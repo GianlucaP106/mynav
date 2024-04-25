@@ -1,0 +1,79 @@
+package ui
+
+import (
+	"errors"
+	"log"
+	"mynav/pkg/controller"
+
+	"github.com/awesome-gocui/gocui"
+)
+
+type UI struct {
+	gui        *gocui.Gui
+	controller *controller.Controller
+	State
+}
+
+type State struct {
+	help         *HelpState
+	confirmation *ConfirmationDialogState
+	toast        *ToastDialogState
+	editor       *EditorDialogState
+	header       *HeaderState
+	workspaces   *WorkspacesState
+	topics       *TopicsState
+	fs           *FsState
+}
+
+func Start() {
+	g, err := gocui.NewGui(gocui.OutputNormal, true)
+	if err != nil {
+		log.Panicln(err)
+	}
+	defer g.Close()
+
+	ui := &UI{
+		gui:        g,
+		controller: controller.NewController(),
+		State: State{
+			confirmation: newConfirmationDialogState(),
+			editor:       newEditorDialogState(),
+			toast:        newToastDialogState(),
+			workspaces:   newWorkspacesState(),
+			header:       newHeaderState(),
+			topics:       newTopicsState(),
+			fs:           newFsState(),
+			help:         newHelpState(),
+		},
+	}
+
+	ui.gui.SetManager(gocui.ManagerFunc(ui.renderViews))
+
+	quit := func(g *gocui.Gui, v *gocui.View) error {
+		return gocui.ErrQuit
+	}
+	ui.keyBinding("").
+		setKeybinding("", gocui.KeyCtrlC, quit).
+		setKeybinding("", 'q', quit).
+		set('?', func() {
+			ui.openHelpView()
+		})
+
+	err = ui.gui.MainLoop()
+	if err != nil {
+		if !errors.Is(err, gocui.ErrQuit) {
+			log.Panicln(err)
+		}
+	}
+}
+
+func (ui *UI) renderViews(g *gocui.Gui) error {
+	ui.renderHeaderView()
+	ui.renderFsView()
+
+	ui.renderToastDialog()
+	ui.renderConfirmationDialog()
+	ui.renderEditorDialog()
+	ui.renderHelpView()
+	return nil
+}
