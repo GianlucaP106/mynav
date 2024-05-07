@@ -45,7 +45,7 @@ func (fs *Filesystem) InitFilesystem() {
 		}
 	}
 	fs.Workspaces = wsp
-	fs.Topics = tps.Sorted()
+	fs.Topics = tps
 }
 
 func (fs *Filesystem) CreateTopic(name string) error {
