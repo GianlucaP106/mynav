@@ -31,7 +31,7 @@ func (fs *Filesystem) detectConfig() {
 	configPath, err := func() (string, error) {
 		for {
 			for _, entry := range dirEntries {
-				if entry.Name() == ".mynav" {
+				if !entry.IsDir() && entry.Name() == ".mynav" {
 					return cwd, nil
 				}
 			}
