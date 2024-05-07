@@ -29,7 +29,7 @@ func newWorkspace(name string, topic *Topic, fs *Filesystem) *Workspace {
 }
 
 func (ws *Workspace) detectGitRemote() {
-	gitPath := ws.Path + "/.git"
+	gitPath := filepath.Join(ws.Path, ".git")
 	if _, err := filepath.Abs(gitPath); err != nil {
 		return
 	}
