@@ -43,7 +43,7 @@ func (c *Controller) GetTopic(idx int) *core.Topic {
 }
 
 func (c *Controller) GetTopics() core.Topics {
-	return c.fs.Topics
+	return c.fs.Topics.Sorted()
 }
 
 func (c *Controller) DeleteTopic(topic *core.Topic) {
@@ -68,7 +68,7 @@ func (c *Controller) GetWorkspacesByTopic(topic *core.Topic) core.Workspaces {
 			out = append(out, workspace)
 		}
 	}
-	return out
+	return out.Sorted()
 }
 
 func (c *Controller) GetWorkspacesByTopicCount(topic *core.Topic) int {
