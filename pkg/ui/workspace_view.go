@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"mynav/pkg/core"
 	"mynav/pkg/utils"
-	"sync"
 
 	"github.com/awesome-gocui/gocui"
 	"github.com/gookit/color"
@@ -151,34 +150,17 @@ func (ui *UI) renderWorkspacesView() {
 			return []string{}
 		}
 		ui.refreshWorkspaces()
-
-		resultChan := make(chan []string, ui.workspaces.listRenderer.endIdx-ui.workspaces.listRenderer.startIdx)
-		var wg sync.WaitGroup
-
+		out := make([]string, 0)
 		ui.workspaces.listRenderer.forEach(func(i int) {
 			selected := (ui.fs.focusedTab == ui.workspaces.viewName) && (i == ui.workspaces.listRenderer.selected)
 
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				workspace := ui.formatWorkspaceItem(ui.workspaces.workspaces[i], selected)
-				resultChan <- workspace
-			}()
+			// TODO: use go routines here to optimize (git remote takes a long time)
+			workspace := ui.formatWorkspaceItem(ui.workspaces.workspaces[i], selected)
+			out = append(out, workspace...)
 		})
-
-		go func() {
-			wg.Wait()
-			close(resultChan)
-		}()
-
-		out := make([]string, 0)
-		for w := range resultChan {
-			out = append(out, w...)
-		}
 
 		return out
 	}()
-
 	for _, line := range content {
 		fmt.Fprintln(view, line)
 	}
