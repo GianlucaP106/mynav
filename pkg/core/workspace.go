@@ -10,22 +10,27 @@ import (
 )
 
 type Workspace struct {
-	Topic      *Topic
-	Filesystem *Filesystem
-	Name       string
-	Path       string
-	GitRemote  string
+	Topic     *Topic
+	gitRemote *string
+	Name      string
+	Path      string
 }
 
-func newWorkspace(name string, topic *Topic, fs *Filesystem) *Workspace {
-	wsPath := filepath.Join(fs.path, filepath.Join(topic.Name, name))
+func newWorkspace(name string, topic *Topic) *Workspace {
+	wsPath := filepath.Join(topic.Filesystem.path, filepath.Join(topic.Name, name))
 	ws := &Workspace{
 		Name:  name,
 		Topic: topic,
 		Path:  wsPath,
 	}
-	ws.detectGitRemote()
 	return ws
+}
+
+func (ws *Workspace) GetGitRemote() string {
+	if ws.gitRemote == nil {
+		ws.detectGitRemote()
+	}
+	return *(ws.gitRemote)
 }
 
 func (ws *Workspace) detectGitRemote() {
@@ -35,7 +40,7 @@ func (ws *Workspace) detectGitRemote() {
 	}
 
 	gitRemote, _ := utils.GitRemote(gitPath)
-	ws.GitRemote = gitRemote
+	ws.gitRemote = &gitRemote
 }
 
 func (ws *Workspace) OpenWorkspace() {
@@ -64,6 +69,6 @@ func (w *Workspace) GetLastModifiedTime() time.Time {
 }
 
 func (w *Workspace) GetLastModifiedTimeFormatted() string {
-	time := w.GetLastModifiedTime().Format(w.Filesystem.getTimeFormat())
+	time := w.GetLastModifiedTime().Format(w.Topic.Filesystem.getTimeFormat())
 	return time
 }

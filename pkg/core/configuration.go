@@ -17,7 +17,7 @@ func (fs *Filesystem) CreateConfigurationFile() string {
 	}
 
 	fs.path = dir
-	fs.Initialized = true
+	fs.ConfigInitialized = true
 	return path
 }
 
@@ -46,7 +46,7 @@ func (fs *Filesystem) detectConfig() {
 		return
 	}
 	fs.path = configPath
-	fs.Initialized = true
+	fs.ConfigInitialized = true
 }
 
 func (fs *Filesystem) getTimeFormat() string {
