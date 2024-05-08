@@ -2,6 +2,8 @@
 
 A user friendly TUI workspace manager
 
+https://github.com/GianlucaP106/mynav/assets/93693693/e14917f3-6b0d-4b0e-a23d-52b610e3fcf0
+
 ## Description
 Mynav is a TUI written in go. It aims to allow for an easy view of all your workspaces, notes or programming projects.
 
