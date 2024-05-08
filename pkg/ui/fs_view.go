@@ -50,7 +50,7 @@ func (ui *UI) setFocusedFsView(focusedTab string) {
 }
 
 func (ui *UI) renderFsView() error {
-	if !ui.controller.IsFsInitialized() {
+	if !ui.controller.IsConfigInitialized() {
 		ui.openConfirmationDialog(func(b bool) {
 			if b {
 				ui.controller.CreateConfigurationFile()
