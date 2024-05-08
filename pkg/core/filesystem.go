@@ -109,10 +109,10 @@ func (fs *Filesystem) CreateWorkspace(name string, repoUrl string, topic *Topic)
 		if err := utils.GitClone(repoUrl, newWorkspacePath); err != nil {
 			return nil, errors.New("failed to clone repository")
 		}
-	}
-
-	if err := os.Mkdir(newWorkspacePath, 0755); err != nil {
-		return nil, err
+	} else {
+		if err := os.Mkdir(newWorkspacePath, 0755); err != nil {
+			return nil, err
+		}
 	}
 
 	workspace := newWorkspace(name, topic)
