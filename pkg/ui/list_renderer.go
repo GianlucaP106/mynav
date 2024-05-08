@@ -48,7 +48,7 @@ func (lr *ListRenderer) setSelected(idx int) {
 
 	size := min(lr.renderSize, lr.listSize)
 	lr.selected = idx
-	lr.startIdx = min(lr.selected, lr.listSize-size)
+	lr.startIdx = min(lr.startIdx, min(lr.selected, lr.listSize-size))
 	lr.endIdx = lr.startIdx + size
 }
 
