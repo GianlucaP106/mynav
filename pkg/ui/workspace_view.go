@@ -62,6 +62,8 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 				if b {
 					curWorkspace := ui.getSelectedWorkspace()
 					ui.controller.DeleteWorkspace(curWorkspace)
+					// HACK:
+					ui.topics.listRenderer.setSelected(0)
 					ui.refreshWorkspaces()
 				}
 			}, "Are you sure you want to delete this workspace?")
