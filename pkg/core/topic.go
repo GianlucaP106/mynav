@@ -45,3 +45,16 @@ func (t *Topic) GetLastModifiedTimeFormatted() string {
 	time := t.GetLastModifiedTime().Format(t.Filesystem.getTimeFormat())
 	return time
 }
+
+func (t *Topic) InitTopicWorkspaces() Workspaces {
+	out := make(Workspaces, 0)
+	workspaces := utils.GetDirEntries(filepath.Join(t.Filesystem.path, t.Name))
+	for _, workspace := range workspaces {
+		if !workspace.IsDir() {
+			continue
+		}
+		w := newWorkspace(workspace.Name(), t)
+		out = append(out, w)
+	}
+	return out
+}

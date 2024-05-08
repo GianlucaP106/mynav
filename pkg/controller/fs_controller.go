@@ -4,9 +4,6 @@ import (
 	"mynav/pkg/core"
 )
 
-// TODO: Optimize the way to update the state
-// Currently it re-initializes the entire FS
-
 type Controller struct {
 	fs *core.Filesystem
 }
@@ -18,16 +15,15 @@ func NewController() *Controller {
 }
 
 func (c *Controller) CreateTopic(name string) error {
-	if err := c.fs.CreateTopic(name); err != nil {
+	if _, err := c.fs.CreateTopic(name); err != nil {
 		return err
 	}
 
-	c.fs.InitFilesystem()
 	return nil
 }
 
-func (c *Controller) IsFsInitialized() bool {
-	return c.fs.Initialized
+func (c *Controller) IsConfigInitialized() bool {
+	return c.fs.ConfigInitialized
 }
 
 func (c *Controller) CreateConfigurationFile() {
@@ -49,7 +45,6 @@ func (c *Controller) GetTopics() core.Topics {
 func (c *Controller) DeleteTopic(topic *core.Topic) {
 	if topic != nil {
 		c.fs.DeleteTopic(topic)
-		c.fs.InitFilesystem()
 	}
 }
 
@@ -87,16 +82,15 @@ func (c *Controller) GetWorkspaces() core.Workspaces {
 }
 
 func (c *Controller) CreateWorkspace(name string, repoUrl string, topic *core.Topic) error {
-	if err := c.fs.CreateWorkspace(name, repoUrl, topic); err != nil {
+	if _, err := c.fs.CreateWorkspace(name, repoUrl, topic); err != nil {
 		return err
 	}
-	c.fs.InitFilesystem()
+
 	return nil
 }
 
 func (c *Controller) DeleteWorkspace(workspace *core.Workspace) {
 	if workspace != nil {
 		c.fs.DeleteWorkspace(workspace)
-		c.fs.InitFilesystem()
 	}
 }

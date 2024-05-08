@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"mynav/pkg/core"
 	"mynav/pkg/utils"
+	"sync"
 
 	"github.com/awesome-gocui/gocui"
 	"github.com/gookit/color"
@@ -123,8 +124,9 @@ func (ui *UI) formatWorkspaceItem(workspace *core.Workspace, selected bool) []st
 
 	lastModTime := workspace.GetLastModifiedTimeFormatted()
 	gitRemote := func() string {
-		if workspace.GitRemote != "" {
-			return utils.TrimGithubUrl(workspace.GitRemote)
+		remote := workspace.GetGitRemote()
+		if remote != "" {
+			return utils.TrimGithubUrl(remote)
 		}
 		return ""
 	}()
@@ -149,15 +151,34 @@ func (ui *UI) renderWorkspacesView() {
 			return []string{}
 		}
 		ui.refreshWorkspaces()
-		out := make([]string, 0)
+
+		resultChan := make(chan []string, ui.workspaces.listRenderer.endIdx-ui.workspaces.listRenderer.startIdx)
+		var wg sync.WaitGroup
+
 		ui.workspaces.listRenderer.forEach(func(i int) {
 			selected := (ui.fs.focusedTab == ui.workspaces.viewName) && (i == ui.workspaces.listRenderer.selected)
-			workspace := ui.formatWorkspaceItem(ui.workspaces.workspaces[i], selected)
-			out = append(out, workspace...)
+
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				workspace := ui.formatWorkspaceItem(ui.workspaces.workspaces[i], selected)
+				resultChan <- workspace
+			}()
 		})
+
+		go func() {
+			wg.Wait()
+			close(resultChan)
+		}()
+
+		out := make([]string, 0)
+		for w := range resultChan {
+			out = append(out, w...)
+		}
 
 		return out
 	}()
+
 	for _, line := range content {
 		fmt.Fprintln(view, line)
 	}
