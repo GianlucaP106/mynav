@@ -49,8 +49,12 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 		}).
 		set(gocui.KeyEnter, func() {
 			curWorkspace := ui.getSelectedWorkspace()
-			if curWorkspace != nil {
-				curWorkspace.OpenWorkspace()
+			if curWorkspace == nil {
+				return
+			}
+			if err := curWorkspace.OpenWorkspace(); err != nil {
+				ui.openToastDialog(err.Error())
+				return
 			}
 		}).
 		set('d', func() {

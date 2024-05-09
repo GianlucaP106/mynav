@@ -29,3 +29,11 @@ func GetLastModifiedTime(path string) (time.Time, error) {
 
 	return stat.ModTime(), nil
 }
+
+func DirExists(path string) bool {
+	if _, err := os.Stat(path); err != nil && os.IsNotExist(err) {
+		return false
+	}
+
+	return true
+}

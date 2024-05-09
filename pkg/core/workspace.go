@@ -1,9 +1,7 @@
 package core
 
 import (
-	"log"
 	"mynav/pkg/utils"
-	"os/exec"
 	"path/filepath"
 	"sort"
 	"time"
@@ -43,11 +41,12 @@ func (ws *Workspace) detectGitRemote() {
 	ws.gitRemote = &gitRemote
 }
 
-func (ws *Workspace) OpenWorkspace() {
-	err := exec.Command("open", "-a", "warp", ws.Path).Run()
-	if err != nil {
-		log.Panicln(err)
+func (ws *Workspace) OpenWorkspace() error {
+	if err := utils.OpenTerminal(ws.Path); err != nil {
+		return err
 	}
+
+	return nil
 }
 
 type Workspaces []*Workspace
