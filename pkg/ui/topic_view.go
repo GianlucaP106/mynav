@@ -105,9 +105,6 @@ func (ui *UI) formatTopic(topic *core.Topic, selected bool) []string {
 	modTime := topic.GetLastModifiedTimeFormatted()
 	name := withSpacePadding(topic.Name, sizeX/3)
 
-	// TODO:
-	// description := withSpacePadding("Description feature to come", sizeX/3)
-
 	modTime = withSpacePadding(modTime, sizeX/3)
 	line := displayLine(name+modTime, Left, sizeX, style)
 

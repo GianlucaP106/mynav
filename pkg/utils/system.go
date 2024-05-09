@@ -30,7 +30,7 @@ func IsWarpInstalled() bool {
 		return false
 	}
 
-	return DirExists("/Applications/Warp.app")
+	return Exists("/Applications/Warp.app")
 }
 
 func IsItermInstalled() bool {
@@ -38,7 +38,7 @@ func IsItermInstalled() bool {
 		return false
 	}
 
-	return DirExists("/Applications/iTerm.app")
+	return Exists("/Applications/iTerm.app")
 }
 
 func OpenTerminal(path string) error {

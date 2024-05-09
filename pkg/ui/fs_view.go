@@ -53,7 +53,7 @@ func (ui *UI) renderFsView() error {
 	if !ui.controller.IsConfigInitialized() {
 		ui.openConfirmationDialog(func(b bool) {
 			if b {
-				ui.controller.CreateConfigurationFile()
+				ui.controller.InitConfiguration()
 			}
 		}, "No workspace configuration found. Would you like to initialize this directory?")
 		return nil
