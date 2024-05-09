@@ -68,6 +68,6 @@ func (w *Workspace) GetLastModifiedTime() time.Time {
 }
 
 func (w *Workspace) GetLastModifiedTimeFormatted() string {
-	time := w.GetLastModifiedTime().Format(w.Topic.Filesystem.getTimeFormat())
+	time := w.GetLastModifiedTime().Format(w.Topic.Filesystem.TimeFormat())
 	return time
 }

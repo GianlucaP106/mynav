@@ -18,7 +18,15 @@ type Filesystem struct {
 
 func NewFilesystem() *Filesystem {
 	fs := &Filesystem{}
-	fs.detectConfig()
+	fs.DetectConfig()
+
+	// tmp
+	if fs.ConfigInitialized {
+		fs.Save(&Store{
+			Some: "To be worked on soon",
+		})
+	}
+
 	fs.InitFilesystem()
 	return fs
 }
@@ -35,6 +43,11 @@ func (fs *Filesystem) InitFilesystem() {
 		if !entry.IsDir() {
 			continue
 		}
+
+		if entry.Name() == ".mynav" {
+			continue
+		}
+
 		topic := newTopic(entry.Name(), fs)
 		tps = append(tps, topic)
 
@@ -93,7 +106,7 @@ func (f *Filesystem) InitFilesystemAsync() {
 
 func (fs *Filesystem) CreateTopic(name string) (*Topic, error) {
 	newTopicPath := filepath.Join(fs.path, name)
-	if err := os.Mkdir(newTopicPath, 0755); err != nil {
+	if err := utils.CreateDir(newTopicPath); err != nil {
 		return nil, err
 	}
 

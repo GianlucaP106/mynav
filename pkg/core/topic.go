@@ -42,7 +42,7 @@ func (t *Topic) GetLastModifiedTime() time.Time {
 }
 
 func (t *Topic) GetLastModifiedTimeFormatted() string {
-	time := t.GetLastModifiedTime().Format(t.Filesystem.getTimeFormat())
+	time := t.GetLastModifiedTime().Format(t.Filesystem.TimeFormat())
 	return time
 }
 

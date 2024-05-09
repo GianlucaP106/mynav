@@ -30,10 +30,22 @@ func GetLastModifiedTime(path string) (time.Time, error) {
 	return stat.ModTime(), nil
 }
 
-func DirExists(path string) bool {
+func Exists(path string) bool {
 	if _, err := os.Stat(path); err != nil && os.IsNotExist(err) {
 		return false
 	}
 
 	return true
+}
+
+func CreateDir(path string) error {
+	if err := os.Mkdir(path, 0755); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func WriteFile(path string, b []byte) error {
+	return os.WriteFile(path, b, 0644)
 }

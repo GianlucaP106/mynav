@@ -2,6 +2,7 @@ package controller
 
 import (
 	"mynav/pkg/core"
+	"os"
 )
 
 type Controller struct {
@@ -26,8 +27,9 @@ func (c *Controller) IsConfigInitialized() bool {
 	return c.fs.ConfigInitialized
 }
 
-func (c *Controller) CreateConfigurationFile() {
-	c.fs.CreateConfigurationFile()
+func (c *Controller) InitConfiguration() {
+	dir, _ := os.Getwd()
+	c.fs.InitConfiguration(dir)
 	c.fs.InitFilesystem()
 }
 
