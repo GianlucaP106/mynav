@@ -43,6 +43,7 @@ func IsItermInstalled() bool {
 
 func OpenTerminal(path string) error {
 	var cmd *exec.Cmd
+
 	command := func(c ...string) *exec.Cmd {
 		c = append(c, path)
 		return exec.Command(c[0], c[1:]...)

@@ -53,7 +53,7 @@ func (t *Topic) InitTopicWorkspaces() Workspaces {
 		if !workspace.IsDir() {
 			continue
 		}
-		w := newWorkspace(workspace.Name(), t)
+		w := NewWorkspace(workspace.Name(), t)
 		out = append(out, w)
 	}
 	return out
