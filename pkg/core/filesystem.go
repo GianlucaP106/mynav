@@ -19,14 +19,6 @@ type Filesystem struct {
 func NewFilesystem() *Filesystem {
 	fs := &Filesystem{}
 	fs.DetectConfig()
-
-	// tmp
-	if fs.ConfigInitialized {
-		fs.Save(&Store{
-			Some: "To be worked on soon",
-		})
-	}
-
 	fs.InitFilesystem()
 	return fs
 }
@@ -128,7 +120,7 @@ func (fs *Filesystem) CreateWorkspace(name string, repoUrl string, topic *Topic)
 		}
 	}
 
-	workspace := newWorkspace(name, topic)
+	workspace := NewWorkspace(name, topic)
 	fs.Workspaces = append(fs.Workspaces, workspace)
 
 	return workspace, nil
@@ -149,6 +141,9 @@ func (fs *Filesystem) DeleteTopic(topic *Topic) error {
 	}
 
 	fs.Topics = append(fs.Topics[:idx], fs.Topics[idx+1:]...)
+
+	// TODO: after refactor (https://github.com/GianlucaP106/mynav/issues/34), delete all workspaces from store
+
 	return nil
 }
 
@@ -163,5 +158,11 @@ func (fs *Filesystem) DeleteWorkspace(workspace *Workspace) error {
 		}
 	}
 	fs.Workspaces = append(fs.Workspaces[:idx], fs.Workspaces[idx+1:]...)
+	workspaceStore := LoadMetadataStore(workspace.GetWorkspaceStorePath())
+
+	wsShortPath := filepath.Join(workspace.Topic.Name, workspace.Name)
+	delete(workspaceStore.Workspaces, wsShortPath)
+	SaveMetadataStore(workspaceStore, workspace.GetWorkspaceStorePath())
+
 	return nil
 }

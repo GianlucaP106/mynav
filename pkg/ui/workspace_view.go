@@ -30,7 +30,6 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 	view = ui.setView(ui.workspaces.viewName)
 
 	view.FrameColor = gocui.ColorBlue
-	// view.FrameRunes = ThickFrame
 	view.Title = withSurroundingSpaces("Workspaces")
 	view.TitleColor = gocui.ColorBlue
 
@@ -52,6 +51,7 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 			if curWorkspace == nil {
 				return
 			}
+
 			if err := curWorkspace.OpenWorkspace(); err != nil {
 				ui.openToastDialog(err.Error())
 				return
@@ -71,6 +71,18 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 					ui.refreshWorkspaces()
 				}
 			}, "Are you sure you want to delete this workspace?")
+		}).
+		set('r', func() {
+			curWorkspace := ui.getSelectedWorkspace()
+			if curWorkspace == nil {
+				return
+			}
+
+			ui.openEditorDialog(func(desc string) {
+				if desc != "" {
+					curWorkspace.SaveDescription(desc)
+				}
+			}, func() {}, "Description")
 		}).
 		set('a', func() {
 			curTopic := ui.getSelectedTopic()
@@ -137,12 +149,13 @@ func (ui *UI) formatWorkspaceItem(workspace *core.Workspace, selected bool) []st
 	}()
 
 	name := withSpacePadding(workspace.Name, sizeX/5)
-	url := withSpacePadding(gitRemote, (sizeX*2)/5)
+	description := withSpacePadding(workspace.GetDescription(), sizeX/5)
+	url := withSpacePadding(gitRemote, sizeX/5)
 	time := withSpacePadding(lastModTime, sizeX/5)
 
 	return []string{
 		blankLine,
-		displayLine(name+url+time, Left, sizeX, style),
+		displayLine(name+description+url+time, Left, sizeX, style),
 		blankLine,
 	}
 }
@@ -160,7 +173,7 @@ func (ui *UI) renderWorkspacesView() {
 		ui.workspaces.listRenderer.forEach(func(i int) {
 			selected := (ui.fs.focusedTab == ui.workspaces.viewName) && (i == ui.workspaces.listRenderer.selected)
 
-			// TODO: use go routines here to optimize (git remote takes a long time)
+			// TODO: https://github.com/GianlucaP106/mynav/issues/18
 			workspace := ui.formatWorkspaceItem(ui.workspaces.workspaces[i], selected)
 			out = append(out, workspace...)
 		})

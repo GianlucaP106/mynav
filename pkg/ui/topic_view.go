@@ -33,7 +33,6 @@ func (ui *UI) initTopicsView() *gocui.View {
 	ui.refreshWorkspaces()
 
 	view.FrameColor = gocui.ColorBlue
-	// view.FrameRunes = ThickFrame
 	view.Title = withSurroundingSpaces("Topics")
 	view.TitleColor = gocui.ColorBlue
 

@@ -1,6 +1,8 @@
 package main
 
-import "mynav/pkg/ui"
+import (
+	"mynav/pkg/ui"
+)
 
 func main() {
 	ui.Start()
