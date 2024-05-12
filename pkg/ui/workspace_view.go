@@ -62,6 +62,22 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 
 			return gocui.ErrQuit
 		}).
+		setKeybinding(ui.workspaces.viewName, 't', func(g *gocui.Gui, v *gocui.View) error {
+			curWorkspace := ui.getSelectedWorkspace()
+			if curWorkspace == nil {
+				return nil
+			}
+
+			openTermCmd, err := utils.GetOpenTerminalCmd(curWorkspace.Path)
+			if err != nil {
+				ui.openToastDialog(err.Error())
+				return nil
+			}
+
+			ui.setAction(openTermCmd)
+
+			return gocui.ErrQuit
+		}).
 		set('d', func() {
 			if ui.controller.GetWorkspacesByTopicCount(ui.getSelectedTopic()) <= 0 {
 				return
