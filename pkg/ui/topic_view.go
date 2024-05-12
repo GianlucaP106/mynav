@@ -2,7 +2,7 @@ package ui
 
 import (
 	"fmt"
-	"mynav/pkg/core"
+	"mynav/pkg/api"
 
 	"github.com/awesome-gocui/gocui"
 	"github.com/gookit/color"
@@ -59,7 +59,7 @@ func (ui *UI) initTopicsView() *gocui.View {
 				ui.refreshTopics()
 				ui.refreshWorkspaces()
 			}, func() {
-			}, "Topic name")
+			}, "Topic name", Small)
 		}).
 		set('d', func() {
 			if ui.controller.GetTopicCount() <= 0 {
@@ -88,11 +88,11 @@ func (ui *UI) refreshTopics() {
 	}
 }
 
-func (ui *UI) getSelectedTopic() *core.Topic {
+func (ui *UI) getSelectedTopic() *api.Topic {
 	return ui.controller.GetTopic(ui.topics.listRenderer.selected)
 }
 
-func (ui *UI) formatTopic(topic *core.Topic, selected bool) []string {
+func (ui *UI) formatTopic(topic *api.Topic, selected bool) []string {
 	sizeX, _ := ui.getView(ui.topics.viewName).Size()
 	style, blankLine := func() (color.Style, string) {
 		if selected {

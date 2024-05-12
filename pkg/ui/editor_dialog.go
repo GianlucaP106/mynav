@@ -7,21 +7,31 @@ type EditorDialogState struct {
 	viewName string
 	title    string
 	active   bool
+	height   int
 }
+
+type EditorSize = uint
+
+const (
+	Small EditorSize = iota
+	Large
+)
 
 func newEditorDialogState() *EditorDialogState {
 	editor := &EditorDialogState{
 		viewName: "EditorDialog",
 		active:   false,
+		height:   3,
 	}
 	return editor
 }
 
 func (ui *UI) initEditorDialogView() *gocui.View {
-	view := ui.setCenteredView(ui.editor.viewName, 80, 3, 0)
+	view := ui.setCenteredView(ui.editor.viewName, 80, ui.editor.height, 0)
 	view.Editable = true
 	view.Editor = ui.editor.editor
 	view.Title = withSurroundingSpaces(ui.editor.title)
+	view.Wrap = true
 	ui.toggleCursor(true)
 	return view
 }
@@ -32,7 +42,13 @@ type OpenEditorRequest struct {
 	title   string
 }
 
-func (ui *UI) openEditorDialog(onEnter func(string), onEsc func(), title string) {
+func (ui *UI) openEditorDialog(onEnter func(string), onEsc func(), title string, size EditorSize) {
+	switch size {
+	case Small:
+		ui.editor.height = 3
+	case Large:
+		ui.editor.height = 7
+	}
 	ui.editor.title = title
 	ui.editor.editor = gocui.EditorFunc(simpleEditorFactory(func(s string) {
 		ui.closeEditorDialog()

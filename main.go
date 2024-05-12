@@ -1,9 +1,9 @@
 package main
 
 import (
-	"mynav/pkg/ui"
+	"mynav/pkg/app"
 )
 
 func main() {
-	ui.Start()
+	app.Main()
 }

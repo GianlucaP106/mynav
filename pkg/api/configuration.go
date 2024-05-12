@@ -1,4 +1,4 @@
-package core
+package api
 
 import (
 	"errors"
@@ -8,22 +8,27 @@ import (
 	"path/filepath"
 )
 
-func (fs *Filesystem) InitConfiguration(dir string) string {
+type Configuration struct {
+	path              string
+	ConfigInitialized bool
+}
+
+func (c *Configuration) InitConfig(dir string) string {
 	path := filepath.Join(dir, ".mynav")
 	if err := utils.CreateDir(path); err != nil {
 		log.Panicln(err)
 	}
 
-	fs.path = dir
-	fs.ConfigInitialized = true
-	return fs.path
+	c.path = dir
+	c.ConfigInitialized = true
+	return c.path
 }
 
-func (fs *Filesystem) GetConfigPath() string {
-	return filepath.Join(fs.path, ".mynav")
+func (c *Configuration) GetConfigPath() string {
+	return filepath.Join(c.path, ".mynav")
 }
 
-func (fs *Filesystem) DetectConfig() bool {
+func (c *Configuration) DetectConfig() bool {
 	cwd, err := os.Getwd()
 	if err != nil {
 		log.Panicln(err)
@@ -34,10 +39,9 @@ func (fs *Filesystem) DetectConfig() bool {
 		for {
 			for _, entry := range dirEntries {
 				if entry.Name() == ".mynav" {
-					// if .mynav as a file exists (prev version of mynav)
 					if !entry.IsDir() {
 						os.Remove(filepath.Join(cwd, entry.Name()))
-						fs.InitConfiguration(cwd)
+						c.InitConfig(cwd)
 						return cwd, nil
 					}
 					homeDir, _ := os.UserHomeDir()
@@ -58,11 +62,11 @@ func (fs *Filesystem) DetectConfig() bool {
 	if err != nil {
 		return false
 	}
-	fs.path = configPath
-	fs.ConfigInitialized = true
+	c.path = configPath
+	c.ConfigInitialized = true
 	return true
 }
 
-func (fs *Filesystem) TimeFormat() string {
+func TimeFormat() string {
 	return "Mon, 02 Jan 15:04:05"
 }
