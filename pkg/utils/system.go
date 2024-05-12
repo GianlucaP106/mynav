@@ -63,5 +63,8 @@ func GetOpenTerminalCmd(path string) ([]string, error) {
 		return nil, errors.New("os not currently supported")
 	}
 
-	return strings.Split(cmd(), " "), nil
+	command := strings.Split(cmd(), " ")
+	command = append(command, path)
+
+	return command, nil
 }
