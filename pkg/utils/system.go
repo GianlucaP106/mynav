@@ -2,8 +2,8 @@ package utils
 
 import (
 	"errors"
-	"os/exec"
 	"runtime"
+	"strings"
 )
 
 type OS = uint
@@ -41,31 +41,27 @@ func IsItermInstalled() bool {
 	return Exists("/Applications/iTerm.app")
 }
 
-func OpenTerminal(path string) error {
-	var cmd *exec.Cmd
-
-	command := func(c ...string) *exec.Cmd {
-		c = append(c, path)
-		return exec.Command(c[0], c[1:]...)
-	}
-	switch DetectOS() {
-	case Linux:
-		cmd = command("xdg-open", "terminal")
-	case Darwin:
-		if IsWarpInstalled() {
-			cmd = command("open", "-a", "warp")
-		} else if IsItermInstalled() {
-			cmd = command("open", "-a", "Iterm")
-		} else {
-			cmd = command("open", "-a", "Terminal")
-		}
-	default:
-		return errors.New("unsupported OS")
+func GetOpenTerminalCmd(path string) ([]string, error) {
+	cmds := map[uint]func() string{
+		Linux: func() string {
+			return "xdg-open terminal"
+		},
+		Darwin: func() string {
+			if IsItermInstalled() {
+				return "open -a Iterm"
+			} else if IsWarpInstalled() {
+				return "open -a warp"
+			} else {
+				return "open -a Terminal"
+			}
+		},
 	}
 
-	if err := cmd.Start(); err != nil {
-		return errors.New("failed to open terminal")
+	os := DetectOS()
+	cmd := cmds[os]
+	if cmd == nil {
+		return nil, errors.New("os not currently supported")
 	}
 
-	return nil
+	return strings.Split(cmd(), " "), nil
 }

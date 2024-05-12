@@ -2,7 +2,7 @@ package ui
 
 import (
 	"fmt"
-	"mynav/pkg/core"
+	"mynav/pkg/api"
 	"mynav/pkg/utils"
 
 	"github.com/awesome-gocui/gocui"
@@ -12,7 +12,7 @@ import (
 type WorkspacesState struct {
 	listRenderer *ListRenderer
 	viewName     string
-	workspaces   core.Workspaces
+	workspaces   api.Workspaces
 }
 
 func newWorkspacesState() *WorkspacesState {
@@ -46,16 +46,21 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 		set(gocui.KeyEsc, func() {
 			ui.setFocusedFsView(ui.topics.viewName)
 		}).
-		set(gocui.KeyEnter, func() {
+		setKeybinding(ui.workspaces.viewName, gocui.KeyEnter, func(g *gocui.Gui, v *gocui.View) error {
 			curWorkspace := ui.getSelectedWorkspace()
 			if curWorkspace == nil {
-				return
+				return nil
 			}
 
-			if err := curWorkspace.OpenWorkspace(); err != nil {
-				ui.openToastDialog(err.Error())
-				return
-			}
+			// 🔥 TODO:
+			//  - https://github.com/GianlucaP106/mynav/issues/33
+			//  - https://github.com/GianlucaP106/mynav/issues/32
+			ui.setAction([]string{
+				"nvim",
+				curWorkspace.Path,
+			})
+
+			return gocui.ErrQuit
 		}).
 		set('d', func() {
 			if ui.controller.GetWorkspacesByTopicCount(ui.getSelectedTopic()) <= 0 {
@@ -80,9 +85,9 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 
 			ui.openEditorDialog(func(desc string) {
 				if desc != "" {
-					curWorkspace.SaveDescription(desc)
+					ui.controller.WorkspaceManager.SetDescription(curWorkspace, desc)
 				}
-			}, func() {}, "Description")
+			}, func() {}, "Description", Large)
 		}).
 		set('a', func() {
 			curTopic := ui.getSelectedTopic()
@@ -99,17 +104,17 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 					ui.topics.listRenderer.setSelected(0)
 					ui.workspaces.listRenderer.setSelected(0)
 					ui.refreshWorkspaces()
-				}, func() {}, "Repo URL (leave blank if none)")
-			}, func() {}, "Workspace name ")
+				}, func() {}, "Repo URL (leave blank if none)", Small)
+			}, func() {}, "Workspace name ", Small)
 		})
 	return view
 }
 
-func (ui *UI) getSelectedWorkspace() *core.Workspace {
+func (ui *UI) getSelectedWorkspace() *api.Workspace {
 	return ui.getDisplayedWorkspace(ui.workspaces.listRenderer.selected)
 }
 
-func (ui *UI) getDisplayedWorkspace(idx int) *core.Workspace {
+func (ui *UI) getDisplayedWorkspace(idx int) *api.Workspace {
 	wv := ui.workspaces.workspaces
 	if idx >= len(wv) || idx < 0 {
 		return nil
@@ -130,7 +135,7 @@ func (ui *UI) refreshWorkspaces() {
 	}
 }
 
-func (ui *UI) formatWorkspaceItem(workspace *core.Workspace, selected bool) []string {
+func (ui *UI) formatWorkspaceItem(workspace *api.Workspace, selected bool) []string {
 	sizeX, _ := ui.getView(ui.workspaces.viewName).Size()
 	style, blankLine := func() (color.Style, string) {
 		if selected {
@@ -141,7 +146,7 @@ func (ui *UI) formatWorkspaceItem(workspace *core.Workspace, selected bool) []st
 
 	lastModTime := workspace.GetLastModifiedTimeFormatted()
 	gitRemote := func() string {
-		remote := workspace.GetGitRemote()
+		remote := ui.controller.WorkspaceManager.GetGitRemote(workspace)
 		if remote != "" {
 			return utils.TrimGithubUrl(remote)
 		}

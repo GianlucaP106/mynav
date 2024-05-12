@@ -3,14 +3,14 @@ package ui
 import (
 	"errors"
 	"log"
-	"mynav/pkg/controller"
+	"mynav/pkg/api"
 
 	"github.com/awesome-gocui/gocui"
 )
 
 type UI struct {
 	gui        *gocui.Gui
-	controller *controller.Controller
+	controller *api.Controller
 	State
 }
 
@@ -23,9 +23,10 @@ type State struct {
 	workspaces   *WorkspacesState
 	topics       *TopicsState
 	fs           *FsState
+	action       *Action
 }
 
-func Start() {
+func Start() *Action {
 	g, err := gocui.NewGui(gocui.OutputNormal, true)
 	if err != nil {
 		log.Panicln(err)
@@ -34,7 +35,7 @@ func Start() {
 
 	ui := &UI{
 		gui:        g,
-		controller: controller.NewController(),
+		controller: api.NewController(),
 		State: State{
 			confirmation: newConfirmationDialogState(),
 			editor:       newEditorDialogState(),
@@ -65,6 +66,8 @@ func Start() {
 			log.Panicln(err)
 		}
 	}
+
+	return ui.action
 }
 
 func (ui *UI) renderViews(g *gocui.Gui) error {
