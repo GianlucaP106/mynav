@@ -8,7 +8,22 @@ https://github.com/GianlucaP106/mynav/assets/93693693/e14917f3-6b0d-4b0e-a23d-52
 Mynav is a TUI written in go. It aims to allow for an easy view of all your workspaces, notes or programming projects.
 
 ## Installation
-> Note: this project is still in development, and to use it requires go and git installed on your system
+
+### Try with docker first
+
+```bash
+docker run -it --name mynav --rm ubuntu bash -c '
+        apt update &&
+        apt install -y git golang-go neovim tmux curl unzip &&
+        cd &&
+        (curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.sh | bash) &&
+        export PATH="$PATH:$HOME/.mynav" &&
+        mkdir nav && cd nav &&
+        mynav
+    '
+```
+
+> Note: The installation uses go and git, and the application uses git, nvim, and tmux.
 
 ### Build from source
 
