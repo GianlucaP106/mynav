@@ -65,7 +65,7 @@ type TmuxSession struct {
 func GetTmuxSessions() map[string]*TmuxSession {
 	stdout, err := exec.Command("tmux", "ls").Output()
 	if err != nil {
-		log.Panicln(err)
+		return map[string]*TmuxSession{}
 	}
 
 	out := map[string]*TmuxSession{}
