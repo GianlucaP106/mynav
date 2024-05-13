@@ -7,8 +7,6 @@ import (
 	"path/filepath"
 )
 
-//////// WorkspaceManager /////////////
-
 type WorkspaceManager struct {
 	Controller     *Controller
 	WorkspaceStore *WorkspaceStore
@@ -21,9 +19,14 @@ func newWorkspaceManager(c *Controller) *WorkspaceManager {
 	}
 
 	wm.WorkspaceStore = newWorkspaceStore(filepath.Join(c.Configuration.GetConfigPath(), "workspaces.json"))
+	wm.loadWorkspaces()
+	wm.SyncTmuxSessions()
+	return wm
+}
 
+func (wm *WorkspaceManager) loadWorkspaces() {
 	workspaces := make(Workspaces, 0)
-	for _, topic := range c.TopicManager.Topics {
+	for _, topic := range wm.Controller.TopicManager.Topics {
 		workspaceDirs := utils.GetDirEntries(topic.Path)
 		for _, w := range workspaceDirs {
 			if !w.IsDir() {
@@ -31,15 +34,16 @@ func newWorkspaceManager(c *Controller) *WorkspaceManager {
 			}
 
 			workspace := NewWorkspace(w.Name(), topic, wm.WorkspacePath(topic, w.Name()))
-			metadata := wm.WorkspaceStore.Workspaces[workspace.GetShortPath()]
+			metadata := wm.WorkspaceStore.Workspaces[workspace.ShortPath()]
+			if metadata == nil {
+				metadata = &WorkspaceMetadata{}
+			}
 			workspace.Metadata = metadata
 			workspaces = append(workspaces, workspace)
 		}
 	}
 
 	wm.Workspaces = workspaces
-
-	return wm
 }
 
 func (wm *WorkspaceManager) WorkspacePath(topic *Topic, name string) string {
@@ -61,6 +65,15 @@ func (ws *WorkspaceManager) GetGitRemote(w *Workspace) string {
 		ws.detectGitRemote(w)
 	}
 	return *(w.GitRemote)
+}
+
+func (wm *WorkspaceManager) GetWorkspaceByPath(path string) *Workspace {
+	for _, workspace := range wm.Workspaces {
+		if workspace.Path == path {
+			return workspace
+		}
+	}
+	return nil
 }
 
 func (wm *WorkspaceManager) CreateWorkspace(name string, repoUrl string, topic *Topic) (*Workspace, error) {
@@ -94,16 +107,59 @@ func (wm *WorkspaceManager) DeleteWorkspace(workspace *Workspace) error {
 	}
 
 	wm.Workspaces = append(wm.Workspaces[:idx], wm.Workspaces[idx+1:]...)
-	wm.WorkspaceStore.DeleteWorkspaceMetadata(workspace.GetShortPath())
+	wm.WorkspaceStore.DeleteWorkspaceMetadata(workspace.ShortPath())
 
 	return nil
+}
+
+func (wm *WorkspaceManager) GetOrCreateTmuxSession(workspace *Workspace) (foundExisting bool, sessionName string) {
+	m := wm.WorkspaceStore.Workspaces[workspace.ShortPath()]
+	if m == nil {
+		m = &WorkspaceMetadata{}
+	}
+
+	if m.TmuxSession != nil {
+		return true, m.TmuxSession.Name
+	}
+
+	m.TmuxSession = &utils.TmuxSession{
+		Name:       workspace.Path,
+		NumWindows: 0,
+	}
+	wm.WorkspaceStore.SetWorkspaceMetadata(workspace.ShortPath(), m)
+	return false, workspace.Path
+}
+
+func (wm *WorkspaceManager) SyncTmuxSessions() {
+	sessions := utils.GetTmuxSessions()
+
+	for _, metadata := range wm.WorkspaceStore.Workspaces {
+		if metadata.TmuxSession != nil && sessions[metadata.TmuxSession.Name] == nil {
+			metadata.TmuxSession = nil
+		}
+	}
+
+	for _, session := range sessions {
+		workspace := wm.GetWorkspaceByPath(session.Name)
+		if workspace == nil {
+			continue
+		}
+		workspace.Metadata.TmuxSession = &utils.TmuxSession{
+			Name:       session.Name,
+			NumWindows: session.NumWindows,
+		}
+
+		wm.WorkspaceStore.SetWorkspaceMetadata(workspace.ShortPath(), workspace.Metadata)
+	}
+
+	wm.WorkspaceStore.Save()
 }
 
 func (wm *WorkspaceManager) SetDescription(workspace *Workspace, description string) {
 	m := &WorkspaceMetadata{
 		Description: description,
 	}
-	wm.WorkspaceStore.SetWorkspaceMetadata(workspace.GetShortPath(), m)
+	wm.WorkspaceStore.SetWorkspaceMetadata(workspace.ShortPath(), m)
 	workspace.Metadata = m
 }
 

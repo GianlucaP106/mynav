@@ -8,7 +8,8 @@ import (
 )
 
 type WorkspaceMetadata struct {
-	Description string `json:"description"`
+	TmuxSession *utils.TmuxSession `json:"tmux-session"`
+	Description string             `json:"description"`
 }
 
 type Workspace struct {
@@ -21,15 +22,16 @@ type Workspace struct {
 
 func NewWorkspace(name string, topic *Topic, path string) *Workspace {
 	ws := &Workspace{
-		Name:  name,
-		Topic: topic,
-		Path:  path,
+		Name:     name,
+		Topic:    topic,
+		Path:     path,
+		Metadata: &WorkspaceMetadata{},
 	}
 
 	return ws
 }
 
-func (w *Workspace) GetShortPath() string {
+func (w *Workspace) ShortPath() string {
 	return filepath.Join(w.Topic.Name, w.Name)
 }
 
