@@ -156,11 +156,8 @@ func (wm *WorkspaceManager) SyncTmuxSessions() {
 }
 
 func (wm *WorkspaceManager) SetDescription(workspace *Workspace, description string) {
-	m := &WorkspaceMetadata{
-		Description: description,
-	}
-	wm.WorkspaceStore.SetWorkspaceMetadata(workspace.ShortPath(), m)
-	workspace.Metadata = m
+	workspace.Metadata.Description = description
+	wm.WorkspaceStore.SetWorkspaceMetadata(workspace.ShortPath(), workspace.Metadata)
 }
 
 type WorkspaceStore struct {
