@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"mynav/pkg/api"
 	"mynav/pkg/utils"
+	"strconv"
 
 	"github.com/awesome-gocui/gocui"
 	"github.com/gookit/color"
@@ -52,14 +53,27 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 				return nil
 			}
 
-			// 🔥 TODO:
-			//  - https://github.com/GianlucaP106/mynav/issues/33
-			//  - https://github.com/GianlucaP106/mynav/issues/32
-			ui.setAction([]string{
-				"nvim",
-				curWorkspace.Path,
-			})
+			if utils.IsTmuxSession() {
+				ui.setAction(utils.NvimCmd(curWorkspace.Path))
+				return gocui.ErrQuit
+			}
 
+			foundExisting, sessionName := ui.controller.WorkspaceManager.GetOrCreateTmuxSession(curWorkspace)
+			if foundExisting {
+				ui.setAction(utils.AttachTmuxSessionCmd(sessionName))
+			} else {
+				ui.setAction(utils.NewTmuxSessionCmd(sessionName, curWorkspace.Path))
+			}
+
+			return gocui.ErrQuit
+		}).
+		setKeybinding(ui.workspaces.viewName, 'v', func(g *gocui.Gui, v *gocui.View) error {
+			curWorkspace := ui.getSelectedWorkspace()
+			if curWorkspace == nil {
+				return nil
+			}
+
+			ui.setAction(utils.NvimCmd(curWorkspace.Path))
 			return gocui.ErrQuit
 		}).
 		setKeybinding(ui.workspaces.viewName, 't', func(g *gocui.Gui, v *gocui.View) error {
@@ -87,7 +101,7 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 				if b {
 					curWorkspace := ui.getSelectedWorkspace()
 					ui.controller.DeleteWorkspace(curWorkspace)
-					// HACK:
+					// HACK: same as below
 					ui.topics.listRenderer.setSelected(0)
 					ui.refreshWorkspaces()
 				}
@@ -169,14 +183,22 @@ func (ui *UI) formatWorkspaceItem(workspace *api.Workspace, selected bool) []str
 		return ""
 	}()
 
-	name := withSpacePadding(workspace.Name, sizeX/5)
-	description := withSpacePadding(workspace.GetDescription(), sizeX/5)
-	url := withSpacePadding(gitRemote, sizeX/5)
-	time := withSpacePadding(lastModTime, sizeX/5)
+	name := withSpacePadding(workspace.Name, sizeX/6)
+	description := withSpacePadding(workspace.GetDescription(), sizeX/6)
+	url := withSpacePadding(gitRemote, sizeX/6)
+	time := withSpacePadding(lastModTime, sizeX/6)
+
+	tmux := func() string {
+		if workspace.Metadata.TmuxSession != nil {
+			tm := workspace.Metadata.TmuxSession
+			return withSpacePadding("Tmux session - "+strconv.Itoa(tm.NumWindows)+" window(s)", sizeX/6)
+		}
+		return withSpacePadding("", sizeX/6)
+	}()
 
 	return []string{
 		blankLine,
-		displayLine(name+description+url+time, Left, sizeX, style),
+		displayLine(name+description+tmux+url+time, Left, sizeX, style),
 		blankLine,
 	}
 }
