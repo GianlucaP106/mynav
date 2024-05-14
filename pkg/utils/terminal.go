@@ -120,7 +120,3 @@ func NewTmuxSessionCmd(session string, path string) []string {
 func AttachTmuxSessionCmd(session string) []string {
 	return []string{"tmux", "a", "-t", session}
 }
-
-func TmuxAttachCmd(session string) []string {
-	return nil
-}

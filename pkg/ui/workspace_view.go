@@ -47,6 +47,13 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 		set(gocui.KeyEsc, func() {
 			ui.setFocusedFsView(ui.topics.viewName)
 		}).
+		set('s', func() {
+			curWorkspace := ui.getSelectedWorkspace()
+			if curWorkspace == nil {
+				return
+			}
+			ui.openWorkspaceInfoDialog(curWorkspace)
+		}).
 		setKeybinding(ui.workspaces.viewName, gocui.KeyEnter, func(g *gocui.Gui, v *gocui.View) error {
 			curWorkspace := ui.getSelectedWorkspace()
 			if curWorkspace == nil {
@@ -165,9 +172,9 @@ func (ui *UI) refreshWorkspaces() {
 	}
 }
 
-func (ui *UI) formatWorkspaceItem(workspace *api.Workspace, selected bool) []string {
+func (ui *UI) formatWorkspaceRow(workspace *api.Workspace, selected bool) []string {
 	sizeX, _ := ui.getView(ui.workspaces.viewName).Size()
-	style, blankLine := func() (color.Style, string) {
+	style, blank := func() (color.Style, string) {
 		if selected {
 			return color.New(color.Black, color.BgCyan), highlightedBlankLine(sizeX)
 		}
@@ -183,23 +190,25 @@ func (ui *UI) formatWorkspaceItem(workspace *api.Workspace, selected bool) []str
 		return ""
 	}()
 
-	name := withSpacePadding(workspace.Name, sizeX/6)
-	description := withSpacePadding(workspace.GetDescription(), sizeX/6)
-	url := withSpacePadding(gitRemote, sizeX/6)
-	time := withSpacePadding(lastModTime, sizeX/6)
+	fifth := sizeX / 5
+	name := withSpacePadding(withSurroundingSpaces(workspace.Name), fifth)
+	description := withSpacePadding(workspace.GetDescription(), fifth)
+	url := withSpacePadding(gitRemote, fifth)
+	time := withSpacePadding(lastModTime, fifth)
 
 	tmux := func() string {
 		if workspace.Metadata.TmuxSession != nil {
 			tm := workspace.Metadata.TmuxSession
-			return withSpacePadding("Tmux session - "+strconv.Itoa(tm.NumWindows)+" window(s)", sizeX/6)
+			return withSpacePadding("Tmux session - "+strconv.Itoa(tm.NumWindows)+" window(s)", fifth)
 		}
-		return withSpacePadding("", sizeX/6)
+		return blankLine(fifth)
 	}()
 
+	line := style.Sprint(name + description + tmux + url + time)
 	return []string{
-		blankLine,
-		displayLine(name+description+tmux+url+time, Left, sizeX, style),
-		blankLine,
+		blank,
+		line,
+		blank,
 	}
 }
 
@@ -217,7 +226,7 @@ func (ui *UI) renderWorkspacesView() {
 			selected := (ui.fs.focusedTab == ui.workspaces.viewName) && (i == ui.workspaces.listRenderer.selected)
 
 			// TODO: https://github.com/GianlucaP106/mynav/issues/18
-			workspace := ui.formatWorkspaceItem(ui.workspaces.workspaces[i], selected)
+			workspace := ui.formatWorkspaceRow(ui.workspaces.workspaces[i], selected)
 			out = append(out, workspace...)
 		})
 

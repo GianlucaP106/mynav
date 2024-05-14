@@ -50,13 +50,13 @@ func (ui *UI) openEditorDialog(onEnter func(string), onEsc func(), title string,
 		ui.editor.height = 7
 	}
 	ui.editor.title = title
-	ui.editor.editor = gocui.EditorFunc(simpleEditorFactory(func(s string) {
+	ui.editor.editor = newSimpleEditor(func(s string) {
 		ui.closeEditorDialog()
 		onEnter(s)
 	}, func() {
 		ui.closeEditorDialog()
 		onEsc()
-	}))
+	})
 	ui.editor.active = true
 }
 

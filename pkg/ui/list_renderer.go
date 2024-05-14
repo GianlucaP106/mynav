@@ -63,20 +63,6 @@ func (lr *ListRenderer) setListSize(listSize int) {
 	}
 }
 
-func min(a int, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-func max(a int, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
 func (lr *ListRenderer) forEach(f func(idx int)) {
 	for i := lr.startIdx; i < lr.endIdx; i++ {
 		f(i)

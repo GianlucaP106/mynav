@@ -101,8 +101,8 @@ func (ui *UI) formatHelpMessage(key *KeyBindingMessage, selected bool) string {
 	}()
 
 	keyMap := withSpacePadding(key.key, sizeX/3)
-	action := withSpacePadding(key.action, (sizeX)/3)
-	return displayLine(keyMap+action, Left, sizeX, color)
+	action := withSpacePadding(key.action, (sizeX*2)/3)
+	return color.Sprint(keyMap + action)
 }
 
 func (ui *UI) renderHelpView() {

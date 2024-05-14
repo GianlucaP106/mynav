@@ -15,15 +15,16 @@ type UI struct {
 }
 
 type State struct {
-	help         *HelpState
-	confirmation *ConfirmationDialogState
-	toast        *ToastDialogState
-	editor       *EditorDialogState
-	header       *HeaderState
-	workspaces   *WorkspacesState
-	topics       *TopicsState
-	fs           *FsState
-	action       *Action
+	help          *HelpState
+	confirmation  *ConfirmationDialogState
+	toast         *ToastDialogState
+	editor        *EditorDialogState
+	header        *HeaderState
+	workspaceInfo *WorkspaceInfoDialogState
+	workspaces    *WorkspacesState
+	topics        *TopicsState
+	fs            *FsState
+	action        *Action
 }
 
 func Start() *Action {
@@ -37,14 +38,15 @@ func Start() *Action {
 		gui:        g,
 		controller: api.NewController(),
 		State: State{
-			confirmation: newConfirmationDialogState(),
-			editor:       newEditorDialogState(),
-			toast:        newToastDialogState(),
-			workspaces:   newWorkspacesState(),
-			header:       newHeaderState(),
-			topics:       newTopicsState(),
-			fs:           newFsState(),
-			help:         newHelpState(),
+			confirmation:  newConfirmationDialogState(),
+			editor:        newEditorDialogState(),
+			toast:         newToastDialogState(),
+			workspaces:    newWorkspacesState(),
+			header:        newHeaderState(),
+			workspaceInfo: newWorkspaceInfoDialogState(),
+			topics:        newTopicsState(),
+			fs:            newFsState(),
+			help:          newHelpState(),
 		},
 	}
 
@@ -76,6 +78,7 @@ func (ui *UI) renderViews(g *gocui.Gui) error {
 
 	ui.renderToastDialog()
 	ui.renderConfirmationDialog()
+	ui.renderWorkspaceInfoDialog()
 	ui.renderEditorDialog()
 	ui.renderHelpView()
 	return nil

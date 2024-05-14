@@ -30,6 +30,6 @@ func (ui *UI) renderHeaderView() {
 	}
 	sizeX, _ := currentView.Size()
 	fmt.Fprintln(currentView, blankLine(sizeX))
-	fmt.Fprintln(currentView, displayLineNormal("Welcome to mynav, a workspace manager", Center, sizeX))
+	fmt.Fprintln(currentView, displayWhiteText("Welcome to mynav, a workspace manager", Center, sizeX))
 	fmt.Fprintln(currentView, blankLine(sizeX))
 }

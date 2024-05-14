@@ -16,31 +16,20 @@ type Alignment uint
 const (
 	Left Alignment = iota
 	Center
-	Right
 )
 
 func displayLine(content string, alignment Alignment, maxWidth int, color color.Style) string {
-	numSpaces := maxWidth - len(content)
-	if numSpaces <= 0 {
-		numSpaces = int(math.Abs(float64(numSpaces)))
-		return color.Sprint(" " + removeLastNChars(content, numSpaces+4) + "...")
-	}
-	numSpaces = numSpaces/2 + 1
-	spaces := strings.Repeat(color.Sprint(" "), numSpaces)
-	content = color.Sprint(" " + content)
 	var line string
 	switch alignment {
 	case Left:
-		line = content + spaces + spaces
+		line = color.Sprint(withSpacePadding(content, maxWidth))
 	case Center:
-		line = spaces + content + spaces
-	case Right:
-		line = spaces + spaces + content
+		line = color.Sprint(blankLine((maxWidth*2)/5)) + color.Sprint(withSpacePadding(content, (maxWidth*3)/5))
 	}
 	return line
 }
 
-func removeLastNChars(s string, n int) string {
+func trimEnd(s string, n int) string {
 	if n >= len(s) {
 		return ""
 	}
@@ -48,8 +37,7 @@ func removeLastNChars(s string, n int) string {
 }
 
 func blankLine(size int) string {
-	white := color.New(color.White)
-	return displayLine("", Center, size, white)
+	return withSpacePadding("", size)
 }
 
 func highlightedBlankLine(size int) string {
@@ -57,18 +45,22 @@ func highlightedBlankLine(size int) string {
 	return displayLine("", Center, size, white)
 }
 
-func displayLineNormal(content string, alignment Alignment, size int) string {
+func displayWhiteText(content string, alignment Alignment, size int) string {
 	white := color.New(color.White)
 	return displayLine(content, alignment, size, white)
 }
 
 func withSpacePadding(content string, size int) string {
+	return withCharPadding(content, size, ' ')
+}
+
+func withCharPadding(content string, size int, c rune) string {
 	repeat := size - len(content)
 	if repeat <= 0 {
 		repeat = int(math.Abs(float64(repeat)))
-		return color.Sprint(removeLastNChars(content, repeat+3) + "...")
+		return trimEnd(content, repeat+4) + "... "
 	}
-	return content + strings.Repeat(" ", size-len(content))
+	return content + strings.Repeat(string(c), size-len(content))
 }
 
 func withSurroundingSpaces(s string) string {
