@@ -5,6 +5,7 @@ import (
 	"mynav/pkg/api"
 	"mynav/pkg/utils"
 	"strconv"
+	"strings"
 
 	"github.com/awesome-gocui/gocui"
 	"github.com/gookit/color"
@@ -191,20 +192,31 @@ func (ui *UI) formatWorkspaceRow(workspace *api.Workspace, selected bool) []stri
 	}()
 
 	fifth := sizeX / 5
-	name := withSpacePadding(withSurroundingSpaces(workspace.Name), fifth)
 	description := withSpacePadding(workspace.GetDescription(), fifth)
 	url := withSpacePadding(gitRemote, fifth)
 	time := withSpacePadding(lastModTime, fifth)
 
+	name := withSurroundingSpaces(workspace.Name)
 	tmux := func() string {
 		if workspace.Metadata.TmuxSession != nil {
 			tm := workspace.Metadata.TmuxSession
-			return withSpacePadding("Tmux session - "+strconv.Itoa(tm.NumWindows)+" window(s)", fifth)
+			numWindows := strconv.Itoa(tm.NumWindows)
+			var line string
+			if selected {
+				c := color.New(color.BgCyan, color.Black)
+				numWindows = c.Sprint(numWindows)
+				line = numWindows + c.Sprint(" - tmux")
+			} else {
+				numWindows = color.New(color.BgGreen, color.Black).Sprint(numWindows)
+				line = numWindows + color.Green.Sprint(" - tmux")
+			}
+			return line
 		}
-		return blankLine(fifth)
+		return ""
 	}()
 
-	line := style.Sprint(name + description + tmux + url + time)
+	name = withSpacePadding(name, (sizeX)/5)
+	line := style.Sprint(name+description+url+time) + tmux + style.Sprint(strings.Repeat(" ", fifth))
 	return []string{
 		blank,
 		line,
