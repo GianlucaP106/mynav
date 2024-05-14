@@ -51,16 +51,16 @@ func displayWhiteText(content string, alignment Alignment, size int) string {
 }
 
 func withSpacePadding(content string, size int) string {
-	return withCharPadding(content, size, ' ')
+	return withCharPadding(content, size, " ")
 }
 
-func withCharPadding(content string, size int, c rune) string {
+func withCharPadding(content string, size int, c string) string {
 	repeat := size - len(content)
 	if repeat <= 0 {
 		repeat = int(math.Abs(float64(repeat)))
 		return trimEnd(content, repeat+4) + "... "
 	}
-	return content + strings.Repeat(string(c), size-len(content))
+	return content + strings.Repeat(c, size-len(content))
 }
 
 func withSurroundingSpaces(s string) string {
