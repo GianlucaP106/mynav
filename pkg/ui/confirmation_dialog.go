@@ -29,15 +29,15 @@ func (ui *UI) initConfirmationDialogView(sizeX int) *gocui.View {
 }
 
 func (ui *UI) openConfirmationDialog(onConfirm func(bool), title string) {
-	ui.confirmation.active = true
 	ui.confirmation.title = title
-	ui.confirmation.editor = gocui.EditorFunc(confirmationEditorFactory(func() {
+	ui.confirmation.editor = newConfirmationEditor(func() {
 		ui.closeConfirmationDialog()
 		onConfirm(true)
 	}, func() {
 		ui.closeConfirmationDialog()
 		onConfirm(false)
-	}))
+	})
+	ui.confirmation.active = true
 }
 
 func (ui *UI) closeConfirmationDialog() {
@@ -59,5 +59,5 @@ func (ui *UI) renderConfirmationDialog() {
 	ui.focusView(ui.confirmation.viewName)
 
 	sizeX, _ := view.Size()
-	fmt.Fprintln(view, displayLineNormal(ui.confirmation.title, Center, sizeX))
+	fmt.Fprintln(view, displayWhiteText(ui.confirmation.title, Center, sizeX))
 }

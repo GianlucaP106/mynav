@@ -102,10 +102,10 @@ func (ui *UI) formatTopic(topic *api.Topic, selected bool) []string {
 	}()
 
 	modTime := topic.GetLastModifiedTimeFormatted()
-	name := withSpacePadding(topic.Name, sizeX/3)
+	name := withSpacePadding(withSurroundingSpaces(topic.Name), sizeX/3)
+	modTime = withSpacePadding(modTime, (sizeX*2)/3)
 
-	modTime = withSpacePadding(modTime, sizeX/3)
-	line := displayLine(name+modTime, Left, sizeX, style)
+	line := style.Sprint(name + modTime)
 
 	out := []string{
 		blankLine,

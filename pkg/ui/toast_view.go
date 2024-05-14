@@ -62,5 +62,5 @@ func (ui *UI) renderToastDialog() {
 	ui.focusView(ui.toast.viewName)
 
 	sizeX, _ := view.Size()
-	fmt.Fprintln(view, displayLineNormal(ui.toast.message, Left, sizeX))
+	fmt.Fprintln(view, displayWhiteText(ui.toast.message, Left, sizeX))
 }
