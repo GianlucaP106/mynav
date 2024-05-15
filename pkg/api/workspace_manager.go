@@ -20,11 +20,12 @@ func newWorkspaceManager(c *Controller) *WorkspaceManager {
 
 	wm.WorkspaceStore = newWorkspaceStore(filepath.Join(c.Configuration.GetConfigPath(), "workspaces.json"))
 	wm.loadWorkspaces()
-	wm.SyncTmuxSessions()
+	wm.syncTmuxSessions()
 	return wm
 }
 
 func (wm *WorkspaceManager) loadWorkspaces() {
+	wMap := map[string]*Workspace{}
 	workspaces := make(Workspaces, 0)
 	for _, topic := range wm.Controller.TopicManager.Topics {
 		workspaceDirs := utils.GetDirEntries(topic.Path)
@@ -40,10 +41,18 @@ func (wm *WorkspaceManager) loadWorkspaces() {
 			}
 			workspace.Metadata = metadata
 			workspaces = append(workspaces, workspace)
+			wMap[workspace.ShortPath()] = workspace
+		}
+	}
+	wm.Workspaces = workspaces
+
+	for id := range wm.WorkspaceStore.Workspaces {
+		if wMap[id] == nil {
+			delete(wm.WorkspaceStore.Workspaces, id)
 		}
 	}
 
-	wm.Workspaces = workspaces
+	wm.WorkspaceStore.Save()
 }
 
 func (wm *WorkspaceManager) WorkspacePath(topic *Topic, name string) string {
@@ -130,7 +139,7 @@ func (wm *WorkspaceManager) GetOrCreateTmuxSession(workspace *Workspace) (foundE
 	return false, workspace.Path
 }
 
-func (wm *WorkspaceManager) SyncTmuxSessions() {
+func (wm *WorkspaceManager) syncTmuxSessions() {
 	sessions := utils.GetTmuxSessions()
 
 	for _, metadata := range wm.WorkspaceStore.Workspaces {
