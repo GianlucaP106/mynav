@@ -59,5 +59,5 @@ func (ui *UI) renderConfirmationDialog() {
 	ui.focusView(ui.confirmation.viewName)
 
 	sizeX, _ := view.Size()
-	fmt.Fprintln(view, displayWhiteText(ui.confirmation.title, Center, sizeX))
+	fmt.Fprintln(view, displayWhiteText(ui.confirmation.title, Left, sizeX))
 }
