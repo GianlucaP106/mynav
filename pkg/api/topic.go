@@ -3,6 +3,7 @@ package api
 import (
 	"mynav/pkg/utils"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -29,6 +30,28 @@ func (t Topics) Less(i, j int) bool {
 func (t Topics) Sorted() Topics {
 	sort.Sort(t)
 	return t
+}
+
+func (t Topics) FilterByNameContaining(s string) Topics {
+	topics := t.Sorted()
+	if s == "" {
+		return t
+	}
+
+	filtered := Topics{}
+	for _, topic := range topics {
+		if strings.Contains(topic.Name, s) {
+			filtered = append(filtered, topic)
+		}
+	}
+	return filtered
+}
+
+func (t Topics) GetTopic(idx int) *Topic {
+	if idx >= len(t) || idx < 0 {
+		return nil
+	}
+	return t[idx]
 }
 
 func (t *Topic) GetLastModifiedTime() time.Time {

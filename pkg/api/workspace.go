@@ -4,6 +4,7 @@ import (
 	"mynav/pkg/utils"
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -58,6 +59,37 @@ func (w Workspaces) Len() int      { return len(w) }
 func (w Workspaces) Swap(i, j int) { w[i], w[j] = w[j], w[i] }
 func (w Workspaces) Less(i, j int) bool {
 	return w[i].GetLastModifiedTime().After(w[j].GetLastModifiedTime())
+}
+
+func (w Workspaces) FilterByNameContaining(s string) Workspaces {
+	if s == "" {
+		return w
+	}
+
+	filtered := Workspaces{}
+	for _, workspace := range w {
+		if strings.Contains(workspace.Name, s) {
+			filtered = append(filtered, workspace)
+		}
+	}
+	return filtered
+}
+
+func (w Workspaces) ByTopic(topic *Topic) Workspaces {
+	out := make(Workspaces, 0)
+	for _, workspace := range w {
+		if workspace.Topic == topic {
+			out = append(out, workspace)
+		}
+	}
+	return out.Sorted()
+}
+
+func (w Workspaces) GetWorkspace(idx int) *Workspace {
+	if idx >= len(w) || idx < 0 {
+		return nil
+	}
+	return w[idx]
 }
 
 func (w Workspaces) Sorted() Workspaces {
