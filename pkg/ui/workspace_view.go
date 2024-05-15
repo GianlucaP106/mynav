@@ -177,7 +177,7 @@ func (ui *UI) formatWorkspaceRow(workspace *api.Workspace, selected bool) []stri
 	sizeX, _ := ui.getView(ui.workspaces.viewName).Size()
 	style, blank := func() (color.Style, string) {
 		if selected {
-			return color.New(color.Black, color.BgCyan), highlightedBlankLine(sizeX)
+			return color.New(color.Black, color.BgCyan), highlightedBlankLine(sizeX + 5) // +5 for extra padding
 		}
 		return color.New(color.Blue), blankLine(sizeX)
 	}()
@@ -215,8 +215,8 @@ func (ui *UI) formatWorkspaceRow(workspace *api.Workspace, selected bool) []stri
 		return ""
 	}()
 
-	name = withSpacePadding(name, (sizeX)/5)
-	line := style.Sprint(name+description+url+time) + tmux + style.Sprint(strings.Repeat(" ", fifth))
+	name = withSpacePadding(name, sizeX/5)
+	line := style.Sprint(name+description+url+time) + tmux + style.Sprint(strings.Repeat(" ", fifth+5)) // +5 for extra padding
 	return []string{
 		blank,
 		line,

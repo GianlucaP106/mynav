@@ -96,14 +96,14 @@ func (ui *UI) formatTopic(topic *api.Topic, selected bool) []string {
 	sizeX, _ := ui.getView(ui.topics.viewName).Size()
 	style, blankLine := func() (color.Style, string) {
 		if selected {
-			return color.New(color.Black, color.BgCyan), highlightedBlankLine(sizeX)
+			return color.New(color.Black, color.BgCyan), highlightedBlankLine(sizeX + 5) // +5 for extra padding
 		}
 		return color.New(color.Blue), blankLine(sizeX)
 	}()
 
 	modTime := topic.GetLastModifiedTimeFormatted()
 	name := withSpacePadding(withSurroundingSpaces(topic.Name), sizeX/3)
-	modTime = withSpacePadding(modTime, (sizeX*2)/3)
+	modTime = withSpacePadding(modTime, ((sizeX*2)/3)+5) // +5 for extra padding
 
 	line := style.Sprint(name + modTime)
 
