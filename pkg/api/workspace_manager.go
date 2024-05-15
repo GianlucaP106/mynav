@@ -104,6 +104,9 @@ func (wm *WorkspaceManager) CreateWorkspace(name string, repoUrl string, topic *
 }
 
 func (wm *WorkspaceManager) DeleteWorkspace(workspace *Workspace) error {
+	if workspace == nil {
+		return nil
+	}
 	if err := os.RemoveAll(workspace.Path); err != nil {
 		return err
 	}

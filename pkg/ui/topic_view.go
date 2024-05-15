@@ -11,6 +11,8 @@ import (
 type TopicsState struct {
 	listRenderer *ListRenderer
 	viewName     string
+	search       string
+	topics       api.Topics
 }
 
 func newTopicsState() *TopicsState {
@@ -21,20 +23,28 @@ func newTopicsState() *TopicsState {
 }
 
 func (ui *UI) initTopicsView() *gocui.View {
+	exists := false
 	view := ui.getView(ui.topics.viewName)
-	if view != nil {
-		return view
-	}
-
+	exists = view != nil
 	view = ui.setView(ui.topics.viewName)
-	_, sizeY := view.Size()
-	ui.topics.listRenderer = newListRenderer(0, sizeY/3, 0)
 
-	ui.refreshWorkspaces()
+	if ui.topics.search != "" {
+		view.Subtitle = withSurroundingSpaces("Searching: " + ui.topics.search)
+	} else {
+		view.Subtitle = ""
+	}
 
 	view.FrameColor = gocui.ColorBlue
 	view.Title = withSurroundingSpaces("Topics")
 	view.TitleColor = gocui.ColorBlue
+
+	if exists {
+		return view
+	}
+	_, sizeY := view.Size()
+	ui.topics.listRenderer = newListRenderer(0, sizeY/3, 0)
+
+	ui.refreshWorkspaces()
 
 	ui.keyBinding(ui.topics.viewName).
 		set('j', func() {
@@ -45,9 +55,19 @@ func (ui *UI) initTopicsView() *gocui.View {
 			ui.topics.listRenderer.decrement()
 			ui.refreshWorkspaces()
 		}).
+		set('/', func() {
+			ui.openEditorDialog(func(s string) {
+				ui.topics.search = s
+			}, func() {}, "Search", Small)
+		}).
+		set(gocui.KeyEsc, func() {
+			if ui.topics.search != "" {
+				ui.topics.search = ""
+			}
+		}).
 		set('a', func() {
 			ui.openEditorDialog(func(s string) {
-				if err := ui.controller.CreateTopic(s); err != nil {
+				if _, err := ui.controller.TopicManager.CreateTopic(s); err != nil {
 					ui.openToastDialog(err.Error())
 					return
 				}
@@ -62,18 +82,18 @@ func (ui *UI) initTopicsView() *gocui.View {
 			}, "Topic name", Small)
 		}).
 		set('d', func() {
-			if ui.controller.GetTopicCount() <= 0 {
+			if ui.controller.TopicManager.Topics.Len() <= 0 {
 				return
 			}
 			ui.openConfirmationDialog(func(b bool) {
 				if b {
-					ui.controller.DeleteTopic(ui.getSelectedTopic())
+					ui.controller.TopicManager.DeleteTopic(ui.getSelectedTopic())
 					ui.refreshWorkspaces()
 				}
 			}, "Are you sure you want to delete this topic? All its content will be deleted.")
 		}).
 		set(gocui.KeyEnter, func() {
-			if ui.controller.GetTopicCount() > 0 {
+			if ui.controller.TopicManager.Topics.Len() > 0 {
 				ui.setFocusedFsView(ui.workspaces.viewName)
 			}
 		})
@@ -82,14 +102,22 @@ func (ui *UI) initTopicsView() *gocui.View {
 }
 
 func (ui *UI) refreshTopics() {
-	newListSize := ui.controller.GetTopicCount()
+	topics := ui.controller.TopicManager.Topics.Sorted()
+
+	if ui.topics.search != "" {
+		topics = topics.FilterByNameContaining(ui.topics.search)
+	}
+
+	ui.topics.topics = topics
+
+	newListSize := ui.topics.topics.Len()
 	if newListSize != ui.topics.listRenderer.listSize {
 		ui.topics.listRenderer.setListSize(newListSize)
 	}
 }
 
 func (ui *UI) getSelectedTopic() *api.Topic {
-	return ui.controller.GetTopic(ui.topics.listRenderer.selected)
+	return ui.controller.TopicManager.Topics.GetTopic(ui.topics.listRenderer.selected)
 }
 
 func (ui *UI) formatTopic(topic *api.Topic, selected bool) []string {
@@ -119,13 +147,8 @@ func (ui *UI) renderTopicsView() {
 	view := ui.initTopicsView()
 
 	view.Clear()
-	topics := ui.controller.GetTopics()
-	if topics.Len() <= 0 {
-		return
-	}
-
 	ui.refreshTopics()
-
+	topics := ui.topics.topics
 	content := make([]string, 0)
 	ui.topics.listRenderer.forEach(func(idx int) {
 		topic := topics[idx]

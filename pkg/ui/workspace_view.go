@@ -14,6 +14,7 @@ import (
 type WorkspacesState struct {
 	listRenderer *ListRenderer
 	viewName     string
+	search       string
 	workspaces   api.Workspaces
 }
 
@@ -25,15 +26,24 @@ func newWorkspacesState() *WorkspacesState {
 }
 
 func (ui *UI) initWorkspacesView() *gocui.View {
+	exists := false
 	view := ui.getView(ui.workspaces.viewName)
-	if view != nil {
-		return view
-	}
+	exists = view != nil
 	view = ui.setView(ui.workspaces.viewName)
 
-	view.FrameColor = gocui.ColorBlue
+	if ui.workspaces.search != "" {
+		view.Subtitle = withSurroundingSpaces("Searching: " + ui.workspaces.search)
+	} else {
+		view.Subtitle = ""
+	}
+
 	view.Title = withSurroundingSpaces("Workspaces")
 	view.TitleColor = gocui.ColorBlue
+	view.FrameColor = gocui.ColorBlue
+
+	if exists {
+		return view
+	}
 
 	_, sizeY := view.Size()
 	ui.workspaces.listRenderer = newListRenderer(0, sizeY/3, 0)
@@ -46,6 +56,11 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 			ui.workspaces.listRenderer.decrement()
 		}).
 		set(gocui.KeyEsc, func() {
+			if ui.workspaces.search != "" {
+				ui.workspaces.search = ""
+				return
+			}
+
 			ui.setFocusedFsView(ui.topics.viewName)
 		}).
 		set('s', func() {
@@ -54,6 +69,11 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 				return
 			}
 			ui.openWorkspaceInfoDialog(curWorkspace)
+		}).
+		set('/', func() {
+			ui.openEditorDialog(func(s string) {
+				ui.workspaces.search = s
+			}, func() {}, "Search", Small)
 		}).
 		setKeybinding(ui.workspaces.viewName, gocui.KeyEnter, func(g *gocui.Gui, v *gocui.View) error {
 			curWorkspace := ui.getSelectedWorkspace()
@@ -101,14 +121,17 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 			return gocui.ErrQuit
 		}).
 		set('d', func() {
-			if ui.controller.GetWorkspacesByTopicCount(ui.getSelectedTopic()) <= 0 {
+			if ui.controller.
+				WorkspaceManager.
+				Workspaces.
+				ByTopic(ui.getSelectedTopic()).Len() <= 0 {
 				return
 			}
 
 			ui.openConfirmationDialog(func(b bool) {
 				if b {
 					curWorkspace := ui.getSelectedWorkspace()
-					ui.controller.DeleteWorkspace(curWorkspace)
+					ui.controller.WorkspaceManager.DeleteWorkspace(curWorkspace)
 					// HACK: same as below
 					ui.topics.listRenderer.setSelected(0)
 					ui.refreshWorkspaces()
@@ -131,7 +154,7 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 			curTopic := ui.getSelectedTopic()
 			ui.openEditorDialog(func(name string) {
 				ui.openEditorDialog(func(repoUrl string) {
-					if err := ui.controller.CreateWorkspace(name, repoUrl, curTopic); err != nil {
+					if _, err := ui.controller.WorkspaceManager.CreateWorkspace(name, repoUrl, curTopic); err != nil {
 						ui.openToastDialog(err.Error())
 						return
 					}
@@ -162,8 +185,13 @@ func (ui *UI) getDisplayedWorkspace(idx int) *api.Workspace {
 
 func (ui *UI) refreshWorkspaces() {
 	ui.refreshTopics()
-	out := ui.controller.GetWorkspacesByTopic(ui.getSelectedTopic())
-	ui.workspaces.workspaces = out
+	workspaces := ui.controller.WorkspaceManager.Workspaces.ByTopic(ui.getSelectedTopic())
+
+	if ui.workspaces.search != "" {
+		workspaces = workspaces.FilterByNameContaining(ui.workspaces.search)
+	}
+
+	ui.workspaces.workspaces = workspaces
 
 	if ui.workspaces.listRenderer != nil {
 		newListSize := len(ui.workspaces.workspaces)

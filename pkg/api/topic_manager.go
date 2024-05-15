@@ -55,6 +55,10 @@ func (tm *TopicManager) CreateTopic(name string) (*Topic, error) {
 }
 
 func (tm *TopicManager) DeleteTopic(topic *Topic) error {
+	if topic == nil {
+		return nil
+	}
+
 	topicPath := filepath.Join(tm.Controller.Configuration.path, topic.Name)
 
 	idx := 0
