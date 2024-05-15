@@ -92,6 +92,16 @@ func (w Workspaces) GetWorkspace(idx int) *Workspace {
 	return w[idx]
 }
 
+func (w Workspaces) GetWorkspaceByShortPath(s string) *Workspace {
+	for _, workspace := range w {
+		if workspace.ShortPath() == s {
+			return workspace
+		}
+	}
+
+	return nil
+}
+
 func (w Workspaces) Sorted() Workspaces {
 	sort.Sort(w)
 	return w

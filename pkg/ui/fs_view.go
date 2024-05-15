@@ -20,10 +20,17 @@ func (ui *UI) initFsView() *gocui.View {
 	if view != nil {
 		return view
 	}
+
 	sizeX, sizeY := ui.gui.Size()
 	view = ui.setCenteredView(ui.fs.viewName, sizeX, sizeY-7, 3)
 	view.Frame = false
-	ui.fs.focusedTab = ui.topics.viewName
+
+	if ui.controller.WorkspaceManager.GetSelectedWorkspace() != nil {
+		ui.fs.focusedTab = ui.workspaces.viewName
+	} else {
+		ui.fs.focusedTab = ui.topics.viewName
+	}
+
 	return view
 }
 
@@ -31,12 +38,14 @@ func (ui *UI) setFocusedFsView(focusedTab string) {
 	if ui.fs.focusedTab != focusedTab {
 		ui.fs.focusedTab = focusedTab
 	}
-	ui.focusView(ui.fs.focusedTab)
 
+	ui.focusView(ui.fs.focusedTab)
 	wv := ui.getView(ui.workspaces.viewName)
 	tv := ui.getView(ui.topics.viewName)
+
 	off := gocui.ColorBlue
 	on := gocui.ColorGreen
+
 	tab := ui.fs.focusedTab
 	switch tab {
 	case ui.workspaces.viewName:

@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"mynav/pkg/api"
+	"strings"
 
 	"github.com/awesome-gocui/gocui"
 	"github.com/gookit/color"
@@ -26,7 +27,9 @@ func (ui *UI) initTopicsView() *gocui.View {
 	exists := false
 	view := ui.getView(ui.topics.viewName)
 	exists = view != nil
-	view = ui.setView(ui.topics.viewName)
+	if !exists {
+		view = ui.setView(ui.topics.viewName)
+	}
 
 	if ui.topics.search != "" {
 		view.Subtitle = withSurroundingSpaces("Searching: " + ui.topics.search)
@@ -41,10 +44,15 @@ func (ui *UI) initTopicsView() *gocui.View {
 	if exists {
 		return view
 	}
+
 	_, sizeY := view.Size()
 	ui.topics.listRenderer = newListRenderer(0, sizeY/3, 0)
+	ui.refreshTopics()
 
-	ui.refreshWorkspaces()
+	if selectedWorkspace := ui.controller.WorkspaceManager.GetSelectedWorkspace(); selectedWorkspace != nil {
+		topicName := strings.Split(selectedWorkspace.ShortPath(), "/")[0]
+		ui.selectTopicByName(topicName)
+	}
 
 	ui.keyBinding(ui.topics.viewName).
 		set('j', func() {
@@ -88,6 +96,7 @@ func (ui *UI) initTopicsView() *gocui.View {
 			ui.openConfirmationDialog(func(b bool) {
 				if b {
 					ui.controller.TopicManager.DeleteTopic(ui.getSelectedTopic())
+					ui.refreshTopics()
 					ui.refreshWorkspaces()
 				}
 			}, "Are you sure you want to delete this topic? All its content will be deleted.")
@@ -111,7 +120,7 @@ func (ui *UI) refreshTopics() {
 	ui.topics.topics = topics
 
 	newListSize := ui.topics.topics.Len()
-	if newListSize != ui.topics.listRenderer.listSize {
+	if ui.topics.listRenderer != nil && newListSize != ui.topics.listRenderer.listSize {
 		ui.topics.listRenderer.setListSize(newListSize)
 	}
 }
@@ -143,11 +152,18 @@ func (ui *UI) formatTopic(topic *api.Topic, selected bool) []string {
 	return out
 }
 
+func (ui *UI) selectTopicByName(name string) {
+	for idx, t := range ui.topics.topics {
+		if t.Name == name {
+			ui.topics.listRenderer.setSelected(idx)
+		}
+	}
+}
+
 func (ui *UI) renderTopicsView() {
 	view := ui.initTopicsView()
 
 	view.Clear()
-	ui.refreshTopics()
 	topics := ui.topics.topics
 	content := make([]string, 0)
 	ui.topics.listRenderer.forEach(func(idx int) {

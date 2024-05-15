@@ -99,6 +99,7 @@ func (wm *WorkspaceManager) CreateWorkspace(name string, repoUrl string, topic *
 
 	workspace := NewWorkspace(name, topic, wm.WorkspacePath(topic, name))
 	wm.Workspaces = append(wm.Workspaces, workspace)
+	wm.WorkspaceStore.SetSelectedWorkspace(workspace)
 
 	return workspace, nil
 }
@@ -139,6 +140,7 @@ func (wm *WorkspaceManager) GetOrCreateTmuxSession(workspace *Workspace) (foundE
 		NumWindows: 0,
 	}
 	wm.WorkspaceStore.SetWorkspaceMetadata(workspace.ShortPath(), m)
+	wm.WorkspaceStore.SetSelectedWorkspace(workspace)
 	return false, workspace.Path
 }
 
@@ -167,14 +169,28 @@ func (wm *WorkspaceManager) syncTmuxSessions() {
 	wm.WorkspaceStore.Save()
 }
 
+func (wm *WorkspaceManager) GetSelectedWorkspace() *Workspace {
+	wId := wm.WorkspaceStore.SelectedWorkspace
+
+	w := wm.Workspaces.GetWorkspaceByShortPath(wId)
+	if w == nil {
+		wm.WorkspaceStore.SetSelectedWorkspace(nil)
+		wm.WorkspaceStore.Save()
+	}
+
+	return w
+}
+
 func (wm *WorkspaceManager) SetDescription(workspace *Workspace, description string) {
 	workspace.Metadata.Description = description
 	wm.WorkspaceStore.SetWorkspaceMetadata(workspace.ShortPath(), workspace.Metadata)
+	wm.WorkspaceStore.SetSelectedWorkspace(workspace)
 }
 
 type WorkspaceStore struct {
-	Workspaces map[string]*WorkspaceMetadata `json:"workspaces"`
-	Store      string                        `json:"-"`
+	Workspaces        map[string]*WorkspaceMetadata `json:"workspaces"`
+	Store             string                        `json:"-"`
+	SelectedWorkspace string                        `json:"selected-workspace"`
 }
 
 func newWorkspaceStore(store string) *WorkspaceStore {
@@ -191,6 +207,15 @@ func newWorkspaceStore(store string) *WorkspaceStore {
 	w.Save()
 
 	return w
+}
+
+func (ws *WorkspaceStore) SetSelectedWorkspace(w *Workspace) {
+	if w == nil {
+		ws.SelectedWorkspace = ""
+	} else {
+		ws.SelectedWorkspace = w.ShortPath()
+	}
+	ws.Save()
 }
 
 func (ws *WorkspaceStore) SetWorkspaceMetadata(id string, m *WorkspaceMetadata) {
