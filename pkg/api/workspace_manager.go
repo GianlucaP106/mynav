@@ -108,6 +108,11 @@ func (wm *WorkspaceManager) DeleteWorkspace(workspace *Workspace) error {
 	if workspace == nil {
 		return nil
 	}
+
+	if workspace.Metadata.TmuxSession != nil {
+		wm.DeleteTmuxSession(workspace)
+	}
+
 	if err := os.RemoveAll(workspace.Path); err != nil {
 		return err
 	}
@@ -120,9 +125,18 @@ func (wm *WorkspaceManager) DeleteWorkspace(workspace *Workspace) error {
 	}
 
 	wm.Workspaces = append(wm.Workspaces[:idx], wm.Workspaces[idx+1:]...)
-	wm.WorkspaceStore.DeleteWorkspaceMetadata(workspace.ShortPath())
+	wm.WorkspaceStore.DeleteMetadata(workspace.ShortPath())
 
 	return nil
+}
+
+func (wm *WorkspaceManager) DeleteTmuxSession(w *Workspace) {
+	if w.Metadata.TmuxSession != nil {
+		utils.DeleteTmxSession(w.Path)
+		meta := w.Metadata
+		meta.TmuxSession = nil
+		wm.WorkspaceStore.SaveMetadata(w)
+	}
 }
 
 func (wm *WorkspaceManager) GetOrCreateTmuxSession(workspace *Workspace) (foundExisting bool, sessionName string) {
@@ -139,7 +153,7 @@ func (wm *WorkspaceManager) GetOrCreateTmuxSession(workspace *Workspace) (foundE
 		Name:       workspace.Path,
 		NumWindows: 0,
 	}
-	wm.WorkspaceStore.SetWorkspaceMetadata(workspace.ShortPath(), m)
+	wm.WorkspaceStore.SaveMetadata(workspace)
 	wm.WorkspaceStore.SetSelectedWorkspace(workspace)
 	return false, workspace.Path
 }
@@ -163,7 +177,7 @@ func (wm *WorkspaceManager) syncTmuxSessions() {
 			NumWindows: session.NumWindows,
 		}
 
-		wm.WorkspaceStore.SetWorkspaceMetadata(workspace.ShortPath(), workspace.Metadata)
+		wm.WorkspaceStore.SaveMetadata(workspace)
 	}
 
 	wm.WorkspaceStore.Save()
@@ -183,7 +197,7 @@ func (wm *WorkspaceManager) GetSelectedWorkspace() *Workspace {
 
 func (wm *WorkspaceManager) SetDescription(workspace *Workspace, description string) {
 	workspace.Metadata.Description = description
-	wm.WorkspaceStore.SetWorkspaceMetadata(workspace.ShortPath(), workspace.Metadata)
+	wm.WorkspaceStore.SaveMetadata(workspace)
 	wm.WorkspaceStore.SetSelectedWorkspace(workspace)
 }
 
@@ -218,12 +232,12 @@ func (ws *WorkspaceStore) SetSelectedWorkspace(w *Workspace) {
 	ws.Save()
 }
 
-func (ws *WorkspaceStore) SetWorkspaceMetadata(id string, m *WorkspaceMetadata) {
-	ws.Workspaces[id] = m
+func (ws *WorkspaceStore) SaveMetadata(w *Workspace) {
+	ws.Workspaces[w.ShortPath()] = w.Metadata
 	ws.Save()
 }
 
-func (ws *WorkspaceStore) DeleteWorkspaceMetadata(ids ...string) {
+func (ws *WorkspaceStore) DeleteMetadata(ids ...string) {
 	for _, id := range ids {
 		delete(ws.Workspaces, id)
 	}

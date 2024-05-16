@@ -61,10 +61,10 @@ func (tm *TopicManager) DeleteTopic(topic *Topic) error {
 
 	topicPath := filepath.Join(tm.Controller.Configuration.path, topic.Name)
 
-	idx := 0
-	for i, t := range tm.Topics {
-		if t == topic {
-			idx = i
+	// clear tmux sessions of this topics workspaces
+	for _, w := range tm.Controller.WorkspaceManager.Workspaces.ByTopic(topic) {
+		if w.Metadata.TmuxSession != nil {
+			tm.Controller.WorkspaceManager.DeleteTmuxSession(w)
 		}
 	}
 
@@ -72,8 +72,17 @@ func (tm *TopicManager) DeleteTopic(topic *Topic) error {
 		return err
 	}
 
+	idx := 0
+	for i, t := range tm.Topics {
+		if t == topic {
+			idx = i
+		}
+	}
+
+	// delete the topic from the array without refreshing
 	tm.Topics = append(tm.Topics[:idx], tm.Topics[idx+1:]...)
 
+	// delete all metadata from the WorkspaceStore that is associated with this topic
 	topicsToDelete := make([]string, 0)
 	for id := range tm.Controller.WorkspaceManager.WorkspaceStore.Workspaces {
 		topicName := strings.Split(id, "/")[0]
@@ -82,7 +91,7 @@ func (tm *TopicManager) DeleteTopic(topic *Topic) error {
 		}
 	}
 
-	tm.Controller.WorkspaceManager.WorkspaceStore.DeleteWorkspaceMetadata(topicsToDelete...)
+	tm.Controller.WorkspaceManager.WorkspaceStore.DeleteMetadata(topicsToDelete...)
 
 	return nil
 }
