@@ -176,6 +176,9 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 					ui.refreshWorkspaces()
 				}, func() {}, "Repo URL (leave blank if none)", Small)
 			}, func() {}, "Workspace name ", Small)
+		}).
+		set('?', func() {
+			ui.openHelpView(ui.getKeyBindings(ui.workspaces.viewName))
 		})
 	return view
 }

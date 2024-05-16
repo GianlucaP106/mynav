@@ -7,65 +7,38 @@ import (
 	"github.com/gookit/color"
 )
 
-type KeyBindingMessage struct {
+type KeyBindingMappings struct {
 	key    string
 	action string
 }
 
 type HelpState struct {
-	listRenderer *ListRenderer
-	viewName     string
-	messages     []*KeyBindingMessage
-	active       bool
+	listRenderer   *ListRenderer
+	viewName       string
+	globalMappings []*KeyBindingMappings
+	mappings       []*KeyBindingMappings
+	active         bool
 }
 
-func newHelpState() *HelpState {
+func (ui *UI) newHelpState(globalMappings []*KeyBindingMappings) *HelpState {
 	return &HelpState{
-		viewName: "HelpView",
+		viewName:       "HelpView",
+		globalMappings: globalMappings,
+		listRenderer:   newListRenderer(0, 10, 0),
 	}
 }
 
 func (ui *UI) initHelpView() *gocui.View {
-	x, _ := ui.gui.Size()
+	exists := false
 	view := ui.getView(ui.help.viewName)
-	if view != nil {
+	exists = view != nil
+
+	x, _ := ui.gui.Size()
+	view = ui.setCenteredView(ui.help.viewName, x/2, 12, 0)
+
+	if exists {
 		return view
 	}
-	ui.help.messages = []*KeyBindingMessage{
-		{
-			key:    "q",
-			action: "Quit",
-		},
-		{
-			key:    "j",
-			action: "Move down",
-		},
-		{
-			key:    "k",
-			action: "Move up",
-		},
-		{
-			key:    "a",
-			action: "Create entry",
-		},
-		{
-			key:    "d",
-			action: "Delete entry",
-		},
-		{
-			key:    "enter",
-			action: "Select",
-		},
-		{
-			key:    "esc",
-			action: "Go back",
-		},
-	}
-
-	numKeymaps := len(ui.help.messages)
-	view = ui.setCenteredView(ui.help.viewName, x/2, numKeymaps+5, 0)
-	_, sizeY := view.Size()
-	ui.help.listRenderer = newListRenderer(0, sizeY, numKeymaps)
 
 	ui.keyBinding(ui.help.viewName).
 		set(gocui.KeyEsc, func() {
@@ -76,20 +49,34 @@ func (ui *UI) initHelpView() *gocui.View {
 		}).
 		set('k', func() {
 			ui.help.listRenderer.decrement()
+		}).
+		set('?', func() {
+			ui.closeHelpView()
 		})
+
 	return view
 }
 
-func (ui *UI) openHelpView() {
+func (ui *UI) openHelpView(mappings []*KeyBindingMappings) {
+	ui.help.mappings = mappings
+	ui.refreshHelpListRenderer()
 	ui.help.active = true
 }
 
 func (ui *UI) closeHelpView() {
 	ui.help.active = false
+	ui.help.mappings = nil
 	ui.gui.DeleteView(ui.help.viewName)
 }
 
-func (ui *UI) formatHelpMessage(key *KeyBindingMessage, selected bool) string {
+func (ui *UI) refreshHelpListRenderer() {
+	newSize := len(ui.help.mappings) + len(ui.help.globalMappings)
+	if newSize != ui.help.listRenderer.listSize {
+		ui.help.listRenderer.setListSize(newSize)
+	}
+}
+
+func (ui *UI) formatHelpMessage(key *KeyBindingMappings, selected bool) string {
 	view := ui.getView(ui.help.viewName)
 	sizeX, _ := view.Size()
 
@@ -100,7 +87,7 @@ func (ui *UI) formatHelpMessage(key *KeyBindingMessage, selected bool) string {
 		return color.New(color.Blue)
 	}()
 
-	keyMap := withSpacePadding(key.key, sizeX/3)
+	keyMap := withSpacePadding("[ "+key.key+" ]", sizeX/3)
 	action := withSpacePadding(key.action, (sizeX*2)/3)
 	return color.Sprint(keyMap + action)
 }
@@ -109,12 +96,14 @@ func (ui *UI) renderHelpView() {
 	if !ui.help.active {
 		return
 	}
+
 	view := ui.initHelpView()
 
+	mappings := append(ui.help.mappings, ui.help.globalMappings...)
 	content := func() []string {
 		out := make([]string, 0)
 		ui.help.listRenderer.forEach(func(idx int) {
-			helpMessage := ui.help.messages[idx]
+			helpMessage := mappings[idx]
 			selected := idx == ui.help.listRenderer.selected
 			out = append(out, ui.formatHelpMessage(helpMessage, selected))
 		})
