@@ -29,6 +29,17 @@ func displayLine(content string, alignment Alignment, maxWidth int, color color.
 	return line
 }
 
+func display(content string, alignment Alignment, maxWidth int) string {
+	var line string
+	switch alignment {
+	case Left:
+		line = withSpacePadding(content, maxWidth)
+	case Center:
+		line = blankLine((maxWidth/2)-(len(content)/2)) + content
+	}
+	return line
+}
+
 func trimEnd(s string, n int) string {
 	if n >= len(s) {
 		return ""
