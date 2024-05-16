@@ -177,6 +177,20 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 				}, func() {}, "Repo URL (leave blank if none)", Small)
 			}, func() {}, "Workspace name ", Small)
 		}).
+		set('x', func() {
+			curWorkspace := ui.getSelectedWorkspace()
+			if curWorkspace == nil {
+				return
+			}
+
+			if curWorkspace.Metadata.TmuxSession != nil {
+				ui.openConfirmationDialog(func(b bool) {
+					if b {
+						ui.controller.WorkspaceManager.DeleteTmuxSession(curWorkspace)
+					}
+				}, "Are you sure you want to delete the tmux session?")
+			}
+		}).
 		set('?', func() {
 			ui.openHelpView(ui.getKeyBindings(ui.workspaces.viewName))
 		})

@@ -62,6 +62,13 @@ type TmuxSession struct {
 	NumWindows int    `json:"num-windows"`
 }
 
+func DeleteTmxSession(sessionName string) {
+	err := exec.Command("tmux", "kill-session", "-t", sessionName).Run()
+	if err != nil {
+		log.Panicln(err)
+	}
+}
+
 func GetTmuxSessions() map[string]*TmuxSession {
 	stdout, err := exec.Command("tmux", "ls").Output()
 	if err != nil {
