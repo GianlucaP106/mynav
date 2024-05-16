@@ -14,6 +14,7 @@ func NewController() *Controller {
 	c := &Controller{}
 	c.Configuration = &Configuration{}
 	c.Configuration.DetectConfig()
+	// utils.InitLogger(filepath.Join(c.Configuration.path, "debug.log"))
 	c.initManagers()
 	return c
 }

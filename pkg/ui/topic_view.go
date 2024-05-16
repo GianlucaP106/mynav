@@ -105,8 +105,10 @@ func (ui *UI) initTopicsView() *gocui.View {
 			if ui.controller.TopicManager.Topics.Len() > 0 {
 				ui.setFocusedFsView(ui.workspaces.viewName)
 			}
+		}).
+		set('?', func() {
+			ui.openHelpView(ui.getKeyBindings(ui.topics.viewName))
 		})
-
 	return view
 }
 

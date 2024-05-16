@@ -46,12 +46,11 @@ func Start() *Action {
 			workspaceInfo: newWorkspaceInfoDialogState(),
 			topics:        newTopicsState(),
 			fs:            newFsState(),
-			help:          newHelpState(),
 		},
 	}
+	ui.help = ui.newHelpState(ui.getKeyBindings("global"))
 
 	ui.gui.SetManager(gocui.ManagerFunc(ui.renderViews))
-
 	quit := func(g *gocui.Gui, v *gocui.View) error {
 		return gocui.ErrQuit
 	}
@@ -59,7 +58,7 @@ func Start() *Action {
 		setKeybinding("", gocui.KeyCtrlC, quit).
 		setKeybinding("", 'q', quit).
 		set('?', func() {
-			ui.openHelpView()
+			ui.openHelpView(nil)
 		})
 
 	err = ui.gui.MainLoop()

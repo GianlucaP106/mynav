@@ -36,12 +36,6 @@ func (ui *UI) initEditorDialogView() *gocui.View {
 	return view
 }
 
-type OpenEditorRequest struct {
-	onEnter func(string)
-	onEsc   func()
-	title   string
-}
-
 func (ui *UI) openEditorDialog(onEnter func(string), onEsc func(), title string, size EditorSize) {
 	switch size {
 	case Small:
