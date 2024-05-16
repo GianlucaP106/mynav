@@ -29,7 +29,9 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 	exists := false
 	view := ui.getView(ui.workspaces.viewName)
 	exists = view != nil
-	view = ui.setView(ui.workspaces.viewName)
+	if !exists {
+		view = ui.setView(ui.workspaces.viewName)
+	}
 
 	if ui.workspaces.search != "" {
 		view.Subtitle = withSurroundingSpaces("Searching: " + ui.workspaces.search)
@@ -47,6 +49,11 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 
 	_, sizeY := view.Size()
 	ui.workspaces.listRenderer = newListRenderer(0, sizeY/3, 0)
+	ui.refreshWorkspaces()
+
+	if selectedWorkspace := ui.controller.WorkspaceManager.GetSelectedWorkspace(); selectedWorkspace != nil {
+		ui.selectWorkspaceByShortPath(selectedWorkspace.ShortPath())
+	}
 
 	ui.keyBinding(ui.workspaces.viewName).
 		set('j', func() {
@@ -82,15 +89,15 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 			}
 
 			if utils.IsTmuxSession() {
-				ui.setAction(utils.NvimCmd(curWorkspace.Path))
+				ui.setWorkspaceAction(curWorkspace, utils.NvimCmd(curWorkspace.Path))
 				return gocui.ErrQuit
 			}
 
 			foundExisting, sessionName := ui.controller.WorkspaceManager.GetOrCreateTmuxSession(curWorkspace)
 			if foundExisting {
-				ui.setAction(utils.AttachTmuxSessionCmd(sessionName))
+				ui.setWorkspaceAction(curWorkspace, utils.AttachTmuxSessionCmd(sessionName))
 			} else {
-				ui.setAction(utils.NewTmuxSessionCmd(sessionName, curWorkspace.Path))
+				ui.setWorkspaceAction(curWorkspace, utils.NewTmuxSessionCmd(sessionName, curWorkspace.Path))
 			}
 
 			return gocui.ErrQuit
@@ -101,7 +108,7 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 				return nil
 			}
 
-			ui.setAction(utils.NvimCmd(curWorkspace.Path))
+			ui.setWorkspaceAction(curWorkspace, utils.NvimCmd(curWorkspace.Path))
 			return gocui.ErrQuit
 		}).
 		setKeybinding(ui.workspaces.viewName, 't', func(g *gocui.Gui, v *gocui.View) error {
@@ -116,7 +123,7 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 				return nil
 			}
 
-			ui.setAction(openTermCmd)
+			ui.setWorkspaceAction(curWorkspace, openTermCmd)
 
 			return gocui.ErrQuit
 		}).
@@ -134,6 +141,7 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 					ui.controller.WorkspaceManager.DeleteWorkspace(curWorkspace)
 					// HACK: same as below
 					ui.topics.listRenderer.setSelected(0)
+					ui.refreshTopics()
 					ui.refreshWorkspaces()
 				}
 			}, "Are you sure you want to delete this workspace?")
@@ -164,11 +172,17 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 					// because we are sorting by modifed time
 					ui.topics.listRenderer.setSelected(0)
 					ui.workspaces.listRenderer.setSelected(0)
+					ui.refreshTopics()
 					ui.refreshWorkspaces()
 				}, func() {}, "Repo URL (leave blank if none)", Small)
 			}, func() {}, "Workspace name ", Small)
 		})
 	return view
+}
+
+func (ui *UI) setWorkspaceAction(w *api.Workspace, action []string) {
+	ui.setAction(action)
+	ui.controller.WorkspaceManager.WorkspaceStore.SetSelectedWorkspace(w)
 }
 
 func (ui *UI) getSelectedWorkspace() *api.Workspace {
@@ -184,7 +198,6 @@ func (ui *UI) getDisplayedWorkspace(idx int) *api.Workspace {
 }
 
 func (ui *UI) refreshWorkspaces() {
-	ui.refreshTopics()
 	workspaces := ui.controller.WorkspaceManager.Workspaces.ByTopic(ui.getSelectedTopic())
 
 	if ui.workspaces.search != "" {
@@ -252,6 +265,14 @@ func (ui *UI) formatWorkspaceRow(workspace *api.Workspace, selected bool) []stri
 	}
 }
 
+func (ui *UI) selectWorkspaceByShortPath(shortPath string) {
+	for idx, w := range ui.workspaces.workspaces {
+		if w.ShortPath() == shortPath {
+			ui.workspaces.listRenderer.setSelected(idx)
+		}
+	}
+}
+
 func (ui *UI) renderWorkspacesView() {
 	view := ui.initWorkspacesView()
 
@@ -260,7 +281,6 @@ func (ui *UI) renderWorkspacesView() {
 		if ui.workspaces.workspaces == nil {
 			return []string{}
 		}
-		ui.refreshWorkspaces()
 		out := make([]string, 0)
 		ui.workspaces.listRenderer.forEach(func(i int) {
 			selected := (ui.fs.focusedTab == ui.workspaces.viewName) && (i == ui.workspaces.listRenderer.selected)
