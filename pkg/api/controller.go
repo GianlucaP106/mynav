@@ -31,3 +31,9 @@ func (c *Controller) InitConfiguration() {
 	c.Configuration.InitConfig(dir)
 	c.initManagers()
 }
+
+func (c *Controller) GetSystemStats() (numTopics int, numWorkspaces int) {
+	numTopics = c.TopicManager.Topics.Len()
+	numWorkspaces = c.WorkspaceManager.Workspaces.Len()
+	return
+}

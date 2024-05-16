@@ -20,7 +20,7 @@ func (ui *UI) setView(viewName string) *gocui.View {
 	}
 
 	views[ui.header.viewName] = func() *gocui.View {
-		view, _ := ui.gui.SetView(ui.header.viewName, 2, 1, maxX-2, 5, 0)
+		view, _ := ui.gui.SetView(ui.header.viewName, 2, 1, maxX-2, 6, 0)
 		return view
 	}
 

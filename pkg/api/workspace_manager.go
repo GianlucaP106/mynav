@@ -139,6 +139,18 @@ func (wm *WorkspaceManager) DeleteTmuxSession(w *Workspace) {
 	}
 }
 
+func (wm *WorkspaceManager) GetTmuxStats() (sessionCount int, windowCount int) {
+	sessionCount = 0
+	windowCount = 0
+	for _, w := range wm.Workspaces {
+		if w.Metadata.TmuxSession != nil {
+			sessionCount++
+			windowCount += w.Metadata.TmuxSession.NumWindows
+		}
+	}
+	return
+}
+
 func (wm *WorkspaceManager) GetOrCreateTmuxSession(workspace *Workspace) (foundExisting bool, sessionName string) {
 	m := wm.WorkspaceStore.Workspaces[workspace.ShortPath()]
 	if m == nil {
