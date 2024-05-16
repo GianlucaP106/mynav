@@ -7,7 +7,7 @@ import (
 	"github.com/gookit/color"
 )
 
-type KeyBindingMappings struct {
+type KeyBindingMapping struct {
 	key    string
 	action string
 }
@@ -15,12 +15,12 @@ type KeyBindingMappings struct {
 type HelpState struct {
 	listRenderer   *ListRenderer
 	viewName       string
-	globalMappings []*KeyBindingMappings
-	mappings       []*KeyBindingMappings
+	globalMappings []*KeyBindingMapping
+	mappings       []*KeyBindingMapping
 	active         bool
 }
 
-func (ui *UI) newHelpState(globalMappings []*KeyBindingMappings) *HelpState {
+func (ui *UI) newHelpState(globalMappings []*KeyBindingMapping) *HelpState {
 	return &HelpState{
 		viewName:       "HelpView",
 		globalMappings: globalMappings,
@@ -57,7 +57,7 @@ func (ui *UI) initHelpView() *gocui.View {
 	return view
 }
 
-func (ui *UI) openHelpView(mappings []*KeyBindingMappings) {
+func (ui *UI) openHelpView(mappings []*KeyBindingMapping) {
 	ui.help.mappings = mappings
 	ui.refreshHelpListRenderer()
 	ui.help.active = true
@@ -76,7 +76,7 @@ func (ui *UI) refreshHelpListRenderer() {
 	}
 }
 
-func (ui *UI) formatHelpMessage(key *KeyBindingMappings, selected bool) string {
+func (ui *UI) formatHelpMessage(key *KeyBindingMapping, selected bool) string {
 	view := ui.getView(ui.help.viewName)
 	sizeX, _ := view.Size()
 
