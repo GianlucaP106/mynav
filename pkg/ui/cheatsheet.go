@@ -1,8 +1,8 @@
 package ui
 
-func (ui *UI) getKeyBindings(viewName string) []*KeyBindingMappings {
-	keys := map[string][]*KeyBindingMappings{}
-	keys["global"] = []*KeyBindingMappings{
+func (ui *UI) getKeyBindings(viewName string) []*KeyBindingMapping {
+	keys := map[string][]*KeyBindingMapping{}
+	keys["global"] = []*KeyBindingMapping{
 		{
 			key:    "q | Ctrl-c",
 			action: "Quit",
@@ -13,7 +13,7 @@ func (ui *UI) getKeyBindings(viewName string) []*KeyBindingMappings {
 		},
 	}
 
-	keys[ui.workspaces.viewName] = []*KeyBindingMappings{
+	keys[ui.workspaces.viewName] = []*KeyBindingMapping{
 		{
 			key:    "j",
 			action: "Move down",
@@ -51,6 +51,10 @@ func (ui *UI) getKeyBindings(viewName string) []*KeyBindingMappings {
 			action: "See workspace information",
 		},
 		{
+			key:    "x",
+			action: "Kill tmux session",
+		},
+		{
 			key:    "/",
 			action: "Search by name",
 		},
@@ -60,7 +64,7 @@ func (ui *UI) getKeyBindings(viewName string) []*KeyBindingMappings {
 		},
 	}
 
-	keys[ui.topics.viewName] = []*KeyBindingMappings{
+	keys[ui.topics.viewName] = []*KeyBindingMapping{
 		{
 			key:    "j",
 			action: "Move down",
