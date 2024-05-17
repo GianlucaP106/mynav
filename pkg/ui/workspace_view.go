@@ -65,6 +65,7 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 		set(gocui.KeyEsc, func() {
 			if ui.workspaces.search != "" {
 				ui.workspaces.search = ""
+				ui.refreshWorkspaces()
 				return
 			}
 
@@ -80,6 +81,7 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 		set('/', func() {
 			ui.openEditorDialog(func(s string) {
 				ui.workspaces.search = s
+				ui.refreshWorkspaces()
 			}, func() {}, "Search", Small)
 		}).
 		setKeybinding(ui.workspaces.viewName, gocui.KeyEnter, func(g *gocui.Gui, v *gocui.View) error {
