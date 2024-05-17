@@ -21,8 +21,10 @@ func newTopic(name string, path string) *Topic {
 
 type Topics []*Topic
 
-func (t Topics) Len() int      { return len(t) }
+func (t Topics) Len() int { return len(t) }
+
 func (t Topics) Swap(i, j int) { t[i], t[j] = t[j], t[i] }
+
 func (t Topics) Less(i, j int) bool {
 	return t[i].GetLastModifiedTime().After(t[j].GetLastModifiedTime())
 }

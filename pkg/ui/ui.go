@@ -9,8 +9,8 @@ import (
 )
 
 type UI struct {
-	gui        *gocui.Gui
-	controller *api.Controller
+	gui *gocui.Gui
+	api *api.Api
 	State
 }
 
@@ -35,8 +35,8 @@ func Start() *Action {
 	defer g.Close()
 
 	ui := &UI{
-		gui:        g,
-		controller: api.NewController(),
+		gui: g,
+		api: api.NewApi(),
 		State: State{
 			confirmation:  newConfirmationDialogState(),
 			editor:        newEditorDialogState(),

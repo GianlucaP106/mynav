@@ -9,8 +9,14 @@ import (
 )
 
 type Configuration struct {
-	path              string
-	ConfigInitialized bool
+	path                string
+	IsConfigInitialized bool
+}
+
+func NewConfiguration() *Configuration {
+	c := &Configuration{}
+	c.DetectConfig()
+	return c
 }
 
 func (c *Configuration) InitConfig(dir string) string {
@@ -20,7 +26,7 @@ func (c *Configuration) InitConfig(dir string) string {
 	}
 
 	c.path = dir
-	c.ConfigInitialized = true
+	c.IsConfigInitialized = true
 	return c.path
 }
 
@@ -63,8 +69,12 @@ func (c *Configuration) DetectConfig() bool {
 		return false
 	}
 	c.path = configPath
-	c.ConfigInitialized = true
+	c.IsConfigInitialized = true
 	return true
+}
+
+func (c *Configuration) GetWorkspaceStorePath() string {
+	return filepath.Join(c.GetConfigPath(), "workspaces.json")
 }
 
 func TimeFormat() string {
