@@ -66,11 +66,15 @@ func (ui *UI) initTopicsView() *gocui.View {
 		set('/', func() {
 			ui.openEditorDialog(func(s string) {
 				ui.topics.search = s
+				ui.refreshTopics()
+				ui.refreshWorkspaces()
 			}, func() {}, "Search", Small)
 		}).
 		set(gocui.KeyEsc, func() {
 			if ui.topics.search != "" {
 				ui.topics.search = ""
+				ui.refreshTopics()
+				ui.refreshWorkspaces()
 			}
 		}).
 		set('a', func() {
@@ -128,7 +132,7 @@ func (ui *UI) refreshTopics() {
 }
 
 func (ui *UI) getSelectedTopic() *api.Topic {
-	return ui.controller.TopicManager.Topics.GetTopic(ui.topics.listRenderer.selected)
+	return ui.topics.topics[ui.topics.listRenderer.selected]
 }
 
 func (ui *UI) formatTopic(topic *api.Topic, selected bool) []string {
