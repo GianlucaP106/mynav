@@ -78,7 +78,8 @@ func (ui *UI) formatWorkspaceInfo(w *api.Workspace) []string {
 	}
 	out = append(out, blankLine(sizeX))
 
-	remote := ui.controller.WorkspaceManager.GetGitRemote(w)
+	// TODO: handle error
+	remote, _ := w.GetGitRemote()
 	if remote != "" {
 		out = append(out, formatItem("Git remote: ", remote)...)
 		out = append(out, blankLine(sizeX))

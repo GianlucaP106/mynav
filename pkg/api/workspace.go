@@ -9,8 +9,8 @@ import (
 )
 
 type WorkspaceMetadata struct {
-	TmuxSession *utils.TmuxSession `json:"tmux-session"`
-	Description string             `json:"description"`
+	TmuxSession *TmuxSession `json:"tmux-session"`
+	Description string       `json:"description"`
 }
 
 type Workspace struct {
@@ -21,11 +21,11 @@ type Workspace struct {
 	Path      string
 }
 
-func NewWorkspace(name string, topic *Topic, path string) *Workspace {
+func NewWorkspace(name string, topic *Topic) *Workspace {
 	ws := &Workspace{
 		Name:     name,
 		Topic:    topic,
-		Path:     path,
+		Path:     filepath.Join(topic.Path, name),
 		Metadata: &WorkspaceMetadata{},
 	}
 
@@ -53,10 +53,26 @@ func (w *Workspace) GetDescription() string {
 	return w.Metadata.Description
 }
 
+func (w *Workspace) GetGitRemote() (string, error) {
+	if w.GitRemote == nil {
+		gitPath := filepath.Join(w.Path, ".git")
+		if _, err := filepath.Abs(gitPath); err != nil {
+			return "", err
+		}
+
+		gitRemote, _ := utils.GitRemote(gitPath)
+		w.GitRemote = &gitRemote
+	}
+
+	return *(w.GitRemote), nil
+}
+
 type Workspaces []*Workspace
 
-func (w Workspaces) Len() int      { return len(w) }
+func (w Workspaces) Len() int { return len(w) }
+
 func (w Workspaces) Swap(i, j int) { w[i], w[j] = w[j], w[i] }
+
 func (w Workspaces) Less(i, j int) bool {
 	return w[i].GetLastModifiedTime().After(w[j].GetLastModifiedTime())
 }
@@ -105,4 +121,10 @@ func (w Workspaces) GetWorkspaceByShortPath(s string) *Workspace {
 func (w Workspaces) Sorted() Workspaces {
 	sort.Sort(w)
 	return w
+}
+
+type WorkspaceStore struct {
+	Workspaces        map[string]*WorkspaceMetadata `json:"workspaces"`
+	Store             string                        `json:"-"`
+	SelectedWorkspace string                        `json:"selected-workspace"`
 }

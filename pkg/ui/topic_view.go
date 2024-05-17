@@ -49,7 +49,7 @@ func (ui *UI) initTopicsView() *gocui.View {
 	ui.topics.listRenderer = newListRenderer(0, sizeY/3, 0)
 	ui.refreshTopics()
 
-	if selectedWorkspace := ui.controller.WorkspaceManager.GetSelectedWorkspace(); selectedWorkspace != nil {
+	if selectedWorkspace := ui.api.GetSelectedWorkspace(); selectedWorkspace != nil {
 		topicName := strings.Split(selectedWorkspace.ShortPath(), "/")[0]
 		ui.selectTopicByName(topicName)
 	}
@@ -79,7 +79,7 @@ func (ui *UI) initTopicsView() *gocui.View {
 		}).
 		set('a', func() {
 			ui.openEditorDialog(func(s string) {
-				if _, err := ui.controller.TopicManager.CreateTopic(s); err != nil {
+				if err := ui.api.CreateTopic(s); err != nil {
 					ui.openToastDialog(err.Error())
 					return
 				}
@@ -94,19 +94,19 @@ func (ui *UI) initTopicsView() *gocui.View {
 			}, "Topic name", Small)
 		}).
 		set('d', func() {
-			if ui.controller.TopicManager.Topics.Len() <= 0 {
+			if ui.api.GetTopicCount() <= 0 {
 				return
 			}
 			ui.openConfirmationDialog(func(b bool) {
 				if b {
-					ui.controller.TopicManager.DeleteTopic(ui.getSelectedTopic())
+					ui.api.DeleteTopic(ui.getSelectedTopic())
 					ui.refreshTopics()
 					ui.refreshWorkspaces()
 				}
 			}, "Are you sure you want to delete this topic? All its content will be deleted.")
 		}).
 		set(gocui.KeyEnter, func() {
-			if ui.controller.TopicManager.Topics.Len() > 0 {
+			if ui.api.GetTopicCount() > 0 {
 				ui.setFocusedFsView(ui.workspaces.viewName)
 			}
 		}).
@@ -117,7 +117,7 @@ func (ui *UI) initTopicsView() *gocui.View {
 }
 
 func (ui *UI) refreshTopics() {
-	topics := ui.controller.TopicManager.Topics.Sorted()
+	topics := ui.api.GetTopics().Sorted()
 
 	if ui.topics.search != "" {
 		topics = topics.FilterByNameContaining(ui.topics.search)
@@ -132,6 +132,10 @@ func (ui *UI) refreshTopics() {
 }
 
 func (ui *UI) getSelectedTopic() *api.Topic {
+	if ui.topics.topics.Len() <= 0 {
+		return nil
+	}
+
 	return ui.topics.topics[ui.topics.listRenderer.selected]
 }
 

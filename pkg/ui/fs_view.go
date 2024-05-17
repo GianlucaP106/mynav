@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"os"
+
 	"github.com/awesome-gocui/gocui"
 )
 
@@ -25,7 +27,7 @@ func (ui *UI) initFsView() *gocui.View {
 	view = ui.setCenteredView(ui.fs.viewName, sizeX, sizeY-7, 3)
 	view.Frame = false
 
-	if ui.controller.WorkspaceManager.GetSelectedWorkspace() != nil {
+	if ui.api.GetSelectedWorkspace() != nil {
 		ui.fs.focusedTab = ui.workspaces.viewName
 	} else {
 		ui.fs.focusedTab = ui.topics.viewName
@@ -59,10 +61,11 @@ func (ui *UI) setFocusedFsView(focusedTab string) {
 }
 
 func (ui *UI) renderFsView() error {
-	if !ui.controller.Configuration.ConfigInitialized {
+	if !ui.api.IsConfigInitialized {
 		ui.openConfirmationDialog(func(b bool) {
 			if b {
-				ui.controller.InitConfiguration()
+				dir, _ := os.Getwd()
+				ui.api.InitConfig(dir)
 			}
 		}, "No workspace configuration found. Would you like to initialize this directory?")
 		return nil
