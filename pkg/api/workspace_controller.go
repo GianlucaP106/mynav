@@ -92,6 +92,16 @@ func (wc *WorkspaceController) DeleteWorkspacesByTopic(t *Topic) {
 	}
 }
 
+func (wc *WorkspaceController) CloneRepo(repoUrl string, w *Workspace) error {
+	err := w.CloneRepo(repoUrl)
+	if err != nil {
+		return err
+	}
+	w.GitRemote = &repoUrl
+	wc.WorkspaceRepository.Save(w)
+	return nil
+}
+
 func (wc *WorkspaceController) syncTmuxSessions() {
 	sessions := wc.TmuxCommunicator.GetSessions()
 	for _, w := range wc.WorkspaceRepository.WorkspaceContainer {
