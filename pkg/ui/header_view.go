@@ -35,7 +35,6 @@ func (ui *UI) renderHeaderView() {
 	currentView.Clear()
 	fmt.Fprintln(currentView, blankLine(sizeX))
 	if !ui.api.IsConfigInitialized {
-		fmt.Fprintln(currentView, blankLine(sizeX))
 		fmt.Fprintln(currentView, displayWhiteText("Welcome to mynav, a workspace manager", Center, sizeX))
 		return
 	}
