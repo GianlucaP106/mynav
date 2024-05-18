@@ -84,7 +84,11 @@ func TimeFormat() string {
 }
 
 func (c *Configuration) DetectUpdate() (update bool, newTag string) {
-	tag := utils.GetLatestReleaseTag("mynav", "GianlucaP106")
+	tag, err := utils.GetLatestReleaseTag()
+	if err != nil {
+		return false, ""
+	}
+
 	res := semver.Compare(tag, VERSION)
 	return res == 1, tag
 }

@@ -4,7 +4,6 @@ go 1.22.1
 
 require (
 	github.com/awesome-gocui/gocui v1.1.0
-	github.com/google/go-github/v62 v62.0.0
 	github.com/gookit/color v1.5.4
 	golang.org/x/mod v0.17.0
 )
