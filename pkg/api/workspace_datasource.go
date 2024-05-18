@@ -36,12 +36,11 @@ func (wd *WorkspaceDatasource) GetMetadata(w *Workspace) *WorkspaceMetadata {
 
 func (wd *WorkspaceDatasource) SetSelectedWorkspace(w *Workspace) {
 	wd.WorkspaceStoreSchema.SelectedWorkspace = w.ShortPath()
-	wd.SaveStore()
 }
 
 func (wd *WorkspaceDatasource) Sync(w WorkspaceContainer) {
-	for id := range wd.WorkspaceStoreSchema.Workspaces {
-		if w.Get(id) == nil {
+	for id, m := range wd.WorkspaceStoreSchema.Workspaces {
+		if w.Get(id) == nil || (m.TmuxSession == nil && m.Description == "") {
 			delete(wd.WorkspaceStoreSchema.Workspaces, id)
 		}
 	}

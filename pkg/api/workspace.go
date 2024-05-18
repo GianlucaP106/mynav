@@ -56,6 +56,10 @@ func (w *Workspace) GetDescription() string {
 func (w *Workspace) GetGitRemote() (string, error) {
 	if w.GitRemote == nil {
 		gitPath := filepath.Join(w.Path, ".git")
+		if !utils.Exists(gitPath) {
+			return "", nil
+		}
+
 		if _, err := filepath.Abs(gitPath); err != nil {
 			return "", err
 		}

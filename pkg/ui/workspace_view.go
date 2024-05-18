@@ -118,6 +118,7 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 				return nil
 			}
 
+			ui.api.SetSelectedWorkspace(curWorkspace)
 			ui.setAction(utils.NvimCmd(curWorkspace.Path))
 			return gocui.ErrQuit
 		}).
@@ -190,7 +191,7 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 			if curWorkspace.Metadata.TmuxSession != nil {
 				ui.openConfirmationDialog(func(b bool) {
 					if b {
-						ui.api.DeleteWorkspace(curWorkspace)
+						ui.api.DeleteTmuxSession(curWorkspace)
 					}
 				}, "Are you sure you want to delete the tmux session?")
 			}
