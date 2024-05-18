@@ -2,10 +2,10 @@
 
 A user friendly TUI workspace manager
 
-https://github.com/GianlucaP106/mynav/assets/93693693/943b4545-0249-4d52-9679-86485d34bfd9
-
 ## Description
-Mynav is a TUI written in go. It aims to allow for an easy view of all your workspaces, notes or programming projects. It integrates with tmux and neovim for a great workspace management experience.
+Mynav is a TUI workspace manager. It aims to allow for an easy view of all your workspaces, notes or programming projects. It integrates with tmux and neovim for a great workspace management experience.
+
+https://github.com/GianlucaP106/mynav/assets/93693693/840efec0-a8a9-4909-8eae-5e9baecba225
 
 ## Installation
 
@@ -42,4 +42,4 @@ export PATH="$PATH:$HOME/.mynav"
 mynav
 ```
 
-> Use '?' in the UI to see the key maps
+> ### Use '?' in the TUI to see all the key maps!
