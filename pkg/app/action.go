@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"mynav/pkg/ui"
 	"os"
 	"os/exec"
@@ -13,5 +14,9 @@ func handleAction(action *ui.Action) {
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Run()
+		if action.End {
+			fmt.Println("Succesfully updated mynav")
+			os.Exit(0)
+		}
 	}
 }
