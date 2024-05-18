@@ -54,18 +54,13 @@ func (wd *WorkspaceDatasource) Sync(w WorkspaceContainer) {
 }
 
 func (wd *WorkspaceDatasource) LoadStore() {
-	store := utils.Load[WorkspaceDataSchema](wd.StorePath)
-	if store != nil {
-		wd.Data = store
-		return
+	wd.Data = utils.Load[WorkspaceDataSchema](wd.StorePath)
+	if wd.Data == nil {
+		wd.Data = &WorkspaceDataSchema{
+			Workspaces:        map[string]*WorkspaceMetadata{},
+			SelectedWorkspace: "",
+		}
 	}
-
-	wd.Data = &WorkspaceDataSchema{
-		Workspaces:        map[string]*WorkspaceMetadata{},
-		SelectedWorkspace: "",
-	}
-
-	wd.SaveStore()
 }
 
 func (wd *WorkspaceDatasource) SaveStore() {

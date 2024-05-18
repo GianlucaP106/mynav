@@ -33,6 +33,5 @@ func (c *ConfigurationDatasource) LoadStore() {
 		c.Data = &ConfigurationDataSchema{
 			UpdateAsked: nil,
 		}
-		c.SaveStore()
 	}
 }

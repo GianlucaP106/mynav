@@ -1,8 +1,6 @@
 package ui
 
 import (
-	"os"
-
 	"github.com/awesome-gocui/gocui"
 )
 
@@ -56,7 +54,6 @@ func (ui *UI) setFocusedFsView(focusedTab string) {
 	case ui.topics.viewName:
 		wv.FrameColor = off
 		tv.FrameColor = on
-
 	}
 }
 
@@ -64,8 +61,7 @@ func (ui *UI) renderFsView() error {
 	if !ui.api.IsConfigInitialized {
 		ui.openConfirmationDialog(func(b bool) {
 			if b {
-				dir, _ := os.Getwd()
-				ui.api.InitConfig(dir)
+				ui.api.InitConfiguration()
 			}
 		}, "No workspace configuration found. Would you like to initialize this directory?")
 		return nil

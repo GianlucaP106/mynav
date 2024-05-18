@@ -73,7 +73,7 @@ func Start() *Action {
 }
 
 func (ui *UI) handleUpdate() {
-	if !ui.api.IsUpdateAsked() {
+	if ui.api.IsConfigInitialized && !ui.api.IsUpdateAsked() {
 		ui.api.SetUpdateAsked()
 		update, newTag := ui.api.DetectUpdate()
 		if update {
