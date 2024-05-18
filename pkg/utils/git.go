@@ -1,12 +1,11 @@
 package utils
 
 import (
-	"context"
-	"log"
+	"encoding/json"
+	"io"
+	"net/http"
 	"os/exec"
 	"strings"
-
-	"github.com/google/go-github/v62/github"
 )
 
 func GitRemote(path string) (string, error) {
@@ -28,15 +27,29 @@ func TrimGithubUrl(url string) string {
 	return strings.Join(items[len(items)-2:], "/")
 }
 
-func GetLatestReleaseTag(repo string, owner string) string {
-	ctx := context.Background()
+type Release struct {
+	TagName string `json:"tag_name"`
+}
 
-	client := github.NewClient(nil)
+func GetLatestReleaseTag() (string, error) {
+	url := "https://api.github.com/repos/GianlucaP106/mynav/releases/latest"
 
-	release, _, err := client.Repositories.GetLatestRelease(ctx, owner, repo)
+	resp, err := http.Get(url)
 	if err != nil {
-		log.Panicln(err)
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
 	}
 
-	return *release.TagName
+	var release Release
+	err = json.Unmarshal(body, &release)
+	if err != nil {
+		return "", err
+	}
+
+	return release.TagName, nil
 }
