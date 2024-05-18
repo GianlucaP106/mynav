@@ -41,26 +41,27 @@ func (ui *UI) renderHeaderView() {
 	}
 
 	line := withSpacePadding("", 10)
+
+	if w := ui.api.GetSelectedWorkspace(); w != nil {
+		selected := withSpacePadding("", 5)
+		selected += withSurroundingSpaces("Last seen: ")
+		selected += color.New(color.Blue).Sprint(w.ShortPath())
+		line += selected
+	}
+
 	sessionCount, windowCount := ui.api.GetTmuxStats()
-	tmux := " "
-	tmux += strconv.Itoa(sessionCount) + withSurroundingSpaces("tmux sessions :")
+	tmux := withSpacePadding("", 5)
+	tmux += strconv.Itoa(sessionCount) + withSurroundingSpaces("tmux sessions |")
 	tmux += strconv.Itoa(windowCount) + withSurroundingSpaces("windows open")
 	tmux = color.New(color.Green).Sprint(tmux)
 	line += tmux
 
 	numTopics, numWorkspaces := ui.api.GetSystemStats()
 	generalStats := withSpacePadding("", 5)
-	generalStats += strconv.Itoa(numTopics) + withSurroundingSpaces("topics :")
+	generalStats += strconv.Itoa(numTopics) + withSurroundingSpaces("topics |")
 	generalStats += strconv.Itoa(numWorkspaces) + withSurroundingSpaces("workspaces")
 	generalStats = color.New(color.Red).Sprint(generalStats)
 	line += generalStats
-
-	if w := ui.api.GetSelectedWorkspace(); w != nil {
-		selected := withSpacePadding("", 5)
-		selected += withSurroundingSpaces("Last: ")
-		selected += color.New(color.Blue).Sprint(w.ShortPath())
-		line += selected
-	}
 
 	line = display(line, Center, sizeX)
 	fmt.Fprintln(currentView, line)

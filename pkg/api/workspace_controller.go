@@ -17,7 +17,8 @@ func NewWorkspaceController(topics Topics, storePath string) *WorkspaceControlle
 
 func (wc *WorkspaceController) CreateWorkspace(name string, topic *Topic) (*Workspace, error) {
 	workspace := NewWorkspace(name, topic)
-	if err := wc.WorkspaceRepository.Save(workspace); err != nil {
+
+	if err := wc.WorkspaceRepository.SetSelectedWorkspace(workspace); err != nil {
 		return nil, err
 	}
 
@@ -36,17 +37,18 @@ func (wc *WorkspaceController) DeleteWorkspace(w *Workspace) error {
 
 func (wc *WorkspaceController) SetDescription(description string, w *Workspace) {
 	w.Metadata.Description = description
-	wc.WorkspaceRepository.Save(w)
+	wc.WorkspaceRepository.SetSelectedWorkspace(w)
 }
 
 func (wc *WorkspaceController) CreateOrAttachTmuxSession(w *Workspace) []string {
 	if w.Metadata.TmuxSession != nil {
+		wc.WorkspaceRepository.SetSelectedWorkspace(w)
 		return utils.AttachTmuxSessionCmd(w.Metadata.TmuxSession.Name)
 	}
 
 	ts := NewTmuxSession(w.Path)
 	w.Metadata.TmuxSession = ts
-	wc.WorkspaceRepository.Save(w)
+	wc.WorkspaceRepository.SetSelectedWorkspace(w)
 	return utils.NewTmuxSessionCmd(ts.Name, ts.Name)
 }
 
@@ -60,6 +62,10 @@ func (wc *WorkspaceController) DeleteTmuxSession(w *Workspace) {
 
 func (wc *WorkspaceController) GetSelectedWorkspace() *Workspace {
 	return wc.WorkspaceRepository.GetSelectedWorkspace()
+}
+
+func (wc *WorkspaceController) SetSelectedWorkspace(w *Workspace) {
+	wc.WorkspaceRepository.SetSelectedWorkspace(w)
 }
 
 func (wm *WorkspaceController) GetTmuxStats() (sessionCount int, windowCount int) {
@@ -98,7 +104,7 @@ func (wc *WorkspaceController) CloneRepo(repoUrl string, w *Workspace) error {
 		return err
 	}
 	w.GitRemote = &repoUrl
-	wc.WorkspaceRepository.Save(w)
+	wc.WorkspaceRepository.SetSelectedWorkspace(w)
 	return nil
 }
 
