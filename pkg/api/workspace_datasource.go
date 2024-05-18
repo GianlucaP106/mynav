@@ -8,8 +8,8 @@ type WorkspaceDataSchema struct {
 }
 
 type WorkspaceDatasource struct {
-	WorkspaceStoreSchema *WorkspaceDataSchema
-	StorePath            string
+	Data      *WorkspaceDataSchema
+	StorePath string
 }
 
 func NewWorkspaceDatasource(storePath string) *WorkspaceDatasource {
@@ -21,33 +21,33 @@ func NewWorkspaceDatasource(storePath string) *WorkspaceDatasource {
 }
 
 func (wd *WorkspaceDatasource) SaveMetadata(w *Workspace) {
-	wd.WorkspaceStoreSchema.Workspaces[w.ShortPath()] = w.Metadata
+	wd.Data.Workspaces[w.ShortPath()] = w.Metadata
 	wd.SaveStore()
 }
 
 func (wd *WorkspaceDatasource) DeleteMetadata(w *Workspace) {
-	delete(wd.WorkspaceStoreSchema.Workspaces, w.ShortPath())
+	delete(wd.Data.Workspaces, w.ShortPath())
 	wd.SaveStore()
 }
 
 func (wd *WorkspaceDatasource) GetMetadata(w *Workspace) *WorkspaceMetadata {
-	return wd.WorkspaceStoreSchema.Workspaces[w.ShortPath()]
+	return wd.Data.Workspaces[w.ShortPath()]
 }
 
 func (wd *WorkspaceDatasource) SetSelectedWorkspace(w *Workspace) {
-	wd.WorkspaceStoreSchema.SelectedWorkspace = w.ShortPath()
+	wd.Data.SelectedWorkspace = w.ShortPath()
 }
 
 func (wd *WorkspaceDatasource) Sync(w WorkspaceContainer) {
-	for id, m := range wd.WorkspaceStoreSchema.Workspaces {
+	for id, m := range wd.Data.Workspaces {
 		if w.Get(id) == nil || (m.TmuxSession == nil && m.Description == "") {
-			delete(wd.WorkspaceStoreSchema.Workspaces, id)
+			delete(wd.Data.Workspaces, id)
 		}
 	}
 
-	id := wd.WorkspaceStoreSchema.SelectedWorkspace
+	id := wd.Data.SelectedWorkspace
 	if w.Get(id) == nil {
-		wd.WorkspaceStoreSchema.SelectedWorkspace = ""
+		wd.Data.SelectedWorkspace = ""
 	}
 
 	wd.SaveStore()
@@ -56,11 +56,11 @@ func (wd *WorkspaceDatasource) Sync(w WorkspaceContainer) {
 func (wd *WorkspaceDatasource) LoadStore() {
 	store := utils.Load[WorkspaceDataSchema](wd.StorePath)
 	if store != nil {
-		wd.WorkspaceStoreSchema = store
+		wd.Data = store
 		return
 	}
 
-	wd.WorkspaceStoreSchema = &WorkspaceDataSchema{
+	wd.Data = &WorkspaceDataSchema{
 		Workspaces:        map[string]*WorkspaceMetadata{},
 		SelectedWorkspace: "",
 	}
@@ -69,5 +69,5 @@ func (wd *WorkspaceDatasource) LoadStore() {
 }
 
 func (wd *WorkspaceDatasource) SaveStore() {
-	utils.Save(wd.WorkspaceStoreSchema, wd.StorePath)
+	utils.Save(wd.Data, wd.StorePath)
 }
