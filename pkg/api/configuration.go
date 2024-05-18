@@ -6,18 +6,21 @@ import (
 	"mynav/pkg/utils"
 	"os"
 	"path/filepath"
+	"time"
 
 	"golang.org/x/mod/semver"
 )
 
 type Configuration struct {
-	path                string
-	IsConfigInitialized bool
+	ConfigurationDatasource *ConfigurationDatasource
+	path                    string
+	IsConfigInitialized     bool
 }
 
 func NewConfiguration() *Configuration {
 	c := &Configuration{}
 	c.DetectConfig()
+	c.ConfigurationDatasource = NewConfigurationDatasource(c.GetConfigStorePath())
 	return c
 }
 
@@ -79,6 +82,10 @@ func (c *Configuration) GetWorkspaceStorePath() string {
 	return filepath.Join(c.GetConfigPath(), "workspaces.json")
 }
 
+func (c *Configuration) GetConfigStorePath() string {
+	return filepath.Join(c.GetConfigPath(), "config.json")
+}
+
 func TimeFormat() string {
 	return "Mon, 02 Jan 15:04:05"
 }
@@ -91,6 +98,21 @@ func (c *Configuration) DetectUpdate() (update bool, newTag string) {
 
 	res := semver.Compare(tag, VERSION)
 	return res == 1, tag
+}
+
+func (c *Configuration) SetUpdateAsked() {
+	now := time.Now()
+	c.ConfigurationDatasource.Data.UpdateAsked = &now
+	c.ConfigurationDatasource.SaveStore()
+}
+
+func (c *Configuration) IsUpdateAsked() bool {
+	time := c.ConfigurationDatasource.Data.UpdateAsked
+	if time == nil {
+		return false
+	}
+
+	return !utils.IsBeforeOneHourAgo(*time)
 }
 
 func (c *Configuration) GetUpdateSystemCmd() []string {

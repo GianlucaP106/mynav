@@ -26,7 +26,7 @@ func (w *WorkspaceRepository) Save(workspace *Workspace) error {
 	}
 
 	w.WorkspaceContainer.Set(workspace)
-	w.WorkspaceDatasource.WorkspaceStoreSchema.Workspaces[workspace.ShortPath()] = workspace.Metadata
+	w.WorkspaceDatasource.Data.Workspaces[workspace.ShortPath()] = workspace.Metadata
 	w.WorkspaceDatasource.SaveStore()
 
 	return nil
@@ -60,7 +60,7 @@ func (w *WorkspaceRepository) Delete(workspace *Workspace) error {
 	}
 
 	if wr := w.GetSelectedWorkspace(); wr != nil && wr.ShortPath() == workspace.ShortPath() {
-		w.WorkspaceDatasource.WorkspaceStoreSchema.SelectedWorkspace = ""
+		w.WorkspaceDatasource.Data.SelectedWorkspace = ""
 	}
 
 	w.WorkspaceContainer.Delete(workspace)
@@ -88,7 +88,7 @@ func (w *WorkspaceRepository) FindByPath(path string) *Workspace {
 }
 
 func (w *WorkspaceRepository) GetSelectedWorkspace() *Workspace {
-	shortPath := w.WorkspaceDatasource.WorkspaceStoreSchema.SelectedWorkspace
+	shortPath := w.WorkspaceDatasource.Data.SelectedWorkspace
 	return w.Find(shortPath)
 }
 

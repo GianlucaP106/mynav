@@ -8,10 +8,6 @@ import (
 	"github.com/awesome-gocui/gocui"
 )
 
-type Config struct {
-	updateAsked bool
-}
-
 type UI struct {
 	gui *gocui.Gui
 	api *api.Api
@@ -29,7 +25,6 @@ type State struct {
 	topics        *TopicsState
 	fs            *FsState
 	action        *Action
-	config        *Config
 }
 
 func Start() *Action {
@@ -51,9 +46,6 @@ func Start() *Action {
 			workspaceInfo: newWorkspaceInfoDialogState(),
 			topics:        newTopicsState(),
 			fs:            newFsState(),
-			config: &Config{
-				updateAsked: false,
-			},
 		},
 	}
 
@@ -80,13 +72,11 @@ func Start() *Action {
 	return ui.action
 }
 
-func (ui *UI) renderViews(g *gocui.Gui) error {
-	ui.renderHeaderView()
-
-	if !ui.config.updateAsked {
+func (ui *UI) handleUpdate() {
+	if !ui.api.IsUpdateAsked() {
+		ui.api.SetUpdateAsked()
 		update, newTag := ui.api.DetectUpdate()
 		if update {
-			ui.config.updateAsked = true
 			ui.openConfirmationDialog(func(b bool) {
 				if b {
 					ui.setActionEnd(ui.api.GetUpdateSystemCmd())
@@ -94,6 +84,12 @@ func (ui *UI) renderViews(g *gocui.Gui) error {
 			}, "A new update of mynav is available! Would you like to update to version "+newTag+"?")
 		}
 	}
+}
+
+func (ui *UI) renderViews(g *gocui.Gui) error {
+	ui.renderHeaderView()
+
+	ui.handleUpdate()
 
 	ui.renderFsView()
 	ui.renderToastDialog()
