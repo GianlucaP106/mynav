@@ -67,6 +67,14 @@ func (w *Workspace) GetGitRemote() (string, error) {
 	return *(w.GitRemote), nil
 }
 
+func (w *Workspace) CloneRepo(url string) error {
+	err := utils.GitClone(url, w.Path)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 type Workspaces []*Workspace
 
 func (w Workspaces) Len() int { return len(w) }

@@ -35,6 +35,10 @@ func (ui *UI) getKeyBindings(viewName string) []*KeyBindingMapping {
 			action: "Add/change description",
 		},
 		{
+			key:    "g",
+			action: "Clone git repo",
+		},
+		{
 			key:    "enter",
 			action: "Open in tmux/open in neovim",
 		},
