@@ -45,6 +45,12 @@ func (wd *WorkspaceDatasource) Sync(w WorkspaceContainer) {
 			delete(wd.WorkspaceStoreSchema.Workspaces, id)
 		}
 	}
+
+	id := wd.WorkspaceStoreSchema.SelectedWorkspace
+	if w.Get(id) == nil {
+		wd.WorkspaceStoreSchema.SelectedWorkspace = ""
+	}
+
 	wd.SaveStore()
 }
 

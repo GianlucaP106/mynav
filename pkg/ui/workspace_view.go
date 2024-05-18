@@ -78,6 +78,18 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 			}
 			ui.openWorkspaceInfoDialog(curWorkspace)
 		}).
+		set('g', func() {
+			curWorkspace := ui.getSelectedWorkspace()
+			if curWorkspace == nil {
+				return
+			}
+
+			ui.openEditorDialog(func(s string) {
+				if err := ui.api.CloneRepo(s, curWorkspace); err != nil {
+					ui.openToastDialog(err.Error())
+				}
+			}, func() {}, "Git repo URL", Small)
+		}).
 		set('/', func() {
 			ui.openEditorDialog(func(s string) {
 				ui.workspaces.search = s
@@ -155,21 +167,18 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 		set('a', func() {
 			curTopic := ui.getSelectedTopic()
 			ui.openEditorDialog(func(name string) {
-				ui.openEditorDialog(func(repoUrl string) {
-					// TODO: repo url change
-					if _, err := ui.api.CreateWorkspace(name, curTopic); err != nil {
-						ui.openToastDialog(err.Error())
-						return
-					}
+				if _, err := ui.api.CreateWorkspace(name, curTopic); err != nil {
+					ui.openToastDialog(err.Error())
+					return
+				}
 
-					// HACK: when there a is a new workspace
-					// This will result in the workspace and the corresponding topic going to the top
-					// because we are sorting by modifed time
-					ui.topics.listRenderer.setSelected(0)
-					ui.workspaces.listRenderer.setSelected(0)
-					ui.refreshTopics()
-					ui.refreshWorkspaces()
-				}, func() {}, "Repo URL (leave blank if none)", Small)
+				// HACK: when there a is a new workspace
+				// This will result in the workspace and the corresponding topic going to the top
+				// because we are sorting by modifed time
+				ui.topics.listRenderer.setSelected(0)
+				ui.workspaces.listRenderer.setSelected(0)
+				ui.refreshTopics()
+				ui.refreshWorkspaces()
 			}, func() {}, "Workspace name ", Small)
 		}).
 		set('x', func() {
