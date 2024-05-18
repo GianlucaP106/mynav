@@ -8,6 +8,10 @@ import (
 	"github.com/awesome-gocui/gocui"
 )
 
+type Config struct {
+	updateAsked bool
+}
+
 type UI struct {
 	gui *gocui.Gui
 	api *api.Api
@@ -25,6 +29,7 @@ type State struct {
 	topics        *TopicsState
 	fs            *FsState
 	action        *Action
+	config        *Config
 }
 
 func Start() *Action {
@@ -46,8 +51,12 @@ func Start() *Action {
 			workspaceInfo: newWorkspaceInfoDialogState(),
 			topics:        newTopicsState(),
 			fs:            newFsState(),
+			config: &Config{
+				updateAsked: false,
+			},
 		},
 	}
+
 	ui.help = ui.newHelpState(ui.getKeyBindings("global"))
 
 	ui.gui.SetManager(gocui.ManagerFunc(ui.renderViews))
@@ -73,12 +82,29 @@ func Start() *Action {
 
 func (ui *UI) renderViews(g *gocui.Gui) error {
 	ui.renderHeaderView()
-	ui.renderFsView()
 
+	if !ui.config.updateAsked {
+		update, newTag := ui.api.DetectUpdate()
+		if update {
+			ui.config.updateAsked = true
+			ui.openConfirmationDialog(func(b bool) {
+				if b {
+					ui.setActionEnd(ui.api.GetUpdateSystemCmd())
+				}
+			}, "A new update of mynav is available! Would you like to update to version "+newTag+"?")
+		}
+	}
+
+	ui.renderFsView()
 	ui.renderToastDialog()
 	ui.renderConfirmationDialog()
 	ui.renderWorkspaceInfoDialog()
 	ui.renderEditorDialog()
 	ui.renderHelpView()
+
+	if ui.action != nil && ui.action.Command != nil {
+		return gocui.ErrQuit
+	}
+
 	return nil
 }

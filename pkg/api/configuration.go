@@ -6,6 +6,8 @@ import (
 	"mynav/pkg/utils"
 	"os"
 	"path/filepath"
+
+	"golang.org/x/mod/semver"
 )
 
 type Configuration struct {
@@ -79,4 +81,14 @@ func (c *Configuration) GetWorkspaceStorePath() string {
 
 func TimeFormat() string {
 	return "Mon, 02 Jan 15:04:05"
+}
+
+func (c *Configuration) DetectUpdate() (update bool, newTag string) {
+	tag := utils.GetLatestReleaseTag("mynav", "GianlucaP106")
+	res := semver.Compare(tag, VERSION)
+	return res == 1, tag
+}
+
+func (c *Configuration) GetUpdateSystemCmd() []string {
+	return []string{"sh", "-c", "curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.sh | bash"}
 }
