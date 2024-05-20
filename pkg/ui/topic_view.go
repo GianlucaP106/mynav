@@ -93,6 +93,18 @@ func (ui *UI) initTopicsView() *gocui.View {
 			}, func() {
 			}, "Topic name", Small)
 		}).
+		set('r', func() {
+			t := ui.getSelectedTopic()
+			if t == nil {
+				return
+			}
+
+			ui.openEditorDialog(func(s string) {
+				if err := ui.api.RenameTopic(t, s); err != nil {
+					ui.openToastDialog(err.Error())
+				}
+			}, func() {}, "New topic name", Small)
+		}).
 		set('d', func() {
 			if ui.api.GetTopicCount() <= 0 {
 				return

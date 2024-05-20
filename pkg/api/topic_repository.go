@@ -6,17 +6,17 @@ import (
 	"path/filepath"
 )
 
-type TopicRepoitory struct {
+type TopicRepository struct {
 	TopicContainer TopicContainer
 }
 
-func NewTopicRepository(rootPath string) *TopicRepoitory {
-	tr := &TopicRepoitory{}
+func NewTopicRepository(rootPath string) *TopicRepository {
+	tr := &TopicRepository{}
 	tr.LoadContainer(rootPath)
 	return tr
 }
 
-func (tr *TopicRepoitory) LoadContainer(rootPath string) {
+func (tr *TopicRepository) LoadContainer(rootPath string) {
 	tc := NewTopicContainer()
 	tr.TopicContainer = tc
 	for _, topicDirEntry := range utils.GetDirEntries(rootPath) {
@@ -30,7 +30,7 @@ func (tr *TopicRepoitory) LoadContainer(rootPath string) {
 	}
 }
 
-func (tr *TopicRepoitory) Save(t *Topic) error {
+func (tr *TopicRepository) Save(t *Topic) error {
 	existing := tr.TopicContainer.Get(t.Name)
 	if existing == nil {
 		if err := utils.CreateDir(t.Path); err != nil {
@@ -42,7 +42,7 @@ func (tr *TopicRepoitory) Save(t *Topic) error {
 	return nil
 }
 
-func (tr *TopicRepoitory) Delete(t *Topic) error {
+func (tr *TopicRepository) Delete(t *Topic) error {
 	if err := os.RemoveAll(t.Path); err != nil {
 		return err
 	}
@@ -51,6 +51,6 @@ func (tr *TopicRepoitory) Delete(t *Topic) error {
 	return nil
 }
 
-func (tr *TopicRepoitory) Find(name string) *Topic {
+func (tr *TopicRepository) Find(name string) *Topic {
 	return tr.TopicContainer.Get(name)
 }
