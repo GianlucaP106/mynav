@@ -77,5 +77,6 @@ func (tc *TopicController) RenameTopic(t *Topic, newName string) error {
 	}
 
 	t.Name = newName
+	t.Path = newTopicPath
 	return nil
 }
