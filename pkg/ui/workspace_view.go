@@ -159,6 +159,16 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 				return
 			}
 
+			ui.openEditorDialog(func(s string) {
+				ui.api.RenameWorkspace(curWorkspace, s)
+			}, func() {}, "New workspace name", Small)
+		}).
+		set('e', func() {
+			curWorkspace := ui.getSelectedWorkspace()
+			if curWorkspace == nil {
+				return
+			}
+
 			ui.openEditorDialog(func(desc string) {
 				if desc != "" {
 					ui.api.SetDescription(desc, curWorkspace)

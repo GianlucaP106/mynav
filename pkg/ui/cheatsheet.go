@@ -31,8 +31,12 @@ func (ui *UI) getKeyBindings(viewName string) []*KeyBindingMapping {
 			action: "Delete a workspace",
 		},
 		{
-			key:    "r",
+			key:    "e",
 			action: "Add/change description",
+		},
+		{
+			key:    "r",
+			action: "Rename workspace",
 		},
 		{
 			key:    "g",

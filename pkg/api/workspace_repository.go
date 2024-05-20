@@ -1,8 +1,10 @@
 package api
 
 import (
+	"errors"
 	"mynav/pkg/utils"
 	"os"
+	"path/filepath"
 )
 
 type WorkspaceRepository struct {
@@ -28,6 +30,33 @@ func (w *WorkspaceRepository) Save(workspace *Workspace) error {
 	w.WorkspaceContainer.Set(workspace)
 	w.WorkspaceDatasource.Data.Workspaces[workspace.ShortPath()] = workspace.Metadata
 	w.WorkspaceDatasource.SaveStore()
+
+	return nil
+}
+
+func (w *WorkspaceRepository) Rename(workspace *Workspace, newName string) error {
+	newShortPath := filepath.Join(workspace.Topic.Name, newName)
+	if w.WorkspaceContainer.Get(newShortPath) != nil {
+		return errors.New("another workspace has this name already")
+	}
+
+	newPath := filepath.Join(workspace.Topic.Path, newName)
+	if err := os.Rename(workspace.Path, newPath); err != nil {
+		return err
+	}
+
+	w.WorkspaceContainer.Delete(workspace)
+	w.WorkspaceDatasource.DeleteMetadata(workspace)
+
+	if w.WorkspaceDatasource.Data.SelectedWorkspace == workspace.ShortPath() {
+		w.WorkspaceDatasource.Data.SelectedWorkspace = newShortPath
+	}
+
+	workspace.Name = newName
+	workspace.Path = newPath
+
+	w.WorkspaceContainer.Set(workspace)
+	w.WorkspaceDatasource.SaveMetadata(workspace)
 
 	return nil
 }
