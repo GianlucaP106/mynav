@@ -82,6 +82,10 @@ func (ui *UI) getKeyBindings(viewName string) []*KeyBindingMapping {
 			action: "Move up",
 		},
 		{
+			key:    "r",
+			action: "Rename topic",
+		},
+		{
 			key:    "a",
 			action: "Create a topic",
 		},

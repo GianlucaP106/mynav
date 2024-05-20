@@ -1,9 +1,12 @@
 package api
 
-import "path/filepath"
+import (
+	"os"
+	"path/filepath"
+)
 
 type TopicController struct {
-	TopicRepoitory      *TopicRepoitory
+	TopicRepoitory      *TopicRepository
 	WorkspaceController *WorkspaceController
 	rootPath            string
 }
@@ -36,5 +39,43 @@ func (tc *TopicController) DeleteTopic(t *Topic) error {
 	}
 
 	tc.WorkspaceController.DeleteWorkspacesByTopic(t)
+	return nil
+}
+
+func (tc *TopicController) RenameTopic(t *Topic, newName string) error {
+	wr := tc.WorkspaceController.WorkspaceRepository
+
+	newTopicPath := filepath.Join(filepath.Dir(t.Path), newName)
+	if err := os.Rename(t.Path, newTopicPath); err != nil {
+		return err
+	}
+
+	topicWorkspaces := tc.WorkspaceController.GetWorkspaces().ByTopic(t)
+
+	for _, w := range topicWorkspaces {
+		newWorkspacePath := filepath.Join(newTopicPath, w.Name)
+		newShortPath := filepath.Join(newName, w.Name)
+
+		wr.WorkspaceContainer.Delete(w)
+		wr.WorkspaceDatasource.DeleteMetadata(w)
+
+		if wr.WorkspaceDatasource.Data.SelectedWorkspace == w.ShortPath() {
+			wr.WorkspaceDatasource.Data.SelectedWorkspace = newShortPath
+		}
+
+		wr.WorkspaceContainer[newShortPath] = w
+		w.Path = newWorkspacePath
+
+		if w.Metadata.TmuxSession != nil {
+			tc.WorkspaceController.TmuxCommunicator.RenameSession(w.Metadata.TmuxSession, newWorkspacePath)
+			w.Metadata.TmuxSession.Name = newWorkspacePath
+		}
+
+		wr.WorkspaceDatasource.Data.Workspaces[newShortPath] = w.Metadata
+		wr.WorkspaceDatasource.SaveStore()
+
+	}
+
+	t.Name = newName
 	return nil
 }
