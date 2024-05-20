@@ -67,3 +67,11 @@ func (tm *TmuxCommunicator) DeleteSession(ts *TmuxSession) {
 		log.Panicln(err)
 	}
 }
+
+func (tm *TmuxCommunicator) RenameSession(ts *TmuxSession, newName string) {
+	if err := exec.Command("tmux", "rename-session", "-t", ts.Name, newName).Run(); err != nil {
+		log.Panicln(err)
+	}
+
+	ts.Name = newName
+}

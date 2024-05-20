@@ -35,6 +35,20 @@ func (wc *WorkspaceController) DeleteWorkspace(w *Workspace) error {
 	return nil
 }
 
+func (wc *WorkspaceController) RenameWorkspace(w *Workspace, newName string) error {
+	if err := wc.WorkspaceRepository.Rename(w, newName); err != nil {
+		return err
+	}
+
+	if w.Metadata.TmuxSession != nil {
+		wc.TmuxCommunicator.RenameSession(w.Metadata.TmuxSession, w.Path)
+		w.Metadata.TmuxSession.Name = w.Path
+		wc.WorkspaceRepository.Save(w)
+	}
+
+	return nil
+}
+
 func (wc *WorkspaceController) SetDescription(description string, w *Workspace) {
 	w.Metadata.Description = description
 	wc.WorkspaceRepository.SetSelectedWorkspace(w)
