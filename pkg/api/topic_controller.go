@@ -67,7 +67,7 @@ func (tc *TopicController) RenameTopic(t *Topic, newName string) error {
 		w.Path = newWorkspacePath
 
 		if w.Metadata.TmuxSession != nil {
-			tc.WorkspaceController.TmuxCommunicator.RenameSession(w.Metadata.TmuxSession, newWorkspacePath)
+			tc.WorkspaceController.TmuxSessionRepository.RenameSession(w.Metadata.TmuxSession, newWorkspacePath)
 			w.Metadata.TmuxSession.Name = newWorkspacePath
 		}
 

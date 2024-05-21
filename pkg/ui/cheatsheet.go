@@ -1,6 +1,6 @@
 package ui
 
-func (ui *UI) getKeyBindings(viewName string) []*KeyBindingMapping {
+func getKeyBindings(viewName string) []*KeyBindingMapping {
 	keys := map[string][]*KeyBindingMapping{}
 	keys["global"] = []*KeyBindingMapping{
 		{
@@ -13,7 +13,7 @@ func (ui *UI) getKeyBindings(viewName string) []*KeyBindingMapping {
 		},
 	}
 
-	keys[ui.workspaces.viewName] = []*KeyBindingMapping{
+	keys[WorkspacesViewName] = []*KeyBindingMapping{
 		{
 			key:    "j",
 			action: "Move down",
@@ -72,7 +72,7 @@ func (ui *UI) getKeyBindings(viewName string) []*KeyBindingMapping {
 		},
 	}
 
-	keys[ui.topics.viewName] = []*KeyBindingMapping{
+	keys[TopicViewName] = []*KeyBindingMapping{
 		{
 			key:    "j",
 			action: "Move down",

@@ -3,13 +3,13 @@ package api
 import "mynav/pkg/utils"
 
 type WorkspaceController struct {
-	WorkspaceRepository *WorkspaceRepository
-	TmuxCommunicator    *TmuxCommunicator
+	WorkspaceRepository   *WorkspaceRepository
+	TmuxSessionRepository *TmuxSessionRepository
 }
 
-func NewWorkspaceController(topics Topics, storePath string) *WorkspaceController {
+func NewWorkspaceController(topics Topics, storePath string, tr *TmuxSessionRepository) *WorkspaceController {
 	wc := &WorkspaceController{}
-	wc.TmuxCommunicator = NewTmuxCommunicator()
+	wc.TmuxSessionRepository = tr
 	wc.WorkspaceRepository = NewWorkspaceRepository(topics, storePath)
 	wc.syncTmuxSessions()
 	return wc
@@ -41,7 +41,7 @@ func (wc *WorkspaceController) RenameWorkspace(w *Workspace, newName string) err
 	}
 
 	if w.Metadata.TmuxSession != nil {
-		wc.TmuxCommunicator.RenameSession(w.Metadata.TmuxSession, w.Path)
+		wc.TmuxSessionRepository.RenameSession(w.Metadata.TmuxSession, w.Path)
 		w.Metadata.TmuxSession.Name = w.Path
 		wc.WorkspaceRepository.Save(w)
 	}
@@ -68,7 +68,7 @@ func (wc *WorkspaceController) CreateOrAttachTmuxSession(w *Workspace) []string 
 
 func (wc *WorkspaceController) DeleteTmuxSession(w *Workspace) {
 	if w.Metadata.TmuxSession != nil {
-		wc.TmuxCommunicator.DeleteSession(w.Metadata.TmuxSession)
+		wc.TmuxSessionRepository.DeleteSession(w.Metadata.TmuxSession)
 	}
 	w.Metadata.TmuxSession = nil
 	wc.WorkspaceRepository.Save(w)
@@ -123,7 +123,7 @@ func (wc *WorkspaceController) CloneRepo(repoUrl string, w *Workspace) error {
 }
 
 func (wc *WorkspaceController) syncTmuxSessions() {
-	sessions := wc.TmuxCommunicator.GetSessions()
+	sessions := wc.TmuxSessionRepository.TmuxSessionContainer
 	for _, w := range wc.WorkspaceRepository.WorkspaceContainer {
 		if w.Metadata.TmuxSession != nil && !sessions.Exists(w.Path) {
 			w.Metadata.TmuxSession = nil

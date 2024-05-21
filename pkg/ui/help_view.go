@@ -12,72 +12,82 @@ type KeyBindingMapping struct {
 	action string
 }
 
-type HelpState struct {
+type HelpView struct {
+	editor         Editor
 	listRenderer   *ListRenderer
-	viewName       string
 	globalMappings []*KeyBindingMapping
 	mappings       []*KeyBindingMapping
-	active         bool
 }
 
-func (ui *UI) newHelpState(globalMappings []*KeyBindingMapping) *HelpState {
-	return &HelpState{
-		viewName:       "HelpView",
+var _ Dialog = &HelpView{}
+
+const HelpStateName = "HelpView"
+
+func newHelpState(globalMappings []*KeyBindingMapping) *HelpView {
+	return &HelpView{
 		globalMappings: globalMappings,
 		listRenderer:   newListRenderer(0, 10, 0),
 	}
 }
 
-func (ui *UI) initHelpView() *gocui.View {
-	exists := false
-	view := ui.getView(ui.help.viewName)
-	exists = view != nil
-
-	x, _ := ui.gui.Size()
-	view = ui.setCenteredView(ui.help.viewName, x/2, 12, 0)
-
-	if exists {
-		return view
-	}
-
-	ui.keyBinding(ui.help.viewName).
-		set(gocui.KeyEsc, func() {
-			ui.closeHelpView()
-		}).
-		set('j', func() {
-			ui.help.listRenderer.increment()
-		}).
-		set('k', func() {
-			ui.help.listRenderer.decrement()
-		}).
-		set('?', func() {
-			ui.closeHelpView()
+func NewHelpViewEditor(up func(), down func(), enter func(), exit func()) gocui.EditorFunc {
+	return gocui.EditorFunc(
+		func(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
+			switch {
+			case key == gocui.KeyEnter:
+				enter()
+			case key == gocui.KeyEsc:
+				exit()
+			case ch == '?':
+				exit()
+			case ch == 'j':
+				down()
+			case ch == 'k':
+				up()
+			}
 		})
-
-	return view
 }
 
-func (ui *UI) openHelpView(mappings []*KeyBindingMapping) {
-	ui.help.mappings = mappings
-	ui.refreshHelpListRenderer()
-	ui.help.active = true
+func (hv *HelpView) Open(mappings []*KeyBindingMapping, exit func()) {
+	hv.mappings = mappings
+	x, _ := ScreenSize()
+	hv.editor = NewHelpViewEditor(func() {
+		hv.listRenderer.decrement()
+	}, func() {
+		hv.listRenderer.increment()
+	}, func() {
+	}, func() {
+		hv.Close()
+		exit()
+	})
+
+	view := SetCenteredView(hv.Name(), x/2, 12, 0)
+	view.Editable = true
+	view.Editor = hv.editor
+
+	FocusView(hv.Name())
+
+	hv.refreshHelpListRenderer()
 }
 
-func (ui *UI) closeHelpView() {
-	ui.help.active = false
-	ui.help.mappings = nil
-	ui.gui.DeleteView(ui.help.viewName)
+func (hv *HelpView) Close() {
+	hv.mappings = nil
+	DeleteView(hv.Name())
 }
 
-func (ui *UI) refreshHelpListRenderer() {
-	newSize := len(ui.help.mappings) + len(ui.help.globalMappings)
-	if newSize != ui.help.listRenderer.listSize {
-		ui.help.listRenderer.setListSize(newSize)
+func (hv *HelpView) Name() string {
+	return HelpStateName
+}
+
+func (hv *HelpView) refreshHelpListRenderer() {
+	newSize := len(hv.mappings) + len(hv.globalMappings)
+	if newSize != hv.listRenderer.listSize {
+		hv.listRenderer.setListSize(newSize)
 	}
 }
 
-func (ui *UI) formatHelpMessage(key *KeyBindingMapping, selected bool) string {
-	view := ui.getView(ui.help.viewName)
+func (hv *HelpView) formatHelpMessage(key *KeyBindingMapping, selected bool) string {
+	view := GetInternalView(hv.Name())
 	sizeX, _ := view.Size()
 
 	color := func() color.Style {
@@ -92,25 +102,23 @@ func (ui *UI) formatHelpMessage(key *KeyBindingMapping, selected bool) string {
 	return color.Sprint(keyMap + action)
 }
 
-func (ui *UI) renderHelpView() {
-	if !ui.help.active {
-		return
+func (hv *HelpView) Render(ui *UI) error {
+	view := GetInternalView(hv.Name())
+	if view == nil {
+		return nil
 	}
 
-	view := ui.initHelpView()
-
-	mappings := append(ui.help.mappings, ui.help.globalMappings...)
+	mappings := append(hv.mappings, hv.globalMappings...)
 	content := func() []string {
 		out := make([]string, 0)
-		ui.help.listRenderer.forEach(func(idx int) {
+		hv.listRenderer.forEach(func(idx int) {
 			helpMessage := mappings[idx]
-			selected := idx == ui.help.listRenderer.selected
-			out = append(out, ui.formatHelpMessage(helpMessage, selected))
+			selected := idx == hv.listRenderer.selected
+			out = append(out, hv.formatHelpMessage(helpMessage, selected))
 		})
 		return out
 	}()
 
-	ui.focusView(ui.help.viewName)
 	view.Clear()
 	sizeX, _ := view.Size()
 	title := displayLine("Cheatsheet", Center, sizeX, color.New(color.White))
@@ -118,4 +126,5 @@ func (ui *UI) renderHelpView() {
 	for _, line := range content {
 		fmt.Fprintln(view, line)
 	}
+	return nil
 }

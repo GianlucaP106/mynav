@@ -4,64 +4,76 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/awesome-gocui/gocui"
 	"github.com/gookit/color"
 )
 
-type HeaderState struct {
-	viewName string
-}
+const HeaderStateName = "HeaderView"
 
-func newHeaderState() *HeaderState {
-	titleView := &HeaderState{
-		viewName: "HeaderView",
-	}
+type HeaderView struct{}
+
+var _ View = &HeaderView{}
+
+func newHeaderState() *HeaderView {
+	titleView := &HeaderView{}
 
 	return titleView
 }
 
-func (ui *UI) initHeaderView() *gocui.View {
-	view := ui.setView(ui.header.viewName)
-	return view
+func (hv *HeaderView) Name() string {
+	return HeaderStateName
 }
 
-func (ui *UI) renderHeaderView() {
-	currentView := ui.getView(ui.header.viewName)
+func (hv *HeaderView) RequiresManager() bool {
+	return true
+}
+
+func (hv *HeaderView) Init(ui *UI) {
+	if GetInternalView(hv.Name()) != nil {
+		return
+	}
+
+	SetViewLayout(hv.Name())
+}
+
+func (hv *HeaderView) Render(ui *UI) error {
+	currentView := GetInternalView(hv.Name())
 	if currentView == nil {
-		currentView = ui.initHeaderView()
+		return nil
 	}
 
 	sizeX, _ := currentView.Size()
 	currentView.Clear()
 	fmt.Fprintln(currentView, blankLine(sizeX))
-	if !ui.api.IsConfigInitialized {
+	if !Api().IsConfigInitialized {
 		fmt.Fprintln(currentView, displayWhiteText("Welcome to mynav, a workspace manager", Center, sizeX))
-		return
+		return nil
 	}
 
 	line := withSpacePadding("", 10)
 
-	if w := ui.api.GetSelectedWorkspace(); w != nil {
+	if w := Api().GetSelectedWorkspace(); w != nil {
 		selected := withSpacePadding("", 5)
 		selected += withSurroundingSpaces("Last seen: ")
 		selected += color.New(color.Blue).Sprint(w.ShortPath())
 		line += selected
 	}
 
-	sessionCount, windowCount := ui.api.GetTmuxStats()
+	sessionCount, windowCount := Api().GetTmuxStats()
 	tmux := withSpacePadding("", 5)
 	tmux += strconv.Itoa(sessionCount) + withSurroundingSpaces("tmux sessions |")
 	tmux += strconv.Itoa(windowCount) + withSurroundingSpaces("windows open")
 	tmux = color.New(color.Green).Sprint(tmux)
 	line += tmux
 
-	numTopics, numWorkspaces := ui.api.GetSystemStats()
+	numTopics, numWorkspaces := Api().GetSystemStats()
 	generalStats := withSpacePadding("", 5)
 	generalStats += strconv.Itoa(numTopics) + withSurroundingSpaces("topics |")
 	generalStats += strconv.Itoa(numWorkspaces) + withSurroundingSpaces("workspaces")
-	generalStats = color.New(color.Red).Sprint(generalStats)
+	generalStats = color.New(color.Blue).Sprint(generalStats)
 	line += generalStats
 
 	line = display(line, Center, sizeX)
 	fmt.Fprintln(currentView, line)
+
+	return nil
 }

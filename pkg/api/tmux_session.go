@@ -12,13 +12,3 @@ func NewTmuxSession(name string) *TmuxSession {
 	}
 	return session
 }
-
-type TmuxSessions map[string]*TmuxSession
-
-func (ws TmuxSessions) Get(id string) *TmuxSession {
-	return ws[id]
-}
-
-func (ws TmuxSessions) Exists(id string) bool {
-	return ws[id] != nil
-}
