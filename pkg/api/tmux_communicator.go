@@ -13,7 +13,7 @@ func NewTmuxCommunicator() *TmuxCommunicator {
 	return &TmuxCommunicator{}
 }
 
-func (tm *TmuxCommunicator) GetSessions() TmuxSessions {
+func (tm *TmuxCommunicator) GetSessions() TmuxSessionContainer {
 	out := map[string]*TmuxSession{}
 
 	stdout, err := exec.Command("tmux", "ls").Output()

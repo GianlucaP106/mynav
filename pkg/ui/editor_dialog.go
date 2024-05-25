@@ -1,69 +1,63 @@
 package ui
 
-import "github.com/awesome-gocui/gocui"
-
-type EditorDialogState struct {
-	editor   Editor
-	viewName string
-	title    string
-	active   bool
-	height   int
+type EditorDialog struct {
+	editor Editor
+	title  string
+	height int
 }
 
+var _ Dialog = &EditorDialog{}
+
 type EditorSize = uint
+
+const EditorDialogStateName = "EditorDialog"
 
 const (
 	Small EditorSize = iota
 	Large
 )
 
-func newEditorDialogState() *EditorDialogState {
-	editor := &EditorDialogState{
-		viewName: "EditorDialog",
-		active:   false,
-		height:   3,
+func newEditorDialogState() *EditorDialog {
+	editor := &EditorDialog{
+		height: 3,
 	}
 	return editor
 }
 
-func (ui *UI) initEditorDialogView() *gocui.View {
-	view := ui.setCenteredView(ui.editor.viewName, 80, ui.editor.height, 0)
-	view.Editable = true
-	view.Editor = ui.editor.editor
-	view.Title = withSurroundingSpaces(ui.editor.title)
-	view.Wrap = true
-	ui.toggleCursor(true)
-	return view
+func (eds *EditorDialog) Name() string {
+	return EditorDialogStateName
 }
 
-func (ui *UI) openEditorDialog(onEnter func(string), onEsc func(), title string, size EditorSize) {
+func (ed *EditorDialog) Open(onEnter func(string), onEsc func(), title string, size EditorSize) {
 	switch size {
 	case Small:
-		ui.editor.height = 3
+		ed.height = 3
 	case Large:
-		ui.editor.height = 7
+		ed.height = 7
 	}
-	ui.editor.title = title
-	ui.editor.editor = newSimpleEditor(func(s string) {
-		ui.closeEditorDialog()
+	ed.title = title
+	ed.editor = NewSimpleEditor(func(s string) {
+		ed.Close()
 		onEnter(s)
 	}, func() {
-		ui.closeEditorDialog()
+		ed.Close()
 		onEsc()
 	})
-	ui.editor.active = true
+
+	view := SetCenteredView(ed.Name(), 80, ed.height, 0)
+	FocusView(ed.Name())
+	view.Editable = true
+	view.Editor = ed.editor
+	view.Title = withSurroundingSpaces(ed.title)
+	view.Wrap = true
+	ToggleCursor(true)
 }
 
-func (ui *UI) closeEditorDialog() {
-	ui.editor.active = false
-	ui.gui.Cursor = false
-	ui.gui.DeleteView(ui.editor.viewName)
+func (ed *EditorDialog) Close() {
+	ToggleCursor(false)
+	DeleteView(ed.Name())
 }
 
-func (ui *UI) renderEditorDialog() {
-	if !ui.editor.active {
-		return
-	}
-	ui.initEditorDialogView()
-	ui.focusView(ui.editor.viewName)
+func (eds *EditorDialog) Render(ui *UI) error {
+	return nil
 }

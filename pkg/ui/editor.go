@@ -10,7 +10,7 @@ type Editor interface {
 	Edit(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier)
 }
 
-func newSimpleEditor(onEnter func(string), onEsc func()) gocui.EditorFunc {
+func NewSimpleEditor(onEnter func(string), onEsc func()) gocui.EditorFunc {
 	return gocui.EditorFunc(
 		func(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
 			switch {
@@ -28,14 +28,42 @@ func newSimpleEditor(onEnter func(string), onEsc func()) gocui.EditorFunc {
 		})
 }
 
-func newConfirmationEditor(onEnter func(), onEsc func()) gocui.EditorFunc {
+func NewConfirmationEditor(onConfirm func(), onReject func()) gocui.EditorFunc {
 	return gocui.EditorFunc(
 		func(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
 			switch key {
 			case gocui.KeyEnter:
-				onEnter()
+				onConfirm()
 			case gocui.KeyEsc:
-				onEsc()
+				onReject()
+			}
+		})
+}
+
+func NewSingleActionEditor(keys []gocui.Key, action func()) gocui.EditorFunc {
+	return gocui.EditorFunc(
+		func(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
+			for _, k := range keys {
+				if key == k {
+					action()
+					return
+				}
+			}
+		})
+}
+
+func NewListRendererEditor(up func(), down func(), enter func(), exit func()) gocui.EditorFunc {
+	return gocui.EditorFunc(
+		func(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
+			switch {
+			case key == gocui.KeyEnter:
+				enter()
+			case key == gocui.KeyEsc:
+				exit()
+			case ch == 'j':
+				down()
+			case ch == 'k':
+				up()
 			}
 		})
 }

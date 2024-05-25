@@ -11,93 +11,147 @@ import (
 	"github.com/gookit/color"
 )
 
-type WorkspacesState struct {
+const WorkspacesViewName = "WorkspacesView"
+
+type WorkspacesView struct {
 	listRenderer *ListRenderer
-	viewName     string
+	tv           *TopicsView
 	search       string
 	workspaces   api.Workspaces
 }
 
-func newWorkspacesState() *WorkspacesState {
-	workspace := &WorkspacesState{
-		viewName: "WorkspacesView",
+var _ View = &WorkspacesView{}
+
+func newWorkspacesView(tv *TopicsView) *WorkspacesView {
+	workspace := &WorkspacesView{
+		tv: tv,
 	}
 	return workspace
 }
 
-func (ui *UI) initWorkspacesView() *gocui.View {
-	exists := false
-	view := ui.getView(ui.workspaces.viewName)
-	exists = view != nil
-	if !exists {
-		view = ui.setView(ui.workspaces.viewName)
+func (wv *WorkspacesView) selectWorkspaceByShortPath(shortPath string) {
+	for idx, w := range wv.workspaces {
+		if w.ShortPath() == shortPath {
+			wv.listRenderer.setSelected(idx)
+		}
+	}
+}
+
+func (wv *WorkspacesView) refreshWorkspaces() {
+	tv := wv.tv
+	var workspaces api.Workspaces
+	if selectedTopic := tv.getSelectedTopic(); selectedTopic != nil {
+		workspaces = Api().GetWorkspaces().ByTopic(selectedTopic)
+	} else {
+		workspaces = make(api.Workspaces, 0)
 	}
 
-	if ui.workspaces.search != "" {
-		view.Subtitle = withSurroundingSpaces("Searching: " + ui.workspaces.search)
-	} else {
-		view.Subtitle = ""
+	if wv.search != "" {
+		workspaces = workspaces.FilterByNameContaining(wv.search)
 	}
+
+	wv.workspaces = workspaces
+
+	if wv.listRenderer != nil {
+		newListSize := len(wv.workspaces)
+		if wv.listRenderer.listSize != newListSize {
+			wv.listRenderer.setListSize(newListSize)
+		}
+	}
+}
+
+func (wv *WorkspacesView) getSelectedWorkspace() *api.Workspace {
+	idx := wv.listRenderer.selected
+	if idx >= len(wv.workspaces) || idx < 0 {
+		return nil
+	}
+	return wv.workspaces[idx]
+}
+
+func (wv *WorkspacesView) RequiresManager() bool {
+	return false
+}
+
+func (wv *WorkspacesView) Name() string {
+	return WorkspacesViewName
+}
+
+func (wv *WorkspacesView) Init(ui *UI) {
+	if GetInternalView(wv.Name()) != nil {
+		return
+	}
+
+	view := SetViewLayout(wv.Name())
 
 	view.Title = withSurroundingSpaces("Workspaces")
 	view.TitleColor = gocui.ColorBlue
 	view.FrameColor = gocui.ColorBlue
 
-	if exists {
-		return view
+	// TODO: change
+	if Api().GetSelectedWorkspace() != nil {
+		ui.FocusWorkspacesView()
+	} else {
+		ui.FocusTopicsView()
 	}
 
 	_, sizeY := view.Size()
-	ui.workspaces.listRenderer = newListRenderer(0, sizeY/3, 0)
-	ui.refreshWorkspaces()
+	wv.listRenderer = newListRenderer(0, sizeY/3, 0)
+	wv.refreshWorkspaces()
 
-	if selectedWorkspace := ui.api.GetSelectedWorkspace(); selectedWorkspace != nil {
-		ui.selectWorkspaceByShortPath(selectedWorkspace.ShortPath())
+	if selectedWorkspace := Api().GetSelectedWorkspace(); selectedWorkspace != nil {
+		wv.selectWorkspaceByShortPath(selectedWorkspace.ShortPath())
 	}
 
-	ui.keyBinding(ui.workspaces.viewName).
+	KeyBinding(wv.Name()).
 		set('j', func() {
-			ui.workspaces.listRenderer.increment()
+			wv.listRenderer.increment()
 		}).
 		set('k', func() {
-			ui.workspaces.listRenderer.decrement()
+			wv.listRenderer.decrement()
 		}).
 		set(gocui.KeyEsc, func() {
-			if ui.workspaces.search != "" {
-				ui.workspaces.search = ""
-				ui.refreshWorkspaces()
+			if wv.search != "" {
+				wv.search = ""
+				wv.refreshWorkspaces()
 				return
 			}
 
-			ui.setFocusedFsView(ui.topics.viewName)
+			ui.FocusTopicsView()
 		}).
 		set('s', func() {
-			curWorkspace := ui.getSelectedWorkspace()
+			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
 				return
 			}
-			ui.openWorkspaceInfoDialog(curWorkspace)
+			GetDialog[*WorkspaceInfoDialogState](ui).Open(curWorkspace, func() {
+				ui.FocusWorkspacesView()
+			})
 		}).
 		set('g', func() {
-			curWorkspace := ui.getSelectedWorkspace()
+			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
 				return
 			}
 
-			ui.openEditorDialog(func(s string) {
-				if err := ui.api.CloneRepo(s, curWorkspace); err != nil {
-					ui.openToastDialog(err.Error())
+			GetDialog[*EditorDialog](ui).Open(func(s string) {
+				if err := Api().CloneRepo(s, curWorkspace); err != nil {
+					GetDialog[*ToastDialogState](ui).Open(err.Error(), func() {
+						ui.FocusWorkspacesView()
+					})
 				}
 			}, func() {}, "Git repo URL", Small)
 		}).
 		set('/', func() {
-			ui.openEditorDialog(func(s string) {
-				ui.workspaces.search = s
-				ui.refreshWorkspaces()
-			}, func() {}, "Search", Small)
+			GetDialog[*EditorDialog](ui).Open(func(s string) {
+				wv.search = s
+				wv.refreshWorkspaces()
+				ui.FocusWorkspacesView()
+			}, func() {
+				ui.FocusWorkspacesView()
+			}, "Search", Small)
 		}).
-		setKeybinding(ui.workspaces.viewName, gocui.KeyEnter, func(g *gocui.Gui, v *gocui.View) error {
-			curWorkspace := ui.getSelectedWorkspace()
+		setKeybinding(wv.Name(), gocui.KeyEnter, func(g *gocui.Gui, v *gocui.View) error {
+			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
 				return nil
 			}
@@ -107,30 +161,32 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 				return gocui.ErrQuit
 			}
 
-			command := ui.api.CreateOrAttachTmuxSession(curWorkspace)
+			command := Api().CreateOrAttachTmuxSession(curWorkspace)
 			ui.setAction(command)
 
 			return gocui.ErrQuit
 		}).
-		setKeybinding(ui.workspaces.viewName, 'v', func(g *gocui.Gui, v *gocui.View) error {
-			curWorkspace := ui.getSelectedWorkspace()
+		setKeybinding(wv.Name(), 'v', func(g *gocui.Gui, v *gocui.View) error {
+			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
 				return nil
 			}
 
-			ui.api.SetSelectedWorkspace(curWorkspace)
+			Api().SetSelectedWorkspace(curWorkspace)
 			ui.setAction(utils.NvimCmd(curWorkspace.Path))
 			return gocui.ErrQuit
 		}).
-		setKeybinding(ui.workspaces.viewName, 't', func(g *gocui.Gui, v *gocui.View) error {
-			curWorkspace := ui.getSelectedWorkspace()
+		setKeybinding(wv.Name(), 't', func(g *gocui.Gui, v *gocui.View) error {
+			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
 				return nil
 			}
 
 			openTermCmd, err := utils.GetOpenTerminalCmd(curWorkspace.Path)
 			if err != nil {
-				ui.openToastDialog(err.Error())
+				GetDialog[*ToastDialogState](ui).Open(err.Error(), func() {
+					ui.FocusWorkspacesView()
+				})
 				return nil
 			}
 
@@ -138,118 +194,100 @@ func (ui *UI) initWorkspacesView() *gocui.View {
 			return gocui.ErrQuit
 		}).
 		set('d', func() {
-			if ui.api.GetWorkspacesByTopicCount(ui.getSelectedTopic()) <= 0 {
+			if Api().GetWorkspacesByTopicCount(wv.tv.getSelectedTopic()) <= 0 {
 				return
 			}
 
-			ui.openConfirmationDialog(func(b bool) {
+			GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
 				if b {
-					curWorkspace := ui.getSelectedWorkspace()
-					ui.api.DeleteWorkspace(curWorkspace)
+					curWorkspace := wv.getSelectedWorkspace()
+					Api().DeleteWorkspace(curWorkspace)
 					// HACK: same as below
-					ui.topics.listRenderer.setSelected(0)
-					ui.refreshTopics()
-					ui.refreshWorkspaces()
+
+					wv.tv.listRenderer.setSelected(0)
+					ui.RefreshMainView()
 				}
+				ui.FocusWorkspacesView()
 			}, "Are you sure you want to delete this workspace?")
 		}).
 		set('r', func() {
-			curWorkspace := ui.getSelectedWorkspace()
+			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
 				return
 			}
 
-			ui.openEditorDialog(func(s string) {
-				if err := ui.api.RenameWorkspace(curWorkspace, s); err != nil {
-					ui.openToastDialog(err.Error())
+			GetDialog[*EditorDialog](ui).Open(func(s string) {
+				if err := Api().RenameWorkspace(curWorkspace, s); err != nil {
+					GetDialog[*ToastDialogState](ui).Open(err.Error(), func() {
+						ui.FocusWorkspacesView()
+					})
 				}
-			}, func() {}, "New workspace name", Small)
+				ui.FocusWorkspacesView()
+			}, func() {
+				ui.FocusWorkspacesView()
+			}, "New workspace name", Small)
 		}).
 		set('e', func() {
-			curWorkspace := ui.getSelectedWorkspace()
+			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
 				return
 			}
 
-			ui.openEditorDialog(func(desc string) {
+			GetDialog[*EditorDialog](ui).Open(func(desc string) {
 				if desc != "" {
-					ui.api.SetDescription(desc, curWorkspace)
+					Api().SetDescription(desc, curWorkspace)
 				}
-			}, func() {}, "Description", Large)
+				ui.FocusWorkspacesView()
+			}, func() {
+				ui.FocusWorkspacesView()
+			}, "Description", Large)
 		}).
 		set('a', func() {
-			curTopic := ui.getSelectedTopic()
-			ui.openEditorDialog(func(name string) {
-				if _, err := ui.api.CreateWorkspace(name, curTopic); err != nil {
-					ui.openToastDialog(err.Error())
+			tv := wv.tv
+			curTopic := tv.getSelectedTopic()
+			GetDialog[*EditorDialog](ui).Open(func(name string) {
+				if _, err := Api().CreateWorkspace(name, curTopic); err != nil {
+					GetDialog[*ToastDialogState](ui).Open(err.Error(), func() {
+						ui.FocusWorkspacesView()
+					})
 					return
 				}
 
 				// HACK: when there a is a new workspace
 				// This will result in the workspace and the corresponding topic going to the top
 				// because we are sorting by modifed time
-				ui.topics.listRenderer.setSelected(0)
-				ui.workspaces.listRenderer.setSelected(0)
-				ui.refreshTopics()
-				ui.refreshWorkspaces()
-			}, func() {}, "Workspace name ", Small)
+				tv.listRenderer.setSelected(0)
+				wv.listRenderer.setSelected(0)
+				ui.RefreshMainView()
+				ui.FocusWorkspacesView()
+			}, func() {
+				ui.FocusWorkspacesView()
+			}, "Workspace name ", Small)
 		}).
 		set('x', func() {
-			curWorkspace := ui.getSelectedWorkspace()
+			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
 				return
 			}
 
 			if curWorkspace.Metadata.TmuxSession != nil {
-				ui.openConfirmationDialog(func(b bool) {
+				GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
 					if b {
-						ui.api.DeleteTmuxSession(curWorkspace)
+						Api().DeleteTmuxSession(curWorkspace)
 					}
+					ui.FocusWorkspacesView()
 				}, "Are you sure you want to delete the tmux session?")
 			}
 		}).
 		set('?', func() {
-			ui.openHelpView(ui.getKeyBindings(ui.workspaces.viewName))
+			GetDialog[*HelpView](ui).Open(getKeyBindings(wv.Name()), func() {
+				ui.FocusWorkspacesView()
+			})
 		})
-	return view
 }
 
-func (ui *UI) getSelectedWorkspace() *api.Workspace {
-	return ui.getDisplayedWorkspace(ui.workspaces.listRenderer.selected)
-}
-
-func (ui *UI) getDisplayedWorkspace(idx int) *api.Workspace {
-	wv := ui.workspaces.workspaces
-	if idx >= len(wv) || idx < 0 {
-		return nil
-	}
-	return wv[idx]
-}
-
-func (ui *UI) refreshWorkspaces() {
-	var workspaces api.Workspaces
-	if selectedTopic := ui.getSelectedTopic(); selectedTopic != nil {
-		workspaces = ui.api.GetWorkspaces().ByTopic(ui.getSelectedTopic())
-	} else {
-		workspaces = make(api.Workspaces, 0)
-	}
-
-	if ui.workspaces.search != "" {
-		workspaces = workspaces.FilterByNameContaining(ui.workspaces.search)
-	}
-
-	ui.workspaces.workspaces = workspaces
-
-	if ui.workspaces.listRenderer != nil {
-		newListSize := len(ui.workspaces.workspaces)
-		if ui.workspaces.listRenderer.listSize != newListSize {
-			ui.workspaces.listRenderer.setListSize(newListSize)
-		}
-	}
-}
-
-func (ui *UI) formatWorkspaceRow(workspace *api.Workspace, selected bool) []string {
-	sizeX, _ := ui.getView(ui.workspaces.viewName).Size()
+func (wv *WorkspacesView) formatWorkspaceRow(workspace *api.Workspace, selected bool) []string {
+	sizeX, _ := GetInternalView(wv.Name()).Size()
 	style, blank := func() (color.Style, string) {
 		if selected {
 			return color.New(color.Black, color.BgCyan), highlightedBlankLine(sizeX + 5) // +5 for extra padding
@@ -300,28 +338,31 @@ func (ui *UI) formatWorkspaceRow(workspace *api.Workspace, selected bool) []stri
 	}
 }
 
-func (ui *UI) selectWorkspaceByShortPath(shortPath string) {
-	for idx, w := range ui.workspaces.workspaces {
-		if w.ShortPath() == shortPath {
-			ui.workspaces.listRenderer.setSelected(idx)
-		}
+func (wv *WorkspacesView) Render(ui *UI) error {
+	view := GetInternalView(wv.Name())
+	if view == nil {
+		return nil
 	}
-}
 
-func (ui *UI) renderWorkspacesView() {
-	view := ui.initWorkspacesView()
+	if wv.search != "" {
+		view.Subtitle = withSurroundingSpaces("Searching: " + wv.search)
+	} else {
+		view.Subtitle = ""
+	}
 
 	view.Clear()
 	content := func() []string {
-		if ui.workspaces.workspaces == nil {
+		if wv.workspaces == nil {
 			return []string{}
 		}
+
 		out := make([]string, 0)
-		ui.workspaces.listRenderer.forEach(func(i int) {
-			selected := (ui.fs.focusedTab == ui.workspaces.viewName) && (i == ui.workspaces.listRenderer.selected)
+		wv.listRenderer.forEach(func(i int) {
+			w := wv.workspaces[i]
+			selected := i == wv.listRenderer.selected && GetFocusedView().Name() == wv.Name()
 
 			// TODO: https://github.com/GianlucaP106/mynav/issues/18
-			workspace := ui.formatWorkspaceRow(ui.workspaces.workspaces[i], selected)
+			workspace := wv.formatWorkspaceRow(w, selected)
 			out = append(out, workspace...)
 		})
 
@@ -330,4 +371,6 @@ func (ui *UI) renderWorkspacesView() {
 	for _, line := range content {
 		fmt.Fprintln(view, line)
 	}
+
+	return nil
 }

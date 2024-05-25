@@ -3,6 +3,7 @@ package api
 import "os"
 
 type Api struct {
+	*TmuxSessionRepository
 	*WorkspaceController
 	*TopicController
 	*Configuration
@@ -29,8 +30,9 @@ func (api *Api) InitConfiguration() {
 
 func (api *Api) InitControllers() {
 	if api.IsConfigInitialized {
+		api.TmuxSessionRepository = NewTmuxSessionRepository()
 		api.TopicController = NewTopicController(api.path)
-		api.WorkspaceController = NewWorkspaceController(api.GetTopics(), api.GetWorkspaceStorePath())
+		api.WorkspaceController = NewWorkspaceController(api.GetTopics(), api.GetWorkspaceStorePath(), api.TmuxSessionRepository)
 		api.TopicController.WorkspaceController = api.WorkspaceController
 	}
 }

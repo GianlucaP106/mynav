@@ -9,150 +9,173 @@ import (
 	"github.com/gookit/color"
 )
 
-type TopicsState struct {
+type TopicsView struct {
 	listRenderer *ListRenderer
-	viewName     string
 	search       string
 	topics       api.Topics
 }
 
-func newTopicsState() *TopicsState {
-	tvm := &TopicsState{
-		viewName: "TopicsView",
-	}
+const TopicViewName = "TopicsView"
+
+var _ View = &TopicsView{}
+
+func newTopicsView() *TopicsView {
+	tvm := &TopicsView{}
 	return tvm
 }
 
-func (ui *UI) initTopicsView() *gocui.View {
-	exists := false
-	view := ui.getView(ui.topics.viewName)
-	exists = view != nil
-	if !exists {
-		view = ui.setView(ui.topics.viewName)
+func (tv *TopicsView) RequiresManager() bool {
+	return false
+}
+
+func (tv *TopicsView) refreshTopics() {
+	topics := Api().GetTopics().Sorted()
+
+	if tv.search != "" {
+		topics = topics.FilterByNameContaining(tv.search)
 	}
 
-	if ui.topics.search != "" {
-		view.Subtitle = withSurroundingSpaces("Searching: " + ui.topics.search)
-	} else {
-		view.Subtitle = ""
+	tv.topics = topics
+
+	newListSize := tv.topics.Len()
+	if tv.listRenderer != nil && newListSize != tv.listRenderer.listSize {
+		tv.listRenderer.setListSize(newListSize)
 	}
+}
+
+func (tv *TopicsView) getSelectedTopic() *api.Topic {
+	if tv.topics.Len() <= 0 {
+		return nil
+	}
+
+	return tv.topics[tv.listRenderer.selected]
+}
+
+func (tv *TopicsView) selectTopicByName(name string) {
+	for idx, t := range tv.topics {
+		if t.Name == name {
+			tv.listRenderer.setSelected(idx)
+		}
+	}
+}
+
+func (tv *TopicsView) Name() string {
+	return TopicViewName
+}
+
+func (tv *TopicsView) Init(ui *UI) {
+	if GetInternalView(tv.Name()) != nil {
+		return
+	}
+
+	view := SetViewLayout(tv.Name())
 
 	view.FrameColor = gocui.ColorBlue
 	view.Title = withSurroundingSpaces("Topics")
 	view.TitleColor = gocui.ColorBlue
 
-	if exists {
-		return view
-	}
-
 	_, sizeY := view.Size()
-	ui.topics.listRenderer = newListRenderer(0, sizeY/3, 0)
-	ui.refreshTopics()
+	tv.listRenderer = newListRenderer(0, sizeY/3, 0)
+	tv.refreshTopics()
 
-	if selectedWorkspace := ui.api.GetSelectedWorkspace(); selectedWorkspace != nil {
+	if selectedWorkspace := Api().GetSelectedWorkspace(); selectedWorkspace != nil {
 		topicName := strings.Split(selectedWorkspace.ShortPath(), "/")[0]
-		ui.selectTopicByName(topicName)
+		tv.selectTopicByName(topicName)
 	}
 
-	ui.keyBinding(ui.topics.viewName).
+	KeyBinding(tv.Name()).
 		set('j', func() {
-			ui.topics.listRenderer.increment()
-			ui.refreshWorkspaces()
+			tv.listRenderer.increment()
+			ui.RefreshWorkspaces()
 		}).
 		set('k', func() {
-			ui.topics.listRenderer.decrement()
-			ui.refreshWorkspaces()
+			tv.listRenderer.decrement()
+			ui.RefreshWorkspaces()
 		}).
 		set('/', func() {
-			ui.openEditorDialog(func(s string) {
-				ui.topics.search = s
-				ui.refreshTopics()
-				ui.refreshWorkspaces()
-			}, func() {}, "Search", Small)
+			GetDialog[*EditorDialog](ui).Open(func(s string) {
+				tv.search = s
+				ui.RefreshMainView()
+				ui.FocusTopicsView()
+			}, func() {
+				ui.FocusTopicsView()
+			}, "Search", Small)
 		}).
 		set(gocui.KeyEsc, func() {
-			if ui.topics.search != "" {
-				ui.topics.search = ""
-				ui.refreshTopics()
-				ui.refreshWorkspaces()
+			if tv.search != "" {
+				tv.search = ""
+				ui.RefreshMainView()
 			}
 		}).
+		set('t', func() {
+			GetDialog[*TmuxSessionView](ui).Open(func() {
+				ui.FocusTopicsView()
+			})
+		}).
 		set('a', func() {
-			ui.openEditorDialog(func(s string) {
-				if err := ui.api.CreateTopic(s); err != nil {
-					ui.openToastDialog(err.Error())
+			GetDialog[*EditorDialog](ui).Open(func(s string) {
+				if err := Api().CreateTopic(s); err != nil {
+					GetDialog[*ToastDialogState](ui).Open(err.Error(), func() {
+						ui.FocusTopicsView()
+					})
 					return
 				}
 
 				// HACK: when there a is a new topic
 				// This will result in the corresponding topic going to the top
 				// because we are sorting by modifed time
-				ui.topics.listRenderer.setSelected(0)
-				ui.refreshTopics()
-				ui.refreshWorkspaces()
+				tv.listRenderer.setSelected(0)
+				ui.RefreshMainView()
+				ui.FocusTopicsView()
 			}, func() {
+				ui.FocusTopicsView()
 			}, "Topic name", Small)
 		}).
 		set('r', func() {
-			t := ui.getSelectedTopic()
+			t := tv.getSelectedTopic()
 			if t == nil {
 				return
 			}
 
-			ui.openEditorDialog(func(s string) {
-				if err := ui.api.RenameTopic(t, s); err != nil {
-					ui.openToastDialog(err.Error())
+			GetDialog[*EditorDialog](ui).Open(func(s string) {
+				if err := Api().RenameTopic(t, s); err != nil {
+					GetDialog[*ToastDialogState](ui).Open(err.Error(), func() {
+						ui.FocusTopicsView()
+					})
+					return
 				}
-			}, func() {}, "New topic name", Small)
+				ui.RefreshMainView()
+				ui.FocusTopicsView()
+			}, func() {
+				ui.FocusTopicsView()
+			}, "New topic name", Small)
 		}).
 		set('d', func() {
-			if ui.api.GetTopicCount() <= 0 {
+			if Api().GetTopicCount() <= 0 {
 				return
 			}
-			ui.openConfirmationDialog(func(b bool) {
+			GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
 				if b {
-					ui.api.DeleteTopic(ui.getSelectedTopic())
-					ui.refreshTopics()
-					ui.refreshWorkspaces()
+					Api().DeleteTopic(tv.getSelectedTopic())
+					ui.RefreshMainView()
 				}
+				ui.FocusTopicsView()
 			}, "Are you sure you want to delete this topic? All its content will be deleted.")
 		}).
 		set(gocui.KeyEnter, func() {
-			if ui.api.GetTopicCount() > 0 {
-				ui.setFocusedFsView(ui.workspaces.viewName)
+			if Api().GetTopicCount() > 0 {
+				ui.FocusWorkspacesView()
 			}
 		}).
 		set('?', func() {
-			ui.openHelpView(ui.getKeyBindings(ui.topics.viewName))
+			GetDialog[*HelpView](ui).Open(getKeyBindings(tv.Name()), func() {
+				ui.FocusTopicsView()
+			})
 		})
-	return view
 }
 
-func (ui *UI) refreshTopics() {
-	topics := ui.api.GetTopics().Sorted()
-
-	if ui.topics.search != "" {
-		topics = topics.FilterByNameContaining(ui.topics.search)
-	}
-
-	ui.topics.topics = topics
-
-	newListSize := ui.topics.topics.Len()
-	if ui.topics.listRenderer != nil && newListSize != ui.topics.listRenderer.listSize {
-		ui.topics.listRenderer.setListSize(newListSize)
-	}
-}
-
-func (ui *UI) getSelectedTopic() *api.Topic {
-	if ui.topics.topics.Len() <= 0 {
-		return nil
-	}
-
-	return ui.topics.topics[ui.topics.listRenderer.selected]
-}
-
-func (ui *UI) formatTopic(topic *api.Topic, selected bool) []string {
-	sizeX, _ := ui.getView(ui.topics.viewName).Size()
+func (tv *TopicsView) formatTopic(topic *api.Topic, selected bool) []string {
+	sizeX, _ := GetInternalView(tv.Name()).Size()
 	style, blankLine := func() (color.Style, string) {
 		if selected {
 			return color.New(color.Black, color.BgCyan), highlightedBlankLine(sizeX + 5) // +5 for extra padding
@@ -174,26 +197,28 @@ func (ui *UI) formatTopic(topic *api.Topic, selected bool) []string {
 	return out
 }
 
-func (ui *UI) selectTopicByName(name string) {
-	for idx, t := range ui.topics.topics {
-		if t.Name == name {
-			ui.topics.listRenderer.setSelected(idx)
-		}
+func (tv *TopicsView) Render(ui *UI) error {
+	view := GetInternalView(tv.Name())
+	if view == nil {
+		return nil
 	}
-}
 
-func (ui *UI) renderTopicsView() {
-	view := ui.initTopicsView()
+	if tv.search != "" {
+		view.Subtitle = withSurroundingSpaces("Searching: " + tv.search)
+	} else {
+		view.Subtitle = ""
+	}
 
 	view.Clear()
-	topics := ui.topics.topics
+	topics := tv.topics
 	content := make([]string, 0)
-	ui.topics.listRenderer.forEach(func(idx int) {
+	tv.listRenderer.forEach(func(idx int) {
 		topic := topics[idx]
-		selected := idx == ui.topics.listRenderer.selected
-		content = append(content, ui.formatTopic(topic, selected)...)
+		selected := idx == tv.listRenderer.selected
+		content = append(content, tv.formatTopic(topic, selected)...)
 	})
 	for _, line := range content {
 		fmt.Fprintln(view, line)
 	}
+	return nil
 }

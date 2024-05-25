@@ -6,61 +6,57 @@ import (
 	"github.com/awesome-gocui/gocui"
 )
 
+const ToastDialogStateName = "ToastDialogView"
+
 type ToastDialogState struct {
-	viewName string
-	message  string
-	active   bool
+	editor  Editor
+	message string
 }
+
+var _ Dialog = &ToastDialogState{}
 
 func newToastDialogState() *ToastDialogState {
-	return &ToastDialogState{
-		viewName: "ToastDialogView",
-		active:   false,
-	}
+	return &ToastDialogState{}
 }
 
-func (ui *UI) initToastDialogView(sizeX int, sizeY int) *gocui.View {
-	view := ui.setCenteredView(ui.toast.viewName, sizeX, sizeY, 0)
+func (td *ToastDialogState) Name() string {
+	return ToastDialogStateName
+}
+
+func (td *ToastDialogState) Open(message string, exit func()) {
+	td.message = message
+	messageLength := len(td.message)
+	view := SetCenteredView(td.Name(), messageLength+5, 3, 0)
 	view.FrameColor = gocui.ColorRed
 	view.Title = withSurroundingSpaces("Error")
-	for _, key := range []gocui.Key{
+	view.Editable = true
+	keys := []gocui.Key{
 		gocui.KeyEnter,
 		gocui.KeyBackspace,
 		gocui.KeyBackspace2,
 		gocui.KeyEsc,
-	} {
-		ui.keyBinding(ui.toast.viewName).set(key, func() {
-			ui.closeToastDialog()
-		})
 	}
 
-	return view
+	td.editor = NewSingleActionEditor(keys, func() {
+		td.Close()
+		exit()
+	})
+	view.Editor = td.editor
+	FocusView(td.Name())
 }
 
-func (ui *UI) openToastDialog(message string) {
-	ui.toast.active = true
-	ui.toast.message = message
+func (td *ToastDialogState) Close() {
+	td.message = ""
+	DeleteView(td.Name())
 }
 
-func (ui *UI) closeToastDialog() {
-	ui.toast.active = false
-	ui.gui.DeleteView(ui.toast.viewName)
-}
-
-func (ui *UI) getToastDialogView() *gocui.View {
-	return ui.getView(ui.toast.viewName)
-}
-
-func (ui *UI) renderToastDialog() {
-	if !ui.toast.active {
-		return
+func (td *ToastDialogState) Render(ui *UI) error {
+	view := GetInternalView(td.Name())
+	if view == nil {
+		return nil
 	}
-
-	messageLength := len(ui.toast.message)
-	view := ui.initToastDialogView(messageLength+5, 3)
-
-	ui.focusView(ui.toast.viewName)
 
 	sizeX, _ := view.Size()
-	fmt.Fprintln(view, displayWhiteText(ui.toast.message, Left, sizeX))
+	fmt.Fprintln(view, displayWhiteText(td.message, Left, sizeX))
+	return nil
 }
