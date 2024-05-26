@@ -3,7 +3,6 @@ package ui
 import (
 	"errors"
 	"log"
-	"mynav/pkg/utils"
 
 	"github.com/awesome-gocui/gocui"
 )
@@ -16,7 +15,6 @@ type UI struct {
 }
 
 func Start() *Action {
-	utils.InitLogger("debug.log")
 	InitApi()
 
 	g := NewGui()

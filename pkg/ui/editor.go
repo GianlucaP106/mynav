@@ -24,6 +24,10 @@ func NewSimpleEditor(onEnter func(string), onEsc func()) gocui.EditorFunc {
 				onEsc()
 			case key == gocui.KeyEnter:
 				onEnter(v.Buffer())
+			case key == gocui.KeyArrowLeft:
+				v.MoveCursor(-1, 0)
+			case key == gocui.KeyArrowRight:
+				v.MoveCursor(1, 0)
 			}
 		})
 }
