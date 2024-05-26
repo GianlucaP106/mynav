@@ -40,7 +40,7 @@ func (wd *WorkspaceDatasource) SetSelectedWorkspace(w *Workspace) {
 
 func (wd *WorkspaceDatasource) Sync(w WorkspaceContainer) {
 	for id, m := range wd.Data.Workspaces {
-		if w.Get(id) == nil || (m.TmuxSession == nil && m.Description == "") {
+		if w.Get(id) == nil || m.Description == "" {
 			delete(wd.Data.Workspaces, id)
 		}
 	}

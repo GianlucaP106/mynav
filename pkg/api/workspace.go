@@ -9,8 +9,8 @@ import (
 )
 
 type WorkspaceMetadata struct {
-	TmuxSession *TmuxSession `json:"tmux-session"`
-	Description string       `json:"description"`
+	// TmuxSession *TmuxSession `json:"-"`
+	Description string `json:"description"`
 }
 
 type Workspace struct {

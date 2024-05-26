@@ -19,4 +19,5 @@ func handleAction(action *ui.Action) {
 			os.Exit(0)
 		}
 	}
+	action.Command = nil
 }

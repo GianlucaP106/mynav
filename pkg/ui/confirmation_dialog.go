@@ -28,7 +28,7 @@ func (cd *ConfirmationDialog) Open(onConfirm func(bool), title string) {
 	})
 
 	sizeX := len(cd.title)
-	view := SetCenteredView(cd.Name(), sizeX, 3, 0)
+	view := SetCenteredView(cd.Name(), sizeX+5, 3, 0)
 	FocusView(cd.Name())
 	view.Title = withSurroundingSpaces("Confirm")
 	view.Wrap = true

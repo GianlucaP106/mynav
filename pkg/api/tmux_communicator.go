@@ -13,7 +13,7 @@ func NewTmuxCommunicator() *TmuxCommunicator {
 	return &TmuxCommunicator{}
 }
 
-func (tm *TmuxCommunicator) GetSessions() TmuxSessionContainer {
+func (tm *TmuxCommunicator) GetSessions() map[string]*TmuxSession {
 	out := map[string]*TmuxSession{}
 
 	stdout, err := exec.Command("tmux", "ls").Output()
@@ -61,17 +61,19 @@ func (tm *TmuxCommunicator) GetSessions() TmuxSessionContainer {
 	return out
 }
 
-func (tm *TmuxCommunicator) DeleteSession(ts *TmuxSession) {
-	err := exec.Command("tmux", "kill-session", "-t", ts.Name).Run()
+func (tm *TmuxCommunicator) KillSession(name string) error {
+	err := exec.Command("tmux", "kill-session", "-t", name).Run()
 	if err != nil {
-		log.Panicln(err)
+		return err
 	}
+
+	return nil
 }
 
-func (tm *TmuxCommunicator) RenameSession(ts *TmuxSession, newName string) {
-	if err := exec.Command("tmux", "rename-session", "-t", ts.Name, newName).Run(); err != nil {
-		log.Panicln(err)
+func (tm *TmuxCommunicator) RenameSession(oldName string, newName string) error {
+	if err := exec.Command("tmux", "rename-session", "-t", oldName, newName).Run(); err != nil {
+		return err
 	}
 
-	ts.Name = newName
+	return nil
 }

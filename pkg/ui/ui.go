@@ -3,6 +3,7 @@ package ui
 import (
 	"errors"
 	"log"
+	"mynav/pkg/utils"
 
 	"github.com/awesome-gocui/gocui"
 )
@@ -15,13 +16,15 @@ type UI struct {
 }
 
 func Start() *Action {
+	utils.InitLogger("debug.log")
 	InitApi()
 
 	g := NewGui()
 	defer g.Close()
 
 	ui := &UI{
-		views: map[string]View{},
+		views:  map[string]View{},
+		action: &Action{},
 	}
 
 	managers := ui.InitViews()
@@ -39,6 +42,9 @@ func Start() *Action {
 	KeyBinding("").
 		setKeybinding("", gocui.KeyCtrlC, quit).
 		setKeybinding("", 'q', quit).
+		set('t', func() {
+			GetDialog[*TmuxSessionView](ui).Open(ui)
+		}).
 		set('?', func() {
 			GetDialog[*HelpView](ui).Open(nil, func() {
 				ui.FocusTopicsView()

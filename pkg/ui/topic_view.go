@@ -107,15 +107,10 @@ func (tv *TopicsView) Init(ui *UI) {
 				ui.RefreshMainView()
 			}
 		}).
-		set('t', func() {
-			GetDialog[*TmuxSessionView](ui).Open(func() {
-				ui.FocusTopicsView()
-			})
-		}).
 		set('a', func() {
 			GetDialog[*EditorDialog](ui).Open(func(s string) {
 				if err := Api().CreateTopic(s); err != nil {
-					GetDialog[*ToastDialogState](ui).Open(err.Error(), func() {
+					GetDialog[*ToastDialog](ui).Open(err.Error(), func() {
 						ui.FocusTopicsView()
 					})
 					return
@@ -139,7 +134,7 @@ func (tv *TopicsView) Init(ui *UI) {
 
 			GetDialog[*EditorDialog](ui).Open(func(s string) {
 				if err := Api().RenameTopic(t, s); err != nil {
-					GetDialog[*ToastDialogState](ui).Open(err.Error(), func() {
+					GetDialog[*ToastDialog](ui).Open(err.Error(), func() {
 						ui.FocusTopicsView()
 					})
 					return
