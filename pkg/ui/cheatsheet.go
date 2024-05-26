@@ -4,6 +4,10 @@ func getKeyBindings(viewName string) []*KeyBindingMapping {
 	keys := map[string][]*KeyBindingMapping{}
 	keys["global"] = []*KeyBindingMapping{
 		{
+			key:    "t",
+			action: "Tmux session view",
+		},
+		{
 			key:    "q | Ctrl-c",
 			action: "Quit",
 		},
@@ -51,7 +55,7 @@ func getKeyBindings(viewName string) []*KeyBindingMapping {
 			action: "Open in neovim",
 		},
 		{
-			key:    "t",
+			key:    "m",
 			action: "Open in terminal",
 		},
 		{
@@ -104,6 +108,25 @@ func getKeyBindings(viewName string) []*KeyBindingMapping {
 		{
 			key:    "esc",
 			action: "Escape search",
+		},
+	}
+
+	keys[TmuxSessionViewName] = []*KeyBindingMapping{
+		{
+			key:    "esc",
+			action: "Exit view",
+		},
+		{
+			key:    "d",
+			action: "Delete session",
+		},
+		{
+			key:    "a",
+			action: "New external session (not associated to a workspace)",
+		},
+		{
+			key:    "enter",
+			action: "Attach to session",
 		},
 	}
 

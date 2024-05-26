@@ -135,7 +135,7 @@ func (wv *WorkspacesView) Init(ui *UI) {
 
 			GetDialog[*EditorDialog](ui).Open(func(s string) {
 				if err := Api().CloneRepo(s, curWorkspace); err != nil {
-					GetDialog[*ToastDialogState](ui).Open(err.Error(), func() {
+					GetDialog[*ToastDialog](ui).Open(err.Error(), func() {
 						ui.FocusWorkspacesView()
 					})
 				}
@@ -161,7 +161,7 @@ func (wv *WorkspacesView) Init(ui *UI) {
 				return gocui.ErrQuit
 			}
 
-			command := Api().CreateOrAttachTmuxSession(curWorkspace)
+			command := Api().GetCreateOrAttachTmuxSessionCmd(curWorkspace)
 			ui.setAction(command)
 
 			return gocui.ErrQuit
@@ -176,7 +176,7 @@ func (wv *WorkspacesView) Init(ui *UI) {
 			ui.setAction(utils.NvimCmd(curWorkspace.Path))
 			return gocui.ErrQuit
 		}).
-		setKeybinding(wv.Name(), 't', func(g *gocui.Gui, v *gocui.View) error {
+		setKeybinding(wv.Name(), 'm', func(g *gocui.Gui, v *gocui.View) error {
 			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
 				return nil
@@ -184,7 +184,7 @@ func (wv *WorkspacesView) Init(ui *UI) {
 
 			openTermCmd, err := utils.GetOpenTerminalCmd(curWorkspace.Path)
 			if err != nil {
-				GetDialog[*ToastDialogState](ui).Open(err.Error(), func() {
+				GetDialog[*ToastDialog](ui).Open(err.Error(), func() {
 					ui.FocusWorkspacesView()
 				})
 				return nil
@@ -218,7 +218,7 @@ func (wv *WorkspacesView) Init(ui *UI) {
 
 			GetDialog[*EditorDialog](ui).Open(func(s string) {
 				if err := Api().RenameWorkspace(curWorkspace, s); err != nil {
-					GetDialog[*ToastDialogState](ui).Open(err.Error(), func() {
+					GetDialog[*ToastDialog](ui).Open(err.Error(), func() {
 						ui.FocusWorkspacesView()
 					})
 				}
@@ -247,7 +247,7 @@ func (wv *WorkspacesView) Init(ui *UI) {
 			curTopic := tv.getSelectedTopic()
 			GetDialog[*EditorDialog](ui).Open(func(name string) {
 				if _, err := Api().CreateWorkspace(name, curTopic); err != nil {
-					GetDialog[*ToastDialogState](ui).Open(err.Error(), func() {
+					GetDialog[*ToastDialog](ui).Open(err.Error(), func() {
 						ui.FocusWorkspacesView()
 					})
 					return
@@ -270,10 +270,10 @@ func (wv *WorkspacesView) Init(ui *UI) {
 				return
 			}
 
-			if curWorkspace.Metadata.TmuxSession != nil {
+			if Api().GetTmuxSessionByWorkspace(curWorkspace) != nil {
 				GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
 					if b {
-						Api().DeleteTmuxSession(curWorkspace)
+						Api().DeleteWorkspaceTmuxSession(curWorkspace)
 					}
 					ui.FocusWorkspacesView()
 				}, "Are you sure you want to delete the tmux session?")
@@ -306,14 +306,18 @@ func (wv *WorkspacesView) formatWorkspaceRow(workspace *api.Workspace, selected 
 	}()
 
 	fifth := sizeX / 5
-	description := withSpacePadding(workspace.GetDescription(), fifth)
+
+	description := ""
+	if workspace.GetDescription() != "" {
+		description = withSpacePadding("Description: "+workspace.GetDescription(), fifth)
+	}
+
 	url := withSpacePadding(gitRemote, fifth)
 	time := withSpacePadding(lastModTime, fifth)
 
 	name := withSurroundingSpaces(workspace.Name)
 	tmux := func() string {
-		if workspace.Metadata.TmuxSession != nil {
-			tm := workspace.Metadata.TmuxSession
+		if tm := Api().GetTmuxSessionByWorkspace(workspace); tm != nil {
 			numWindows := strconv.Itoa(tm.NumWindows)
 			var line string
 			if selected {
@@ -329,7 +333,12 @@ func (wv *WorkspacesView) formatWorkspaceRow(workspace *api.Workspace, selected 
 		return ""
 	}()
 
-	name = withSpacePadding(name, sizeX/5)
+	if description == "" {
+		name = withSpacePadding(name, 2*fifth)
+	} else {
+		name = withSpacePadding(name, fifth)
+	}
+
 	line := style.Sprint(name+description+url+time) + tmux + style.Sprint(strings.Repeat(" ", fifth+5)) // +5 for extra padding
 	return []string{
 		blank,

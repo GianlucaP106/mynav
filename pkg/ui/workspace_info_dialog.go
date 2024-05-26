@@ -94,9 +94,9 @@ func (wd *WorkspaceInfoDialogState) formatWorkspaceInfo(w *api.Workspace) []stri
 		out = append(out, blankLine(sizeX))
 	}
 
-	if w.Metadata.TmuxSession != nil && w.Metadata.TmuxSession.Name != "" {
-		out = append(out, formatItem("Tmux session: ", w.Metadata.TmuxSession.Name)...)
-		out = append(out, withSpacePadding(strconv.Itoa(w.Metadata.TmuxSession.NumWindows)+" window(s)", sizeX))
+	if s := Api().GetTmuxSessionByWorkspace(w); s != nil {
+		out = append(out, formatItem("Tmux session: ", s.Name)...)
+		out = append(out, withSpacePadding(strconv.Itoa(s.NumWindows)+" window(s)", sizeX))
 		out = append(out, blankLine(sizeX))
 	}
 

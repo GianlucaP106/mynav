@@ -12,3 +12,5 @@ func NewTmuxSession(name string) *TmuxSession {
 	}
 	return session
 }
+
+type TmuxSessions []*TmuxSession

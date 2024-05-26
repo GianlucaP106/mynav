@@ -4,14 +4,13 @@ import "mynav/pkg/utils"
 
 type WorkspaceController struct {
 	WorkspaceRepository   *WorkspaceRepository
-	TmuxSessionRepository *TmuxSessionRepository
+	TmuxSessionController *TmuxSessionController
 }
 
-func NewWorkspaceController(topics Topics, storePath string, tr *TmuxSessionRepository) *WorkspaceController {
+func NewWorkspaceController(topics Topics, storePath string, tr *TmuxSessionController) *WorkspaceController {
 	wc := &WorkspaceController{}
-	wc.TmuxSessionRepository = tr
+	wc.TmuxSessionController = tr
 	wc.WorkspaceRepository = NewWorkspaceRepository(topics, storePath)
-	wc.syncTmuxSessions()
 	return wc
 }
 
@@ -26,7 +25,7 @@ func (wc *WorkspaceController) CreateWorkspace(name string, topic *Topic) (*Work
 }
 
 func (wc *WorkspaceController) DeleteWorkspace(w *Workspace) error {
-	wc.DeleteTmuxSession(w)
+	wc.DeleteWorkspaceTmuxSession(w)
 
 	if err := wc.WorkspaceRepository.Delete(w); err != nil {
 		return err
@@ -36,14 +35,14 @@ func (wc *WorkspaceController) DeleteWorkspace(w *Workspace) error {
 }
 
 func (wc *WorkspaceController) RenameWorkspace(w *Workspace, newName string) error {
+	s := wc.TmuxSessionController.GetTmuxSessionByWorkspace(w)
+
 	if err := wc.WorkspaceRepository.Rename(w, newName); err != nil {
 		return err
 	}
 
-	if w.Metadata.TmuxSession != nil {
-		wc.TmuxSessionRepository.RenameSession(w.Metadata.TmuxSession, w.Path)
-		w.Metadata.TmuxSession.Name = w.Path
-		wc.WorkspaceRepository.Save(w)
+	if s != nil {
+		wc.TmuxSessionController.RenameTmuxSession(s, w.Path)
 	}
 
 	return nil
@@ -54,24 +53,20 @@ func (wc *WorkspaceController) SetDescription(description string, w *Workspace) 
 	wc.WorkspaceRepository.SetSelectedWorkspace(w)
 }
 
-func (wc *WorkspaceController) CreateOrAttachTmuxSession(w *Workspace) []string {
-	if w.Metadata.TmuxSession != nil {
+func (wc *WorkspaceController) GetCreateOrAttachTmuxSessionCmd(w *Workspace) []string {
+	if ts := wc.TmuxSessionController.GetTmuxSessionByWorkspace(w); ts != nil {
 		wc.WorkspaceRepository.SetSelectedWorkspace(w)
-		return utils.AttachTmuxSessionCmd(w.Metadata.TmuxSession.Name)
+		return utils.AttachTmuxSessionCmd(ts.Name)
 	}
 
-	ts := NewTmuxSession(w.Path)
-	w.Metadata.TmuxSession = ts
 	wc.WorkspaceRepository.SetSelectedWorkspace(w)
-	return utils.NewTmuxSessionCmd(ts.Name, ts.Name)
+	return utils.NewTmuxSessionCmd(w.Path, w.Path)
 }
 
-func (wc *WorkspaceController) DeleteTmuxSession(w *Workspace) {
-	if w.Metadata.TmuxSession != nil {
-		wc.TmuxSessionRepository.DeleteSession(w.Metadata.TmuxSession)
+func (wc *WorkspaceController) DeleteWorkspaceTmuxSession(w *Workspace) {
+	if ts := wc.TmuxSessionController.GetTmuxSessionByWorkspace(w); ts != nil {
+		wc.TmuxSessionController.DeleteTmuxSession(ts)
 	}
-	w.Metadata.TmuxSession = nil
-	wc.WorkspaceRepository.Save(w)
 }
 
 func (wc *WorkspaceController) GetSelectedWorkspace() *Workspace {
@@ -82,16 +77,14 @@ func (wc *WorkspaceController) SetSelectedWorkspace(w *Workspace) {
 	wc.WorkspaceRepository.SetSelectedWorkspace(w)
 }
 
-func (wm *WorkspaceController) GetTmuxStats() (sessionCount int, windowCount int) {
-	sessionCount = 0
-	windowCount = 0
-	for _, w := range wm.WorkspaceRepository.GetContainer() {
-		if w.Metadata.TmuxSession != nil {
-			sessionCount++
-			windowCount += w.Metadata.TmuxSession.NumWindows
+func (wc *WorkspaceController) GetWorkspaceByTmuxSession(s *TmuxSession) *Workspace {
+	for _, w := range wc.GetWorkspaces() {
+		if ts := wc.TmuxSessionController.GetTmuxSessionByWorkspace(w); ts != nil && ts.Name == s.Name {
+			return w
 		}
 	}
-	return
+
+	return nil
 }
 
 func (wc *WorkspaceController) GetWorkspaceCount() int {
@@ -120,21 +113,4 @@ func (wc *WorkspaceController) CloneRepo(repoUrl string, w *Workspace) error {
 	w.GitRemote = &repoUrl
 	wc.WorkspaceRepository.SetSelectedWorkspace(w)
 	return nil
-}
-
-func (wc *WorkspaceController) syncTmuxSessions() {
-	sessions := wc.TmuxSessionRepository.TmuxSessionContainer
-	for _, w := range wc.WorkspaceRepository.WorkspaceContainer {
-		if w.Metadata.TmuxSession != nil && !sessions.Exists(w.Path) {
-			w.Metadata.TmuxSession = nil
-			wc.WorkspaceRepository.Save(w)
-		}
-	}
-
-	for id, session := range sessions {
-		if w := wc.WorkspaceRepository.FindByPath(id); w != nil {
-			w.Metadata.TmuxSession = session
-			wc.WorkspaceRepository.Save(w)
-		}
-	}
 }

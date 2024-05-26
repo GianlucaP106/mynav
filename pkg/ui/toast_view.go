@@ -8,22 +8,22 @@ import (
 
 const ToastDialogStateName = "ToastDialogView"
 
-type ToastDialogState struct {
+type ToastDialog struct {
 	editor  Editor
 	message string
 }
 
-var _ Dialog = &ToastDialogState{}
+var _ Dialog = &ToastDialog{}
 
-func newToastDialogState() *ToastDialogState {
-	return &ToastDialogState{}
+func newToastDialogState() *ToastDialog {
+	return &ToastDialog{}
 }
 
-func (td *ToastDialogState) Name() string {
+func (td *ToastDialog) Name() string {
 	return ToastDialogStateName
 }
 
-func (td *ToastDialogState) Open(message string, exit func()) {
+func (td *ToastDialog) Open(message string, exit func()) {
 	td.message = message
 	messageLength := len(td.message)
 	view := SetCenteredView(td.Name(), messageLength+5, 3, 0)
@@ -45,12 +45,12 @@ func (td *ToastDialogState) Open(message string, exit func()) {
 	FocusView(td.Name())
 }
 
-func (td *ToastDialogState) Close() {
+func (td *ToastDialog) Close() {
 	td.message = ""
 	DeleteView(td.Name())
 }
 
-func (td *ToastDialogState) Render(ui *UI) error {
+func (td *ToastDialog) Render(ui *UI) error {
 	view := GetInternalView(td.Name())
 	if view == nil {
 		return nil

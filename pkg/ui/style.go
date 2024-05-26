@@ -71,7 +71,7 @@ func withCharPadding(content string, size int, c string) string {
 		repeat = int(math.Abs(float64(repeat)))
 		return trimEnd(content, repeat+4) + "... "
 	}
-	return content + strings.Repeat(c, size-len(content))
+	return content + strings.Repeat(c, repeat)
 }
 
 func withSurroundingSpaces(s string) string {
