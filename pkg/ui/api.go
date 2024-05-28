@@ -8,6 +8,11 @@ func Api() *api.Api {
 	return _api
 }
 
-func InitApi() {
-	_api = api.NewApi()
+func InitApi() error {
+	a, err := api.NewApi()
+	if err != nil {
+		return err
+	}
+	_api = a
+	return nil
 }

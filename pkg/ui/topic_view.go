@@ -195,7 +195,8 @@ func (tv *TopicsView) formatTopic(topic *api.Topic, selected bool) []string {
 func (tv *TopicsView) Render(ui *UI) error {
 	view := GetInternalView(tv.Name())
 	if view == nil {
-		return nil
+		tv.Init(ui)
+		view = GetInternalView(tv.Name())
 	}
 
 	if tv.search != "" {

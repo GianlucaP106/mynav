@@ -353,7 +353,8 @@ func (wv *WorkspacesView) formatWorkspaceRow(workspace *api.Workspace, selected 
 func (wv *WorkspacesView) Render(ui *UI) error {
 	view := GetInternalView(wv.Name())
 	if view == nil {
-		return nil
+		wv.Init(ui)
+		view = GetInternalView(wv.Name())
 	}
 
 	if wv.search != "" {
