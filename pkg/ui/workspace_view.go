@@ -139,7 +139,10 @@ func (wv *WorkspacesView) Init(ui *UI) {
 						ui.FocusWorkspacesView()
 					})
 				}
-			}, func() {}, "Git repo URL", Small)
+				ui.FocusWorkspacesView()
+			}, func() {
+				ui.FocusWorkspacesView()
+			}, "Git repo URL", Small)
 		}).
 		set('/', func() {
 			GetDialog[*EditorDialog](ui).Open(func(s string) {

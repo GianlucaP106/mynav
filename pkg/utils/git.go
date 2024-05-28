@@ -19,7 +19,8 @@ func GitRemote(path string) (string, error) {
 }
 
 func GitClone(url string, path string) error {
-	return exec.Command("git", "clone", url, path).Run()
+	exec.Command("git", "clone", url, path).Run()
+	return nil
 }
 
 func TrimGithubUrl(url string) string {
