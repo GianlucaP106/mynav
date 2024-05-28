@@ -1,6 +1,9 @@
 package api
 
-import "os"
+import (
+	"errors"
+	"os"
+)
 
 type Api struct {
 	*TmuxSessionController
@@ -9,11 +12,17 @@ type Api struct {
 	*Configuration
 }
 
-func NewApi() *Api {
+func NewApi() (*Api, error) {
 	api := &Api{}
 	api.Configuration = NewConfiguration()
+
+	cwd, _ := os.Getwd()
+	home, _ := os.UserHomeDir()
+	if !api.IsConfigInitialized && cwd == home {
+		return nil, errors.New("initializing mynav in the home directory is not supported")
+	}
 	api.InitControllers()
-	return api
+	return api, nil
 }
 
 func (api *Api) GetSystemStats() (numTopics int, numWorkspaces int) {
@@ -22,10 +31,14 @@ func (api *Api) GetSystemStats() (numTopics int, numWorkspaces int) {
 	return
 }
 
-func (api *Api) InitConfiguration() {
+func (api *Api) InitConfiguration() error {
 	dir, _ := os.Getwd()
-	api.InitConfig(dir)
+	if _, err := api.InitConfig(dir); err != nil {
+		return errors.New("cannot initialize mynav in the home directory")
+	}
+
 	api.InitControllers()
+	return nil
 }
 
 func (api *Api) InitControllers() {

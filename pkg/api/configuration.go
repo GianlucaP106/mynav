@@ -19,20 +19,24 @@ type Configuration struct {
 
 func NewConfiguration() *Configuration {
 	c := &Configuration{}
-	c.DetectConfig()
-	c.ConfigurationDatasource = NewConfigurationDatasource(c.GetConfigStorePath())
+	initialized := c.DetectConfig()
+	if initialized {
+		cwd, _ := os.Getwd()
+		c.InitConfig(cwd)
+	}
 	return c
 }
 
-func (c *Configuration) InitConfig(dir string) string {
+func (c *Configuration) InitConfig(dir string) (string, error) {
 	path := filepath.Join(dir, ".mynav")
 	if err := utils.CreateDir(path); err != nil {
-		log.Panicln(err)
+		return "", err
 	}
 
 	c.path = dir
 	c.IsConfigInitialized = true
-	return c.path
+	c.ConfigurationDatasource = NewConfigurationDatasource(c.GetConfigStorePath())
+	return c.path, nil
 }
 
 func (c *Configuration) GetConfigPath() string {
@@ -45,28 +49,29 @@ func (c *Configuration) DetectConfig() bool {
 		log.Panicln(err)
 	}
 	dirEntries := utils.GetDirEntries(cwd)
+	homeDir, _ := os.UserHomeDir()
 
 	configPath, err := func() (string, error) {
 		for {
 			for _, entry := range dirEntries {
+				if cwd == "/" {
+					return "", errors.New("no config present")
+				}
 				if entry.Name() == ".mynav" {
+					if cwd == homeDir {
+						break
+					}
+
 					if !entry.IsDir() {
 						os.Remove(filepath.Join(cwd, entry.Name()))
 						c.InitConfig(cwd)
 						return cwd, nil
-					}
-					homeDir, _ := os.UserHomeDir()
-					if cwd == homeDir {
-						break
 					}
 
 					return cwd, nil
 				}
 			}
 			cwd = filepath.Dir(cwd)
-			if cwd == "/" {
-				return "", errors.New("no config present")
-			}
 			dirEntries = utils.GetDirEntries(cwd)
 		}
 	}()

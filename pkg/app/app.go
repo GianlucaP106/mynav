@@ -18,9 +18,10 @@ func Main() {
 
 	for {
 		action := ui.Start()
-		if action.Command == nil {
+		if action == nil || action.Command == nil {
 			break
 		}
+
 		handleAction(action)
 	}
 }

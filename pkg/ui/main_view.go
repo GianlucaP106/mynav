@@ -57,6 +57,19 @@ func (mv *MainView) Init(ui *UI) {
 }
 
 func (mv *MainView) Render(ui *UI) error {
+	if !Api().IsConfigInitialized {
+		GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
+			if !b {
+				return
+			}
+
+			Api().InitConfiguration()
+
+			mv.Init(ui)
+			ui.FocusTopicsView()
+		}, "No configuration found. Would you like to initialize this directory?")
+		return nil
+	}
 	mv.tv.Render(ui)
 	mv.wv.Render(ui)
 	return nil

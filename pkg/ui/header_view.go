@@ -36,16 +36,17 @@ func (hv *HeaderView) Init(ui *UI) {
 }
 
 func (hv *HeaderView) Render(ui *UI) error {
-	currentView := GetInternalView(hv.Name())
-	if currentView == nil {
-		return nil
+	view := GetInternalView(hv.Name())
+	if view == nil {
+		hv.Init(ui)
+		view = GetInternalView(hv.Name())
 	}
 
-	sizeX, _ := currentView.Size()
-	currentView.Clear()
-	fmt.Fprintln(currentView, blankLine(sizeX))
+	sizeX, _ := view.Size()
+	view.Clear()
+	fmt.Fprintln(view, blankLine(sizeX))
 	if !Api().IsConfigInitialized {
-		fmt.Fprintln(currentView, displayWhiteText("Welcome to mynav, a workspace manager", Center, sizeX))
+		fmt.Fprintln(view, displayWhiteText("Welcome to mynav, a workspace manager", Center, sizeX))
 		return nil
 	}
 
@@ -73,7 +74,7 @@ func (hv *HeaderView) Render(ui *UI) error {
 	line += generalStats
 
 	line = display(line, Center, sizeX)
-	fmt.Fprintln(currentView, line)
+	fmt.Fprintln(view, line)
 
 	return nil
 }
