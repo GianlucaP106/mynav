@@ -58,6 +58,23 @@ func Start() *Action {
 	return ui.action
 }
 
+func (ui *UI) handleUpdate() bool {
+	if Api().IsConfigInitialized && !Api().IsUpdateAsked() {
+		Api().SetUpdateAsked()
+		update, newTag := Api().DetectUpdate()
+		if update {
+			GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
+				if b {
+					ui.setActionEnd(Api().GetUpdateSystemCmd())
+				}
+				ui.FocusTopicsView()
+			}, "A new update of mynav is available! Would you like to update to version "+newTag+"?")
+			return true
+		}
+	}
+	return false
+}
+
 func SetViewLayout(viewName string) *gocui.View {
 	maxX, maxY := ScreenSize()
 	views := map[string]func() *gocui.View{}
