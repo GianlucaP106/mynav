@@ -18,6 +18,10 @@ func (tc *TmuxSessionController) RenameTmuxSession(s *TmuxSession, newName strin
 	return nil
 }
 
+func (tc *TmuxSessionController) GetTmuxSessionCount() int {
+	return len(tc.TmuxSessionRepository.TmuxSessionContainer)
+}
+
 func (tc *TmuxSessionController) GetTmuxSessions() TmuxSessions {
 	return tc.TmuxSessionRepository.TmuxSessionContainer.ToList()
 }
@@ -31,6 +35,15 @@ func (tc *TmuxSessionController) DeleteTmuxSession(s *TmuxSession) error {
 		return err
 	}
 
+	return nil
+}
+
+func (tc *TmuxSessionController) DeleteAllTmuxSessions() error {
+	for _, s := range tc.TmuxSessionRepository.TmuxSessionContainer {
+		if err := tc.DeleteTmuxSession(s); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

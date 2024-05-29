@@ -19,11 +19,8 @@ type Configuration struct {
 
 func NewConfiguration() *Configuration {
 	c := &Configuration{}
-	initialized := c.DetectConfig()
-	if initialized {
-		cwd, _ := os.Getwd()
-		c.InitConfig(cwd)
-	}
+	c.DetectConfig()
+	c.ConfigurationDatasource = NewConfigurationDatasource(c.GetConfigStorePath())
 	return c
 }
 
