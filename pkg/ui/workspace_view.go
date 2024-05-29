@@ -94,6 +94,8 @@ func (wv *WorkspacesView) Init(ui *UI) {
 		ui.FocusTopicsView()
 	}
 
+	ui.handleUpdate()
+
 	_, sizeY := view.Size()
 	wv.listRenderer = newListRenderer(0, sizeY/3, 0)
 	wv.refreshWorkspaces()
