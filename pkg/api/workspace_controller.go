@@ -48,6 +48,16 @@ func (wc *WorkspaceController) RenameWorkspace(w *Workspace, newName string) err
 	return nil
 }
 
+func (wc *WorkspaceController) GetWorkspaceTmuxSessionCount() int {
+	out := 0
+	for _, w := range wc.WorkspaceRepository.WorkspaceContainer {
+		if wc.TmuxSessionController.GetTmuxSessionByWorkspace(w) != nil {
+			out++
+		}
+	}
+	return out
+}
+
 func (wc *WorkspaceController) SetDescription(description string, w *Workspace) {
 	w.Metadata.Description = description
 	wc.WorkspaceRepository.SetSelectedWorkspace(w)
@@ -67,6 +77,18 @@ func (wc *WorkspaceController) DeleteWorkspaceTmuxSession(w *Workspace) {
 	if ts := wc.TmuxSessionController.GetTmuxSessionByWorkspace(w); ts != nil {
 		wc.TmuxSessionController.DeleteTmuxSession(ts)
 	}
+}
+
+func (wc *WorkspaceController) DeleteAllWorkspaceTmuxSessions() error {
+	for _, w := range wc.GetWorkspaces() {
+		if s := wc.TmuxSessionController.GetTmuxSessionByWorkspace(w); s != nil {
+			if err := wc.TmuxSessionController.DeleteTmuxSession(s); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 func (wc *WorkspaceController) GetSelectedWorkspace() *Workspace {

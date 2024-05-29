@@ -121,6 +121,14 @@ func getKeyBindings(viewName string) []*KeyBindingMapping {
 			action: "Delete session",
 		},
 		{
+			key:    "x",
+			action: "Kill ALL tmux sessions",
+		},
+		{
+			key:    "w",
+			action: "Kill ALL non-external (has a workspace) tmux sessions",
+		},
+		{
 			key:    "a",
 			action: "New external session (not associated to a workspace)",
 		},

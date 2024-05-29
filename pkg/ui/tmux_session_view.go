@@ -50,15 +50,60 @@ func (tv *TmuxSessionView) Open(ui *UI) {
 			session := tv.getSelectedSession()
 			ui.setAction(utils.AttachTmuxSessionCmd(session.Name))
 		case ch == 'd':
+			if Api().GetTmuxSessionCount() == 0 {
+				return
+			}
+
 			GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
 				if b {
 					session := tv.getSelectedSession()
-					Api().DeleteTmuxSession(session)
+					if err := Api().DeleteTmuxSession(session); err != nil {
+						GetDialog[*ToastDialog](ui).Open(err.Error(), func() {
+							FocusView(tv.Name())
+						})
+						return
+					}
 					tv.refreshTmuxSessions()
 					ui.RefreshWorkspaces()
 				}
 				FocusView(tv.Name())
 			}, "Are you sure you want to delete this session?")
+		case ch == 'x':
+			if Api().GetTmuxSessionCount() == 0 {
+				return
+			}
+
+			GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
+				if b {
+					if err := Api().DeleteAllTmuxSessions(); err != nil {
+						GetDialog[*ToastDialog](ui).Open(err.Error(), func() {
+							FocusView(tv.Name())
+						})
+						return
+					}
+					tv.refreshTmuxSessions()
+					ui.RefreshWorkspaces()
+				}
+				FocusView(tv.Name())
+			}, "Are you sure you want to delete ALL tmux sessions?")
+		case ch == 'w':
+			if Api().GetWorkspaceTmuxSessionCount() == 0 {
+				return
+			}
+
+			GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
+				if b {
+					if err := Api().DeleteAllWorkspaceTmuxSessions(); err != nil {
+						GetDialog[*ToastDialog](ui).Open(err.Error(), func() {
+							FocusView(tv.Name())
+						})
+						return
+					}
+					tv.refreshTmuxSessions()
+					ui.RefreshWorkspaces()
+				}
+				FocusView(tv.Name())
+			}, "Are you sure you want to delete ALL non-external tmux sessions?")
 		case key == gocui.KeyEsc:
 			tv.Close()
 			ui.FocusTopicsView()
@@ -130,17 +175,6 @@ func (tv *TmuxSessionView) format(session *api.TmuxSession, selected bool, w *ap
 	} else {
 		workspace = "external"
 	}
-
-	// TODO: investigate the weird behaviour of len when there is color
-	// if selected {
-	// 	// sessionName = color.New(color.Blue).Sprint(sessionName)
-	// 	// windows = color.Green.Sprint(windows)
-	// 	workspace = color.Blue.Sprint(workspace)
-	// } else {
-	// 	// sessionName = color.White.Sprint(sessionName)
-	// 	// windows = color.White.Sprint(windows)
-	// 	workspace = color.White.Sprint(workspace)
-	// }
 
 	line = withSpacePadding(sessionName, 3*fifth)
 	line += withSpacePadding(windows, fifth)
