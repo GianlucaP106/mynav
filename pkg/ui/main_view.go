@@ -51,12 +51,32 @@ func (ui *UI) focusMainView(window string) {
 	}
 }
 
+func (mv *MainView) handleUpdate(ui *UI) bool {
+	if Api().IsConfigInitialized && !Api().IsUpdateAsked() {
+		Api().SetUpdateAsked()
+		update, newTag := Api().DetectUpdate()
+		if update {
+			GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
+				if b {
+					ui.setActionEnd(Api().GetUpdateSystemCmd())
+				}
+			}, "A new update of mynav is available! Would you like to update to version "+newTag+"?")
+			return true
+		}
+	}
+	return false
+}
+
 func (mv *MainView) Init(ui *UI) {
 	mv.tv.Init(ui)
 	mv.wv.Init(ui)
 }
 
 func (mv *MainView) Render(ui *UI) error {
+	if mv.handleUpdate(ui) {
+		return gocui.ErrQuit
+	}
+
 	if !Api().IsConfigInitialized {
 		GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
 			if !b {

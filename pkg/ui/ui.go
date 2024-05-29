@@ -48,8 +48,6 @@ func Start() *Action {
 			})
 		})
 
-	ui.handleUpdate()
-
 	err := g.MainLoop()
 	if err != nil {
 		if !errors.Is(err, gocui.ErrQuit) {
@@ -58,20 +56,6 @@ func Start() *Action {
 	}
 
 	return ui.action
-}
-
-func (ui *UI) handleUpdate() {
-	if Api().IsConfigInitialized && !Api().IsUpdateAsked() {
-		Api().SetUpdateAsked()
-		update, newTag := Api().DetectUpdate()
-		if update {
-			GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
-				if b {
-					ui.setActionEnd(Api().GetUpdateSystemCmd())
-				}
-			}, "A new update of mynav is available! Would you like to update to version "+newTag+"?")
-		}
-	}
 }
 
 func SetViewLayout(viewName string) *gocui.View {
