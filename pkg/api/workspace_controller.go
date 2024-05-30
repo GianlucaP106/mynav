@@ -63,6 +63,11 @@ func (wc *WorkspaceController) SetDescription(description string, w *Workspace) 
 	wc.WorkspaceRepository.SetSelectedWorkspace(w)
 }
 
+func (wc *WorkspaceController) GetWorkspaceNvimCmd(w *Workspace) []string {
+	wc.WorkspaceRepository.SetSelectedWorkspace(w)
+	return utils.NvimCmd(w.Path)
+}
+
 func (wc *WorkspaceController) GetCreateOrAttachTmuxSessionCmd(w *Workspace) []string {
 	if ts := wc.TmuxSessionController.GetTmuxSessionByWorkspace(w); ts != nil {
 		wc.WorkspaceRepository.SetSelectedWorkspace(w)

@@ -162,7 +162,7 @@ func (wv *WorkspacesView) Init(ui *UI) {
 			}
 
 			if utils.IsTmuxSession() {
-				ui.setAction(utils.NvimCmd(curWorkspace.Path))
+				ui.setAction(Api().GetWorkspaceNvimCmd(curWorkspace))
 				return gocui.ErrQuit
 			}
 
