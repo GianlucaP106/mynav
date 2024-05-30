@@ -226,6 +226,7 @@ func (wv *WorkspacesView) Init(ui *UI) {
 					GetDialog[*ToastDialog](ui).Open(err.Error(), func() {
 						ui.FocusWorkspacesView()
 					})
+					return
 				}
 				ui.FocusWorkspacesView()
 			}, func() {

@@ -1,6 +1,10 @@
 package api
 
-import "mynav/pkg/utils"
+import (
+	"errors"
+	"mynav/pkg/utils"
+	"strings"
+)
 
 type WorkspaceController struct {
 	WorkspaceRepository   *WorkspaceRepository
@@ -14,7 +18,18 @@ func NewWorkspaceController(topics Topics, storePath string, tr *TmuxSessionCont
 	return wc
 }
 
+func (wc *WorkspaceController) PeriodValidation(name string) error {
+	if strings.ContainsRune(name, '.') {
+		return errors.New("workspace name cannot contain '.'")
+	}
+	return nil
+}
+
 func (wc *WorkspaceController) CreateWorkspace(name string, topic *Topic) (*Workspace, error) {
+	if err := wc.PeriodValidation(name); err != nil {
+		return nil, err
+	}
+
 	workspace := NewWorkspace(name, topic)
 
 	if err := wc.WorkspaceRepository.SetSelectedWorkspace(workspace); err != nil {
@@ -35,6 +50,10 @@ func (wc *WorkspaceController) DeleteWorkspace(w *Workspace) error {
 }
 
 func (wc *WorkspaceController) RenameWorkspace(w *Workspace, newName string) error {
+	if err := wc.PeriodValidation(newName); err != nil {
+		return err
+	}
+
 	s := wc.TmuxSessionController.GetTmuxSessionByWorkspace(w)
 
 	if err := wc.WorkspaceRepository.Rename(w, newName); err != nil {
