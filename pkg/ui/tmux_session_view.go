@@ -16,6 +16,7 @@ type TmuxSessionView struct {
 	editor       Editor
 	listRenderer *ListRenderer
 	sessions     []*api.TmuxSession
+	standalone   bool
 }
 
 var _ Dialog = &TmuxSessionView{}
@@ -26,7 +27,15 @@ func newTmuxSessionView() *TmuxSessionView {
 	return ts
 }
 
-func (tv *TmuxSessionView) Open(ui *UI) {
+func (tv *TmuxSessionView) refresh(ui *UI) {
+	tv.refreshTmuxSessions()
+	if !tv.standalone {
+		ui.RefreshWorkspaces()
+	}
+}
+
+func (tv *TmuxSessionView) Open(ui *UI, standalone bool) {
+	tv.standalone = standalone
 	view := SetViewLayout(tv.Name())
 
 	view.Title = withSurroundingSpaces("TMUX Sessions")
@@ -63,8 +72,7 @@ func (tv *TmuxSessionView) Open(ui *UI) {
 						})
 						return
 					}
-					tv.refreshTmuxSessions()
-					ui.RefreshWorkspaces()
+					tv.refresh(ui)
 				}
 				FocusView(tv.Name())
 			}, "Are you sure you want to delete this session?")
@@ -81,13 +89,12 @@ func (tv *TmuxSessionView) Open(ui *UI) {
 						})
 						return
 					}
-					tv.refreshTmuxSessions()
-					ui.RefreshWorkspaces()
+					tv.refresh(ui)
 				}
 				FocusView(tv.Name())
 			}, "Are you sure you want to delete ALL tmux sessions?")
 		case ch == 'w':
-			if Api().GetWorkspaceTmuxSessionCount() == 0 {
+			if tv.standalone || Api().GetWorkspaceTmuxSessionCount() == 0 {
 				return
 			}
 
@@ -99,19 +106,23 @@ func (tv *TmuxSessionView) Open(ui *UI) {
 						})
 						return
 					}
-					tv.refreshTmuxSessions()
-					ui.RefreshWorkspaces()
+					tv.refresh(ui)
 				}
 				FocusView(tv.Name())
 			}, "Are you sure you want to delete ALL non-external tmux sessions?")
 		case key == gocui.KeyEsc:
-			tv.Close()
-			ui.FocusTopicsView()
+			if !tv.standalone {
+				tv.Close()
+				ui.FocusTopicsView()
+			}
 		case ch == 'j':
 			tv.listRenderer.increment()
 		case ch == 'k':
 			tv.listRenderer.decrement()
 		case ch == 'a':
+			if utils.IsTmuxSession() {
+				return
+			}
 			GetDialog[*EditorDialog](ui).Open(func(s string) {
 				ui.setAction(utils.NewTmuxSessionCmd(s, "~"))
 			}, func() {
@@ -217,7 +228,10 @@ func (tv *TmuxSessionView) Render(ui *UI) error {
 	fmt.Fprintln(view, tv.formatTitles())
 	tv.listRenderer.forEach(func(idx int) {
 		session := tv.sessions[idx]
-		potentialWorkspace := Api().GetWorkspaceByTmuxSession(session)
+		var potentialWorkspace *api.Workspace
+		if !tv.standalone {
+			potentialWorkspace = Api().GetWorkspaceByTmuxSession(session)
+		}
 		line := tv.format(session, idx == tv.listRenderer.selected, potentialWorkspace)
 		fmt.Fprintln(view, line)
 	})

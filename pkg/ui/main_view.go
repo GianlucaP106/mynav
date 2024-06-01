@@ -3,16 +3,18 @@ package ui
 import "github.com/awesome-gocui/gocui"
 
 type MainView struct {
-	wv *WorkspacesView
-	tv *TopicsView
+	wv          *WorkspacesView
+	tv          *TopicsView
+	configAsked bool
 }
 
 var _ View = &MainView{}
 
 func newMainView(wv *WorkspacesView, tv *TopicsView) *MainView {
 	return &MainView{
-		wv: wv,
-		tv: tv,
+		wv:          wv,
+		tv:          tv,
+		configAsked: false,
 	}
 }
 
@@ -57,21 +59,28 @@ func (mv *MainView) Init(ui *UI) {
 }
 
 func (mv *MainView) Render(ui *UI) error {
-	if !Api().IsConfigInitialized {
+	if !Api().IsConfigInitialized && !mv.configAsked {
+		mv.configAsked = true
 		GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
 			if !b {
+				Api().InitTmuxController()
+				GetDialog[*TmuxSessionView](ui).Open(ui, true)
+				FocusView(TmuxSessionViewName)
 				return
 			}
 
 			Api().InitConfiguration()
-
 			mv.Init(ui)
 			ui.FocusTopicsView()
 		}, "No configuration found. Would you like to initialize this directory?")
 		return nil
 	}
-	mv.tv.Render(ui)
-	mv.wv.Render(ui)
+
+	if Api().IsConfigInitialized {
+		mv.tv.Render(ui)
+		mv.wv.Render(ui)
+
+	}
 
 	if ui.action.Command != nil {
 		return gocui.ErrQuit
