@@ -50,7 +50,7 @@ func (hv *HeaderView) Render(ui *UI) error {
 		return nil
 	}
 
-	line := withSpacePadding("", 10)
+	line := ""
 
 	if w := Api().GetSelectedWorkspace(); w != nil {
 		selected := withSpacePadding("", 5)
