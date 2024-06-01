@@ -40,7 +40,7 @@ func Start() *Action {
 		setKeybinding("", gocui.KeyCtrlC, quit).
 		setKeybinding("", 'q', quit).
 		set('t', func() {
-			GetDialog[*TmuxSessionView](ui).Open(ui)
+			GetDialog[*TmuxSessionView](ui).Open(ui, false)
 		}).
 		set('?', func() {
 			GetDialog[*HelpView](ui).Open(nil, func() {

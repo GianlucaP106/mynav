@@ -41,9 +41,13 @@ func (api *Api) InitConfiguration() error {
 	return nil
 }
 
+func (api *Api) InitTmuxController() {
+	api.TmuxSessionController = NewTmuxSessionController()
+}
+
 func (api *Api) InitControllers() {
 	if api.IsConfigInitialized {
-		api.TmuxSessionController = NewTmuxSessionController()
+		api.InitTmuxController()
 		api.TopicController = NewTopicController(api.path, api.TmuxSessionController)
 		api.WorkspaceController = NewWorkspaceController(api.GetTopics(), api.GetWorkspaceStorePath(), api.TmuxSessionController)
 		api.TopicController.WorkspaceController = api.WorkspaceController
