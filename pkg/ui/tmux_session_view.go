@@ -157,6 +157,20 @@ func (tv *TmuxSessionView) Name() string {
 	return TmuxSessionViewName
 }
 
+func (tv *TmuxSessionView) formatTitles() string {
+	view := GetInternalView(tv.Name())
+	sizeX, _ := view.Size()
+
+	fifth := (sizeX / 5) + 1
+	line := ""
+
+	line += withSpacePadding("Workspace | external", fifth)
+	line += withSpacePadding("Windows Open", fifth)
+	line += withSpacePadding("Session Name", 3*fifth)
+
+	return line
+}
+
 func (tv *TmuxSessionView) format(session *api.TmuxSession, selected bool, w *api.Workspace) string {
 	view := GetInternalView(tv.Name())
 	sizeX, _ := view.Size()
@@ -176,9 +190,9 @@ func (tv *TmuxSessionView) format(session *api.TmuxSession, selected bool, w *ap
 		workspace = "external"
 	}
 
-	line = withSpacePadding(sessionName, 3*fifth)
-	line += withSpacePadding(windows, fifth)
 	line += withSpacePadding(workspace, fifth)
+	line += withSpacePadding(windows, fifth)
+	line += withSpacePadding(sessionName, 3*fifth)
 
 	if selected {
 		line = color.New(color.BgCyan, color.Black).Sprint(line)
@@ -200,6 +214,7 @@ func (tv *TmuxSessionView) Render(ui *UI) error {
 	}
 
 	view.Clear()
+	fmt.Fprintln(view, tv.formatTitles())
 	tv.listRenderer.forEach(func(idx int) {
 		session := tv.sessions[idx]
 		potentialWorkspace := Api().GetWorkspaceByTmuxSession(session)
