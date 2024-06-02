@@ -1,6 +1,10 @@
 package ui
 
-import "github.com/awesome-gocui/gocui"
+import (
+	"os"
+
+	"github.com/awesome-gocui/gocui"
+)
 
 type MainView struct {
 	wv          *WorkspacesView
@@ -61,9 +65,17 @@ func (mv *MainView) Init(ui *UI) {
 func (mv *MainView) Render(ui *UI) error {
 	if !Api().IsConfigInitialized && !mv.configAsked {
 		mv.configAsked = true
+
+		homeDir, _ := os.UserHomeDir()
+		cwd, _ := os.Getwd()
+		if homeDir == cwd {
+			GetDialog[*TmuxSessionView](ui).Open(ui, true)
+			FocusView(TmuxSessionViewName)
+			return nil
+		}
+
 		GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
 			if !b {
-				Api().InitTmuxController()
 				GetDialog[*TmuxSessionView](ui).Open(ui, true)
 				FocusView(TmuxSessionViewName)
 				return

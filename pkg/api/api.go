@@ -16,12 +16,12 @@ func NewApi() (*Api, error) {
 	api := &Api{}
 	api.Configuration = NewConfiguration()
 
-	cwd, _ := os.Getwd()
-	home, _ := os.UserHomeDir()
-	if !api.IsConfigInitialized && cwd == home {
-		return nil, errors.New("initializing mynav in the home directory is not supported")
+	if api.IsConfigInitialized {
+		api.InitControllers()
+	} else {
+		api.InitTmuxController()
 	}
-	api.InitControllers()
+
 	return api, nil
 }
 
