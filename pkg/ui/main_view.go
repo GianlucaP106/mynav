@@ -84,6 +84,7 @@ func (mv *MainView) Render(ui *UI) error {
 			Api().InitConfiguration()
 			mv.Init(ui)
 			ui.FocusTopicsView()
+			ui.handleUpdate()
 		}, "No configuration found. Would you like to initialize this directory?")
 		return nil
 	}
