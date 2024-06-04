@@ -17,6 +17,7 @@ type TmuxSessionView struct {
 	listRenderer *ListRenderer
 	sessions     []*api.TmuxSession
 	standalone   bool
+	quit         bool
 }
 
 var _ Dialog = &TmuxSessionView{}
@@ -119,6 +120,8 @@ func (tv *TmuxSessionView) Open(ui *UI, standalone bool) {
 			tv.listRenderer.increment()
 		case ch == 'k':
 			tv.listRenderer.decrement()
+		case ch == 'q':
+			tv.quit = true
 		case ch == 'a':
 			if utils.IsTmuxSession() {
 				return
@@ -220,7 +223,7 @@ func (tv *TmuxSessionView) Render(ui *UI) error {
 		return nil
 	}
 
-	if ui.action.Command != nil {
+	if ui.action.Command != nil || tv.quit {
 		return gocui.ErrQuit
 	}
 
