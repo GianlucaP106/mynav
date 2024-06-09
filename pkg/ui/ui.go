@@ -84,7 +84,12 @@ func SetViewLayout(viewName string) *gocui.View {
 	}
 
 	views[TopicViewName] = func() *gocui.View {
-		view, _ := SetView(TopicViewName, 2, 8, maxX/3-1, maxY-4, 0)
+		view, _ := SetView(TopicViewName, 2, 8, maxX/3-1, (maxY/2)-4, 0)
+		return view
+	}
+
+	views[PortViewName] = func() *gocui.View {
+		view, _ := SetView(PortViewName, 2, (maxY/2)-3, maxX/3-1, maxY-4, 0)
 		return view
 	}
 

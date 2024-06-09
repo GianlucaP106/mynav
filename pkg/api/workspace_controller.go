@@ -8,10 +8,10 @@ import (
 
 type WorkspaceController struct {
 	WorkspaceRepository   *WorkspaceRepository
-	TmuxSessionController *TmuxSessionController
+	TmuxSessionController *TmuxController
 }
 
-func NewWorkspaceController(topics Topics, storePath string, tr *TmuxSessionController) *WorkspaceController {
+func NewWorkspaceController(topics Topics, storePath string, tr *TmuxController) *WorkspaceController {
 	wc := &WorkspaceController{}
 	wc.TmuxSessionController = tr
 	wc.WorkspaceRepository = NewWorkspaceRepository(topics, storePath)

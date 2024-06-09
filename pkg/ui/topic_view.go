@@ -92,6 +92,9 @@ func (tv *TopicsView) Init(ui *UI) {
 			tv.listRenderer.decrement()
 			ui.RefreshWorkspaces()
 		}).
+		set(gocui.KeyArrowDown, func() {
+			ui.FocusPortView()
+		}).
 		set('/', func() {
 			GetDialog[*EditorDialog](ui).Open(func(s string) {
 				tv.search = s
@@ -206,11 +209,16 @@ func (tv *TopicsView) Render(ui *UI) error {
 	}
 
 	view.Clear()
+	currentViewSelected := false
+	if v := GetFocusedView(); v != nil && v.Name() == tv.Name() {
+		currentViewSelected = true
+	}
+
 	topics := tv.topics
 	content := make([]string, 0)
 	tv.listRenderer.forEach(func(idx int) {
 		topic := topics[idx]
-		selected := idx == tv.listRenderer.selected
+		selected := (idx == tv.listRenderer.selected) && currentViewSelected
 		content = append(content, tv.formatTopic(topic, selected)...)
 	})
 	for _, line := range content {

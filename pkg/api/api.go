@@ -6,9 +6,10 @@ import (
 )
 
 type Api struct {
-	*TmuxSessionController
+	*TmuxController
 	*WorkspaceController
 	*TopicController
+	*PortController
 	*Configuration
 }
 
@@ -42,14 +43,15 @@ func (api *Api) InitConfiguration() error {
 }
 
 func (api *Api) InitTmuxController() {
-	api.TmuxSessionController = NewTmuxSessionController()
+	api.TmuxController = NewTmuxController()
 }
 
 func (api *Api) InitControllers() {
 	if api.IsConfigInitialized {
 		api.InitTmuxController()
-		api.TopicController = NewTopicController(api.path, api.TmuxSessionController)
-		api.WorkspaceController = NewWorkspaceController(api.GetTopics(), api.GetWorkspaceStorePath(), api.TmuxSessionController)
+		api.PortController = NewPortController(api.TmuxController)
+		api.TopicController = NewTopicController(api.path, api.TmuxController)
+		api.WorkspaceController = NewWorkspaceController(api.GetTopics(), api.GetWorkspaceStorePath(), api.TmuxController)
 		api.TopicController.WorkspaceController = api.WorkspaceController
 	}
 }
