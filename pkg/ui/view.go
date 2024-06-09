@@ -14,10 +14,12 @@ type View interface {
 func (ui *UI) InitViews() []gocui.Manager {
 	tv := newTopicsView()
 	wv := newWorkspacesView(tv)
+	pv := newPortView()
 	ui.SetViews(
-		newMainView(wv, tv),
+		newMainView(wv, tv, pv),
 		tv,
 		wv,
+		pv,
 		newHeaderState(),
 	)
 

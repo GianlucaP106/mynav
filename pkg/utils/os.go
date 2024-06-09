@@ -2,9 +2,35 @@ package utils
 
 import (
 	"errors"
-	"os"
+	"runtime"
 	"strings"
+	"time"
 )
+
+type OS = uint
+
+const (
+	Darwin OS = iota
+	Linux
+	Unsuported
+)
+
+func DetectOS() OS {
+	switch runtime.GOOS {
+	case "darwin":
+		return Darwin
+	case "linux":
+		return Linux
+	default:
+		return Unsuported
+	}
+}
+
+func IsBeforeOneHourAgo(timestamp time.Time) bool {
+	now := time.Now()
+	oneHourAgo := now.Add(-1 * time.Hour)
+	return timestamp.Before(oneHourAgo)
+}
 
 func IsWarpInstalled() bool {
 	if DetectOS() != Darwin {
@@ -48,24 +74,4 @@ func GetOpenTerminalCmd(path string) ([]string, error) {
 	command = append(command, path)
 
 	return command, nil
-}
-
-func IsTmuxSession() bool {
-	return os.Getenv("TMUX") != ""
-}
-
-func NvimCmd(path string) []string {
-	return []string{"nvim", path}
-}
-
-func NewTmuxSessionCmd(session string, path string) []string {
-	return []string{"tmux", "new", "-s", session, "-c", path}
-}
-
-func AttachTmuxSessionCmd(session string) []string {
-	return []string{"tmux", "a", "-t", session}
-}
-
-func KillTmuxSessionCmd(sessionName string) []string {
-	return []string{"tmux", "kill-session", "-t", sessionName}
 }

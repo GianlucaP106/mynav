@@ -6,16 +6,16 @@ import (
 )
 
 type TopicController struct {
-	TopicRepoitory        *TopicRepository
-	WorkspaceController   *WorkspaceController
-	TmuxSessionController *TmuxSessionController
-	rootPath              string
+	TopicRepoitory      *TopicRepository
+	WorkspaceController *WorkspaceController
+	TmuxController      *TmuxController
+	rootPath            string
 }
 
-func NewTopicController(rootPath string, tsc *TmuxSessionController) *TopicController {
+func NewTopicController(rootPath string, tsc *TmuxController) *TopicController {
 	tc := &TopicController{
-		rootPath:              rootPath,
-		TmuxSessionController: tsc,
+		rootPath:       rootPath,
+		TmuxController: tsc,
 	}
 	tc.TopicRepoitory = NewTopicRepository(rootPath)
 	return tc
@@ -65,8 +65,8 @@ func (tc *TopicController) RenameTopic(t *Topic, newName string) error {
 			wr.WorkspaceDatasource.Data.SelectedWorkspace = newShortPath
 		}
 
-		if s := tc.TmuxSessionController.GetTmuxSessionByWorkspace(w); s != nil {
-			tc.TmuxSessionController.RenameTmuxSession(s, newWorkspacePath)
+		if s := tc.TmuxController.GetTmuxSessionByWorkspace(w); s != nil {
+			tc.TmuxController.RenameTmuxSession(s, newWorkspacePath)
 		}
 
 		wr.WorkspaceContainer[newShortPath] = w

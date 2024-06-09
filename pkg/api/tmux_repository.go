@@ -1,23 +1,23 @@
 package api
 
-type TmuxSessionRepository struct {
+type TmuxRepository struct {
 	TmuxSessionContainer TmuxSessionContainer
 	TmuxCommunicator     *TmuxCommunicator
 }
 
-func NewTmuxSessionRepository() *TmuxSessionRepository {
-	tr := &TmuxSessionRepository{
-		TmuxCommunicator: NewTmuxCommunicator(),
+func NewTmuxRepository(tc *TmuxCommunicator) *TmuxRepository {
+	tr := &TmuxRepository{
+		TmuxCommunicator: tc,
 	}
 	tr.LoadSessions()
 	return tr
 }
 
-func (tr *TmuxSessionRepository) LoadSessions() {
+func (tr *TmuxRepository) LoadSessions() {
 	tr.TmuxSessionContainer = tr.TmuxCommunicator.GetSessions()
 }
 
-func (tr *TmuxSessionRepository) DeleteSession(ts *TmuxSession) error {
+func (tr *TmuxRepository) DeleteSession(ts *TmuxSession) error {
 	if err := tr.TmuxCommunicator.KillSession(ts.Name); err != nil {
 		return err
 	}
@@ -26,11 +26,11 @@ func (tr *TmuxSessionRepository) DeleteSession(ts *TmuxSession) error {
 	return nil
 }
 
-func (tr *TmuxSessionRepository) GetSessionByName(name string) *TmuxSession {
+func (tr *TmuxRepository) GetSessionByName(name string) *TmuxSession {
 	return tr.TmuxSessionContainer.Get(name)
 }
 
-func (tr *TmuxSessionRepository) RenameSession(ts *TmuxSession, newName string) error {
+func (tr *TmuxRepository) RenameSession(ts *TmuxSession, newName string) error {
 	if err := tr.TmuxCommunicator.RenameSession(ts.Name, newName); err != nil {
 		return err
 	}

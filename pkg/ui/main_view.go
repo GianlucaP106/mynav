@@ -9,15 +9,17 @@ import (
 type MainView struct {
 	wv          *WorkspacesView
 	tv          *TopicsView
+	pv          *PortView
 	configAsked bool
 }
 
 var _ View = &MainView{}
 
-func newMainView(wv *WorkspacesView, tv *TopicsView) *MainView {
+func newMainView(wv *WorkspacesView, tv *TopicsView, pv *PortView) *MainView {
 	return &MainView{
 		wv:          wv,
 		tv:          tv,
+		pv:          pv,
 		configAsked: false,
 	}
 }
@@ -38,11 +40,16 @@ func (ui *UI) FocusWorkspacesView() {
 	ui.focusMainView(WorkspacesViewName)
 }
 
+func (ui *UI) FocusPortView() {
+	ui.focusMainView(PortViewName)
+}
+
 func (ui *UI) focusMainView(window string) {
 	FocusView(window)
 
 	wv := GetInternalView(WorkspacesViewName)
 	tv := GetInternalView(TopicViewName)
+	pv := GetInternalView(PortViewName)
 
 	off := gocui.ColorBlue
 	on := gocui.ColorGreen
@@ -51,14 +58,22 @@ func (ui *UI) focusMainView(window string) {
 	case WorkspacesViewName:
 		wv.FrameColor = on
 		tv.FrameColor = off
+		pv.FrameColor = off
 	case TopicViewName:
-		wv.FrameColor = off
 		tv.FrameColor = on
+		wv.FrameColor = off
+		pv.FrameColor = off
+	case PortViewName:
+		pv.FrameColor = on
+		tv.FrameColor = off
+		wv.FrameColor = off
+
 	}
 }
 
 func (mv *MainView) Init(ui *UI) {
 	mv.tv.Init(ui)
+	mv.pv.Init(ui)
 	mv.wv.Init(ui)
 }
 
@@ -91,8 +106,8 @@ func (mv *MainView) Render(ui *UI) error {
 
 	if Api().IsConfigInitialized {
 		mv.tv.Render(ui)
+		mv.pv.Render(ui)
 		mv.wv.Render(ui)
-
 	}
 
 	if ui.action.Command != nil {
