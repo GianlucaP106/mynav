@@ -26,6 +26,10 @@ func (p *Port) GetExeName() string {
 	return filepath.Base(p.Exe)
 }
 
+func (p *Port) IsInternal() bool {
+	return p.TmuxSession != nil
+}
+
 func (p *Port) GetPortStr() string {
 	return strconv.Itoa(p.Port)
 }

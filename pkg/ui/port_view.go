@@ -12,8 +12,9 @@ import (
 const PortViewName = "PortView"
 
 type PortView struct {
-	listRenderer *ListRenderer
-	ports        []*api.Port
+	listRenderer  *ListRenderer
+	ports         api.PortList
+	externalPorts api.PortList
 }
 
 var _ View = &PortView{}
@@ -34,8 +35,18 @@ func (p *PortView) RequiresManager() bool {
 }
 
 func (pv *PortView) refreshPorts() {
-	ports := Api().GetPorts().ToList().Sorted()
+	externalPorts := make(api.PortList, 0)
+	ports := make(api.PortList, 0)
+	for _, p := range Api().GetPorts().ToList().Sorted() {
+		if p.IsInternal() {
+			ports = append(ports, p)
+		} else {
+			externalPorts = append(externalPorts, p)
+		}
+	}
+
 	pv.ports = ports
+	pv.externalPorts = externalPorts
 
 	newListSize := len(pv.ports)
 	if pv.listRenderer != nil && newListSize != pv.listRenderer.listSize {
@@ -124,7 +135,7 @@ func (p *PortView) formatPort(port *api.Port, selected bool) string {
 	if port.TmuxSession != nil {
 		workspace := Api().GetWorkspaceByTmuxSession(port.TmuxSession)
 		if workspace != nil {
-			tmuxContent = "workspace: " + workspace.Name
+			tmuxContent = "workspace: " + workspace.ShortPath()
 		} else {
 			tmuxContent = "tmux: " + port.TmuxSession.Name
 		}
@@ -162,6 +173,7 @@ func (p *PortView) Render(ui *UI) error {
 				p.refreshPorts()
 			}
 
+			sizeX, _ := view.Size()
 			currentViewSelected := GetFocusedView().Name() == p.Name()
 			view.Clear()
 			content := make([]string, 0)
@@ -172,8 +184,20 @@ func (p *PortView) Render(ui *UI) error {
 			})
 
 			fmt.Fprintln(view, p.formatPortListTitle())
-			for _, line := range content {
-				fmt.Fprintln(view, line)
+			fmt.Fprintln(view, withCharPadding("", sizeX, "-"))
+
+			if len(content) > 0 {
+				for _, line := range content {
+					fmt.Fprintln(view, line)
+				}
+			} else {
+				fmt.Fprintln(view, display("No workspace ports", Left, sizeX))
+			}
+
+			fmt.Fprintln(view, withCharPadding("", sizeX, "-"))
+
+			for _, port := range p.externalPorts {
+				fmt.Fprintln(view, p.formatPort(port, false))
 			}
 
 			return nil
