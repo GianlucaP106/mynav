@@ -88,10 +88,20 @@ func (pc *PortController) InitPortsAsync() {
 	pc.ports = out
 }
 
+func (pc *PortController) KillPort(p *Port) error {
+	if err := utils.KillProcess(p.Pid); err != nil {
+		return err
+	}
+
+	pc.InitPortsAsync()
+	return nil
+}
+
 func (pc *PortController) GetPorts() Ports {
 	if len(pc.ports) == 0 {
 		pc.InitPortsAsync()
 		// pc.InitPorts()
 	}
+
 	return pc.ports
 }

@@ -151,6 +151,10 @@ func getKeyBindings(viewName string) []*KeyBindingMapping {
 			key:    "enter",
 			action: "Open associated tmux session (if it exists)",
 		},
+		{
+			key:    "D",
+			action: "Kill port",
+		},
 	}
 
 	return keys[viewName]

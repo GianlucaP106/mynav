@@ -51,7 +51,13 @@ func (api *Api) InitControllers() {
 		api.InitTmuxController()
 		api.PortController = NewPortController(api.TmuxController)
 		api.TopicController = NewTopicController(api.path, api.TmuxController)
-		api.WorkspaceController = NewWorkspaceController(api.GetTopics(), api.GetWorkspaceStorePath(), api.TmuxController)
+		api.WorkspaceController = NewWorkspaceController(
+			api.GetTopics(),
+			api.GetWorkspaceStorePath(),
+			api.TmuxController,
+			api.PortController,
+		)
+
 		api.TopicController.WorkspaceController = api.WorkspaceController
 	}
 }

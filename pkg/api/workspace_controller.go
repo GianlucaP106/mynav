@@ -7,13 +7,15 @@ import (
 )
 
 type WorkspaceController struct {
-	WorkspaceRepository   *WorkspaceRepository
-	TmuxSessionController *TmuxController
+	WorkspaceRepository *WorkspaceRepository
+	TmuxController      *TmuxController
+	PortController      *PortController
 }
 
-func NewWorkspaceController(topics Topics, storePath string, tr *TmuxController) *WorkspaceController {
+func NewWorkspaceController(topics Topics, storePath string, tr *TmuxController, pc *PortController) *WorkspaceController {
 	wc := &WorkspaceController{}
-	wc.TmuxSessionController = tr
+	wc.TmuxController = tr
+	wc.PortController = pc
 	wc.WorkspaceRepository = NewWorkspaceRepository(topics, storePath)
 	return wc
 }
@@ -40,10 +42,17 @@ func (wc *WorkspaceController) CreateWorkspace(name string, topic *Topic) (*Work
 }
 
 func (wc *WorkspaceController) DeleteWorkspace(w *Workspace) error {
+	pl := wc.GetPortsByWorkspace(w)
+	refreshPorts := pl.Len() > 0
+
 	wc.DeleteWorkspaceTmuxSession(w)
 
 	if err := wc.WorkspaceRepository.Delete(w); err != nil {
 		return err
+	}
+
+	if refreshPorts {
+		wc.PortController.InitPortsAsync()
 	}
 
 	return nil
@@ -54,14 +63,14 @@ func (wc *WorkspaceController) RenameWorkspace(w *Workspace, newName string) err
 		return err
 	}
 
-	s := wc.TmuxSessionController.GetTmuxSessionByWorkspace(w)
+	s := wc.TmuxController.GetTmuxSessionByWorkspace(w)
 
 	if err := wc.WorkspaceRepository.Rename(w, newName); err != nil {
 		return err
 	}
 
 	if s != nil {
-		wc.TmuxSessionController.RenameTmuxSession(s, w.Path)
+		wc.TmuxController.RenameTmuxSession(s, w.Path)
 	}
 
 	return nil
@@ -70,7 +79,7 @@ func (wc *WorkspaceController) RenameWorkspace(w *Workspace, newName string) err
 func (wc *WorkspaceController) GetWorkspaceTmuxSessionCount() int {
 	out := 0
 	for _, w := range wc.WorkspaceRepository.WorkspaceContainer {
-		if wc.TmuxSessionController.GetTmuxSessionByWorkspace(w) != nil {
+		if wc.TmuxController.GetTmuxSessionByWorkspace(w) != nil {
 			out++
 		}
 	}
@@ -88,7 +97,7 @@ func (wc *WorkspaceController) GetWorkspaceNvimCmd(w *Workspace) []string {
 }
 
 func (wc *WorkspaceController) GetCreateOrAttachTmuxSessionCmd(w *Workspace) []string {
-	if ts := wc.TmuxSessionController.GetTmuxSessionByWorkspace(w); ts != nil {
+	if ts := wc.TmuxController.GetTmuxSessionByWorkspace(w); ts != nil {
 		wc.WorkspaceRepository.SetSelectedWorkspace(w)
 		return utils.AttachTmuxSessionCmd(ts.Name)
 	}
@@ -98,15 +107,15 @@ func (wc *WorkspaceController) GetCreateOrAttachTmuxSessionCmd(w *Workspace) []s
 }
 
 func (wc *WorkspaceController) DeleteWorkspaceTmuxSession(w *Workspace) {
-	if ts := wc.TmuxSessionController.GetTmuxSessionByWorkspace(w); ts != nil {
-		wc.TmuxSessionController.DeleteTmuxSession(ts)
+	if ts := wc.TmuxController.GetTmuxSessionByWorkspace(w); ts != nil {
+		wc.TmuxController.DeleteTmuxSession(ts)
 	}
 }
 
 func (wc *WorkspaceController) DeleteAllWorkspaceTmuxSessions() error {
 	for _, w := range wc.GetWorkspaces() {
-		if s := wc.TmuxSessionController.GetTmuxSessionByWorkspace(w); s != nil {
-			if err := wc.TmuxSessionController.DeleteTmuxSession(s); err != nil {
+		if s := wc.TmuxController.GetTmuxSessionByWorkspace(w); s != nil {
+			if err := wc.TmuxController.DeleteTmuxSession(s); err != nil {
 				return err
 			}
 		}
@@ -125,7 +134,7 @@ func (wc *WorkspaceController) SetSelectedWorkspace(w *Workspace) {
 
 func (wc *WorkspaceController) GetWorkspaceByTmuxSession(s *TmuxSession) *Workspace {
 	for _, w := range wc.GetWorkspaces() {
-		if ts := wc.TmuxSessionController.GetTmuxSessionByWorkspace(w); ts != nil && ts.Name == s.Name {
+		if ts := wc.TmuxController.GetTmuxSessionByWorkspace(w); ts != nil && ts.Name == s.Name {
 			return w
 		}
 	}
@@ -149,6 +158,26 @@ func (wc *WorkspaceController) DeleteWorkspacesByTopic(t *Topic) {
 	for _, w := range wc.WorkspaceRepository.WorkspaceContainer.ToList().ByTopic(t) {
 		wc.DeleteWorkspace(w)
 	}
+}
+
+func (wc *WorkspaceController) GetPortsByWorkspace(w *Workspace) PortList {
+	out := make(PortList, 0)
+	for _, p := range wc.PortController.GetPorts() {
+		if p.TmuxSession == nil {
+			continue
+		}
+
+		workspace := wc.GetWorkspaceByTmuxSession(p.TmuxSession)
+		if workspace == nil {
+			continue
+		}
+
+		if workspace == w {
+			out = append(out, p)
+		}
+	}
+
+	return out.Sorted()
 }
 
 func (wc *WorkspaceController) CloneRepo(repoUrl string, w *Workspace) error {

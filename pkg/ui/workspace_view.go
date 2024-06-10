@@ -205,8 +205,8 @@ func (wv *WorkspacesView) Init(ui *UI) {
 				if b {
 					curWorkspace := wv.getSelectedWorkspace()
 					Api().DeleteWorkspace(curWorkspace)
-					// HACK: same as below
 
+					// HACK: same as below
 					wv.tv.listRenderer.setSelected(0)
 					ui.RefreshMainView()
 				}
