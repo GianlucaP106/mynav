@@ -91,6 +91,10 @@ func (p *PortView) Init(ui *UI) {
 		}).
 		set(gocui.KeyEnter, func() {
 			port := p.getSelectedPort()
+			if port == nil {
+				return
+			}
+
 			if port.TmuxSession != nil {
 				ui.setAction(utils.AttachTmuxSessionCmd(port.TmuxSession.Name))
 			}
