@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"os"
+
 	"github.com/shirou/gopsutil/process"
 )
 
@@ -46,4 +48,17 @@ func GetProcessInfo(pid int) *ProcessInfo {
 	return &ProcessInfo{
 		Exe: exe,
 	}
+}
+
+func KillProcess(pid int) error {
+	proc, err := os.FindProcess(pid)
+	if err != nil {
+		return err
+	}
+
+	if err := proc.Kill(); err != nil {
+		return err
+	}
+
+	return nil
 }

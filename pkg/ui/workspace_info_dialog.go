@@ -100,6 +100,18 @@ func (wd *WorkspaceInfoDialogState) formatWorkspaceInfo(w *api.Workspace) []stri
 		out = append(out, blankLine(sizeX))
 	}
 
+	if pw := Api().GetPortsByWorkspace(w); pw != nil && pw.Len() > 0 {
+		ports := ""
+		for _, p := range pw {
+			ports += p.GetPortStr() + ", "
+		}
+
+		ports = trimEnd(ports, 2)
+		out = append(out, formatItem("Open Ports: ", ports)...)
+		out = append(out, blankLine(sizeX))
+
+	}
+
 	out = append(out, formatItem("Last modified: ", w.GetLastModifiedTimeFormatted())...)
 	out = append(out, blankLine(sizeX))
 

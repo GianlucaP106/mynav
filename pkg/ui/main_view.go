@@ -120,8 +120,10 @@ func (mv *MainView) Render(ui *UI) error {
 func (ui *UI) RefreshMainView() {
 	tv := GetView[*TopicsView](ui)
 	wv := GetView[*WorkspacesView](ui)
+	pv := GetView[*PortView](ui)
 	tv.refreshTopics()
 	wv.refreshWorkspaces()
+	pv.refreshPorts()
 }
 
 func (ui *UI) RefreshWorkspaces() {

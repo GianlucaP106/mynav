@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"mynav/pkg/api"
 	"mynav/pkg/utils"
-	"strconv"
 
 	"github.com/awesome-gocui/gocui"
 	"github.com/gookit/color"
@@ -35,11 +34,8 @@ func (p *PortView) RequiresManager() bool {
 }
 
 func (pv *PortView) refreshPorts() {
-	ports := Api().GetPorts()
-	pv.ports = make([]*api.Port, 0)
-	for _, p := range ports {
-		pv.ports = append(pv.ports, p)
-	}
+	ports := Api().GetPorts().ToList().Sorted()
+	pv.ports = ports
 
 	newListSize := len(pv.ports)
 	if pv.listRenderer != nil && newListSize != pv.listRenderer.listSize {
@@ -88,6 +84,22 @@ func (p *PortView) Init(ui *UI) {
 				ui.setAction(utils.AttachTmuxSessionCmd(port.TmuxSession.Name))
 			}
 		}).
+		set('D', func() {
+			port := p.getSelectedPort()
+			if port != nil {
+				GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
+					if b {
+						if err := Api().KillPort(port); err != nil {
+							GetDialog[*ToastDialog](ui).Open(err.Error(), func() {
+								ui.FocusPortView()
+							})
+						}
+						p.refreshPorts()
+					}
+					ui.FocusPortView()
+				}, "Are you sure you want to kill this port?")
+			}
+		}).
 		set('?', func() {
 			GetDialog[*HelpView](ui).Open(getKeyBindings(p.Name()), func() {
 				ui.FocusPortView()
@@ -103,7 +115,7 @@ func (p *PortView) formatPort(port *api.Port, selected bool) string {
 
 	exeLine := withSpacePadding(port.GetExeName(), fifth)
 
-	portNumber := strconv.Itoa(port.Port)
+	portNumber := port.GetPortStr()
 	portLine := withSpacePadding(portNumber, fifth)
 
 	tmuxSessionLine := ""
