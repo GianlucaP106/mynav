@@ -70,7 +70,12 @@ func (pc *PortController) InitPortsAsync() {
 			}
 
 			pi := utils.GetProcessInfo(prt.Pid)
-			port := NewPort(prt.Port, prt.Pid, session, pi.Exe)
+			exe := ""
+			if pi != nil {
+				exe = pi.Exe
+			}
+
+			port := NewPort(prt.Port, prt.Pid, session, exe)
 			resultChan <- port
 		}()
 	}
