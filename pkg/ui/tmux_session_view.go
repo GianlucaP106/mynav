@@ -47,6 +47,8 @@ func (tv *TmuxSessionView) Open(ui *UI, standalone bool) {
 	tv.listRenderer = newListRenderer(0, sizeY, 0)
 	tv.refreshTmuxSessions()
 
+	previousViewName := GetFocusedView().Name()
+
 	tv.editor = gocui.EditorFunc(func(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
 		switch {
 		case key == gocui.KeyEnter:
@@ -114,7 +116,7 @@ func (tv *TmuxSessionView) Open(ui *UI, standalone bool) {
 		case key == gocui.KeyEsc:
 			if !tv.standalone {
 				tv.Close()
-				ui.FocusTopicsView()
+				FocusView(previousViewName)
 			}
 		case ch == 'j':
 			tv.listRenderer.increment()
