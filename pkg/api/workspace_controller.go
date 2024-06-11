@@ -44,15 +44,14 @@ func (wc *WorkspaceController) CreateWorkspace(name string, topic *Topic) (*Work
 func (wc *WorkspaceController) DeleteWorkspace(w *Workspace) error {
 	pl := wc.GetPortsByWorkspace(w)
 	refreshPorts := pl.Len() > 0
+	if refreshPorts {
+		defer wc.PortController.InitPortsAsync()
+	}
 
 	wc.DeleteWorkspaceTmuxSession(w)
 
 	if err := wc.WorkspaceRepository.Delete(w); err != nil {
 		return err
-	}
-
-	if refreshPorts {
-		wc.PortController.InitPortsAsync()
 	}
 
 	return nil
@@ -161,20 +160,17 @@ func (wc *WorkspaceController) DeleteWorkspacesByTopic(t *Topic) {
 }
 
 func (wc *WorkspaceController) GetPortsByWorkspace(w *Workspace) PortList {
+	session := wc.TmuxController.GetTmuxSessionByWorkspace(w)
 	out := make(PortList, 0)
 	for _, p := range wc.PortController.GetPorts() {
 		if p.TmuxSession == nil {
 			continue
 		}
 
-		workspace := wc.GetWorkspaceByTmuxSession(p.TmuxSession)
-		if workspace == nil {
-			continue
-		}
-
-		if workspace == w {
+		if p.TmuxSession == session {
 			out = append(out, p)
 		}
+
 	}
 
 	return out.Sorted()

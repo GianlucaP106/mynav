@@ -31,7 +31,7 @@ func newTmuxSessionView() *TmuxSessionView {
 func (tv *TmuxSessionView) refresh(ui *UI) {
 	tv.refreshTmuxSessions()
 	if !tv.standalone {
-		ui.RefreshWorkspaces()
+		ui.RefreshMainView()
 	}
 }
 

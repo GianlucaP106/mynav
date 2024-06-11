@@ -3,13 +3,15 @@ package api
 type TmuxController struct {
 	TmuxRepository   *TmuxRepository
 	TmuxCommunicator *TmuxCommunicator
+	PortController   *PortController
 }
 
-func NewTmuxController() *TmuxController {
+func NewTmuxController(pc *PortController) *TmuxController {
 	tc := NewTmuxCommunicator()
 	return &TmuxController{
 		TmuxRepository:   NewTmuxRepository(tc),
 		TmuxCommunicator: tc,
+		PortController:   pc,
 	}
 }
 
@@ -33,7 +35,28 @@ func (tc *TmuxController) GetTmuxSessionByWorkspace(w *Workspace) *TmuxSession {
 	return tc.TmuxRepository.GetSessionByName(w.Path)
 }
 
+func (tc *TmuxController) GetPortsByTmuxSession(session *TmuxSession) PortList {
+	out := make(PortList, 0)
+	for _, port := range tc.PortController.GetPorts() {
+		if port.TmuxSession == nil {
+			continue
+		}
+
+		if port.TmuxSession == session {
+			out = append(out, port)
+		}
+	}
+
+	return out
+}
+
 func (tc *TmuxController) DeleteTmuxSession(s *TmuxSession) error {
+	pl := tc.GetPortsByTmuxSession(s)
+	refreshPorts := pl.Len() > 0
+	if refreshPorts {
+		defer tc.PortController.InitPortsAsync()
+	}
+
 	if err := tc.TmuxRepository.DeleteSession(s); err != nil {
 		return err
 	}

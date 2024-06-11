@@ -10,10 +10,9 @@ type PortController struct {
 	ports          Ports
 }
 
-func NewPortController(tc *TmuxController) *PortController {
+func NewPortController() *PortController {
 	pc := &PortController{
-		TmuxController: tc,
-		ports:          make(Ports),
+		ports: make(Ports),
 	}
 
 	return pc
@@ -105,7 +104,6 @@ func (pc *PortController) KillPort(p *Port) error {
 func (pc *PortController) GetPorts() Ports {
 	if len(pc.ports) == 0 {
 		pc.InitPortsAsync()
-		// pc.InitPorts()
 	}
 
 	return pc.ports

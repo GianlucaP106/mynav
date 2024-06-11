@@ -23,7 +23,6 @@ func Start() *Action {
 
 	g := NewGui()
 	defer g.Close()
-
 	ui := &UI{
 		views:  map[string]View{},
 		action: &Action{},
