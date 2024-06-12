@@ -43,13 +43,14 @@ func (api *Api) InitConfiguration() error {
 }
 
 func (api *Api) InitTmuxController() {
-	api.TmuxController = NewTmuxController()
+	api.PortController = NewPortController()
+	api.TmuxController = NewTmuxController(api.PortController)
+	api.PortController.TmuxController = api.TmuxController
 }
 
 func (api *Api) InitControllers() {
 	if api.IsConfigInitialized {
 		api.InitTmuxController()
-		api.PortController = NewPortController(api.TmuxController)
 		api.TopicController = NewTopicController(api.path, api.TmuxController)
 		api.WorkspaceController = NewWorkspaceController(
 			api.GetTopics(),
