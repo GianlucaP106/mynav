@@ -148,7 +148,7 @@ func (tv *TopicsView) Init(ui *UI) {
 				ui.FocusTopicsView()
 			}, "New topic name", Small)
 		}).
-		set('d', func() {
+		set('D', func() {
 			if Api().GetTopicCount() <= 0 {
 				return
 			}

@@ -196,7 +196,7 @@ func (wv *WorkspacesView) Init(ui *UI) {
 			ui.setAction(openTermCmd)
 			return gocui.ErrQuit
 		}).
-		set('d', func() {
+		set('D', func() {
 			if Api().GetWorkspacesByTopicCount(wv.tv.getSelectedTopic()) <= 0 {
 				return
 			}
