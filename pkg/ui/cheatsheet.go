@@ -31,7 +31,7 @@ func getKeyBindings(viewName string) []*KeyBindingMapping {
 			action: "Create a workspace",
 		},
 		{
-			key:    "d",
+			key:    "D",
 			action: "Delete a workspace",
 		},
 		{
@@ -98,7 +98,7 @@ func getKeyBindings(viewName string) []*KeyBindingMapping {
 			action: "Create a topic",
 		},
 		{
-			key:    "d",
+			key:    "D",
 			action: "Delete a topic",
 		},
 		{
