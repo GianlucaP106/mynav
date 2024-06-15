@@ -21,8 +21,10 @@ func newListRenderer(initial int, renderSize int, listSize int) *ListRenderer {
 
 func (lr *ListRenderer) increment() {
 	if lr.selected >= lr.listSize-1 {
+		lr.setSelected(0)
 		return
 	}
+
 	lr.selected++
 	if lr.selected >= lr.endIdx {
 		lr.endIdx++
@@ -32,6 +34,7 @@ func (lr *ListRenderer) increment() {
 
 func (lr *ListRenderer) decrement() {
 	if lr.selected <= 0 {
+		lr.setSelected(lr.listSize - 1)
 		return
 	}
 	lr.selected--
@@ -48,7 +51,8 @@ func (lr *ListRenderer) setSelected(idx int) {
 
 	size := min(lr.renderSize, lr.listSize)
 	lr.selected = idx
-	lr.startIdx = min(lr.startIdx, min(lr.selected, lr.listSize-size))
+	// lr.startIdx = min(lr.startIdx, min(lr.selected, lr.listSize-size))
+	lr.startIdx = min(lr.selected, lr.listSize-size)
 	lr.endIdx = lr.startIdx + size
 }
 
