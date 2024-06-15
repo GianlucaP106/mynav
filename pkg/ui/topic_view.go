@@ -75,7 +75,7 @@ func (tv *TopicsView) Init(ui *UI) {
 	view.TitleColor = gocui.ColorBlue
 
 	_, sizeY := view.Size()
-	tv.listRenderer = newListRenderer(0, sizeY/3, 0)
+	tv.listRenderer = newListRenderer(0, sizeY, 0)
 	tv.refreshTopics()
 
 	if selectedWorkspace := Api().GetSelectedWorkspace(); selectedWorkspace != nil {
@@ -174,7 +174,7 @@ func (tv *TopicsView) Init(ui *UI) {
 
 func (tv *TopicsView) formatTopic(topic *api.Topic, selected bool) []string {
 	sizeX, _ := GetInternalView(tv.Name()).Size()
-	style, blankLine := func() (color.Style, string) {
+	style, _ := func() (color.Style, string) {
 		if selected {
 			return color.New(color.Black, color.BgCyan), highlightedBlankLine(sizeX + 5) // +5 for extra padding
 		}
@@ -188,9 +188,7 @@ func (tv *TopicsView) formatTopic(topic *api.Topic, selected bool) []string {
 	line := style.Sprint(name + modTime)
 
 	out := []string{
-		blankLine,
 		line,
-		blankLine,
 	}
 	return out
 }
