@@ -13,7 +13,7 @@ type HeaderView struct{}
 
 var _ View = &HeaderView{}
 
-func newHeaderState() *HeaderView {
+func newHeaderView() *HeaderView {
 	titleView := &HeaderView{}
 
 	return titleView

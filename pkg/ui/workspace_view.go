@@ -95,7 +95,7 @@ func (wv *WorkspacesView) Init(ui *UI) {
 	}
 
 	_, sizeY := view.Size()
-	wv.listRenderer = newListRenderer(0, sizeY/3, 0)
+	wv.listRenderer = newListRenderer(0, sizeY, 0)
 	wv.refreshWorkspaces()
 
 	if selectedWorkspace := Api().GetSelectedWorkspace(); selectedWorkspace != nil {
@@ -108,6 +108,12 @@ func (wv *WorkspacesView) Init(ui *UI) {
 		}).
 		set('k', func() {
 			wv.listRenderer.decrement()
+		}).
+		set(gocui.KeyArrowDown, func() {
+			ui.FocusTmuxView()
+		}).
+		set(gocui.KeyArrowLeft, func() {
+			ui.FocusTopicsView()
 		}).
 		set(gocui.KeyEsc, func() {
 			if wv.search != "" {
@@ -292,7 +298,7 @@ func (wv *WorkspacesView) Init(ui *UI) {
 
 func (wv *WorkspacesView) formatWorkspaceRow(workspace *api.Workspace, selected bool) []string {
 	sizeX, _ := GetInternalView(wv.Name()).Size()
-	style, blank := func() (color.Style, string) {
+	style, _ := func() (color.Style, string) {
 		if selected {
 			return color.New(color.Black, color.BgCyan), highlightedBlankLine(sizeX + 5) // +5 for extra padding
 		}
@@ -345,9 +351,7 @@ func (wv *WorkspacesView) formatWorkspaceRow(workspace *api.Workspace, selected 
 
 	line := style.Sprint(name+description+url+time) + tmux + style.Sprint(strings.Repeat(" ", fifth+5)) // +5 for extra padding
 	return []string{
-		blank,
 		line,
-		blank,
 	}
 }
 

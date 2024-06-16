@@ -86,6 +86,9 @@ func (p *PortView) Init(ui *UI) {
 		set(gocui.KeyArrowUp, func() {
 			ui.FocusTopicsView()
 		}).
+		set(gocui.KeyArrowRight, func() {
+			ui.FocusTmuxView()
+		}).
 		set(gocui.KeyEsc, func() {
 			ui.FocusTopicsView()
 		}).
@@ -152,7 +155,7 @@ func (p *PortView) formatPort(port *api.Port, selected bool) string {
 	if selected {
 		line = color.New(color.BgCyan, color.Black).Sprint(line)
 	} else {
-		line = color.New(color.White).Sprint(line)
+		line = color.New(color.Blue).Sprint(line)
 	}
 
 	return line
@@ -165,7 +168,7 @@ func (p *PortView) formatPortListTitle() string {
 	portTitle := withSpacePadding("port", fifth)
 	pidTitle := withSpacePadding("exe", fifth)
 	tmuxTitle := withSpacePadding("linked to", (fifth*3)+5)
-	return color.Blue.Sprint(portTitle + pidTitle + tmuxTitle)
+	return portTitle + pidTitle + tmuxTitle
 }
 
 func (p *PortView) Render(ui *UI) error {
