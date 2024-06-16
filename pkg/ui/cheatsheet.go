@@ -25,12 +25,12 @@ var workspaceKeyBindings []*KeyBindingMapping = []*KeyBindingMapping{
 		action: "Move up",
 	},
 	{
-		key:    "down arrow",
+		key:    "down arrow | ctrl-j",
 		action: "Focus Tmux view",
 	},
 	{
-		key:    "left arrow",
-		action: "Go back",
+		key:    "left arrow | ctrl-h",
+		action: "Focus topic view",
 	},
 	{
 		key:    "a",
@@ -96,11 +96,11 @@ var topicKeyBindings []*KeyBindingMapping = []*KeyBindingMapping{
 		action: "Move up",
 	},
 	{
-		key:    "arrow down",
+		key:    "down arrow | ctrl-j",
 		action: "Focus Port View",
 	},
 	{
-		key:    "enter | arrow right",
+		key:    "enter | right arrow | ctrl-l",
 		action: "Open topic",
 	},
 	{
@@ -127,11 +127,11 @@ var topicKeyBindings []*KeyBindingMapping = []*KeyBindingMapping{
 
 var portKeyBindings []*KeyBindingMapping = []*KeyBindingMapping{
 	{
-		key:    "esc | arrow up",
+		key:    "esc | up arrow | ctrl-k",
 		action: "Focus Topic View",
 	},
 	{
-		key:    "arrow right",
+		key:    "right arrow | ctrl-l",
 		action: "Focus Tmux View",
 	},
 	{
@@ -171,11 +171,11 @@ func getTmuxKeyBindings(standalone bool) []*KeyBindingMapping {
 	if !standalone {
 		tmuxKeyBindings = append([]*KeyBindingMapping{
 			{
-				key:    "esc | arrow up",
+				key:    "esc | up arrow | ctrl-k",
 				action: "Focus Workspace View",
 			},
 			{
-				key:    "arrow left",
+				key:    "left arrow | ctrl-h",
 				action: "Focus Port View",
 			},
 		}, tmuxKeyBindings...)
