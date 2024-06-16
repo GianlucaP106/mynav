@@ -150,6 +150,22 @@ func (wv *WorkspacesView) Init(ui *UI) {
 				ui.FocusWorkspacesView()
 			}, "Git repo URL", Small)
 		}).
+		set('G', func() {
+			curWorkspace := wv.getSelectedWorkspace()
+			if curWorkspace == nil {
+				return
+			}
+
+			if curWorkspace.GitRemote == nil {
+				return
+			}
+
+			if err := utils.OpenBrowser(*curWorkspace.GitRemote); err != nil {
+				GetDialog[*ToastDialog](ui).Open(err.Error(), func() {
+					ui.FocusWorkspacesView()
+				})
+			}
+		}).
 		set('/', func() {
 			GetDialog[*EditorDialog](ui).Open(func(s string) {
 				wv.search = s

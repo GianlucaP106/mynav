@@ -49,6 +49,10 @@ var workspaceKeyBindings []*KeyBindingMapping = []*KeyBindingMapping{
 		action: "Clone git repo",
 	},
 	{
+		key:    "G",
+		action: "Open browser to git repo",
+	},
+	{
 		key:    "enter",
 		action: "Open in tmux/open in neovim",
 	},
