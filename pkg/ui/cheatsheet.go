@@ -2,6 +2,10 @@ package ui
 
 var globalKeyBindings []*KeyBindingMapping = []*KeyBindingMapping{
 	{
+		key:    "t",
+		action: "Focus tmux session view",
+	},
+	{
 		key:    "q | Ctrl-c",
 		action: "Quit",
 	},
