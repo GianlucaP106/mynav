@@ -112,6 +112,8 @@ func (mv *MainView) Render(ui *UI) error {
 		mv.tmv.Render(ui)
 	}
 
+	ui.handleUpdate()
+
 	if ui.action.Command != nil {
 		return gocui.ErrQuit
 	}
