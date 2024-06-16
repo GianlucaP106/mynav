@@ -2,6 +2,7 @@ package utils
 
 import (
 	"errors"
+	"os/exec"
 	"runtime"
 	"strings"
 	"time"
@@ -46,6 +47,19 @@ func IsItermInstalled() bool {
 	}
 
 	return Exists("/Applications/iTerm.app")
+}
+
+func OpenBrowser(url string) error {
+	var cmd string
+
+	switch DetectOS() {
+	case Linux:
+		cmd = "xdg-open"
+	case Darwin:
+		cmd = "open"
+	}
+
+	return exec.Command(cmd, url).Start()
 }
 
 func GetOpenTerminalCmd(path string) ([]string, error) {
