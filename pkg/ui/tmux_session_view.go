@@ -47,6 +47,18 @@ func (tv *TmuxSessionView) Init(ui *UI) {
 	tv.listRenderer = newListRenderer(0, sizeY, 0)
 	tv.refreshTmuxSessions()
 
+	moveUp := func() {
+		if !tv.standalone {
+			ui.FocusWorkspacesView()
+		}
+	}
+
+	moveLeft := func() {
+		if !tv.standalone {
+			ui.FocusPortView()
+		}
+	}
+
 	KeyBinding(TmuxSessionViewName).
 		set(gocui.KeyEnter, func() {
 			if utils.IsTmuxSession() {
@@ -135,21 +147,11 @@ func (tv *TmuxSessionView) Init(ui *UI) {
 				FocusView(tv.Name())
 			})
 		}).
-		set(gocui.KeyEsc, func() {
-			if !tv.standalone {
-				ui.FocusWorkspacesView()
-			}
-		}).
-		set(gocui.KeyArrowUp, func() {
-			if !tv.standalone {
-				ui.FocusWorkspacesView()
-			}
-		}).
-		set(gocui.KeyArrowLeft, func() {
-			if !tv.standalone {
-				ui.FocusPortView()
-			}
-		})
+		set(gocui.KeyEsc, moveUp).
+		set(gocui.KeyArrowUp, moveUp).
+		set(gocui.KeyCtrlK, moveUp).
+		set(gocui.KeyArrowLeft, moveLeft).
+		set(gocui.KeyCtrlH, moveLeft)
 
 	if tv.standalone {
 		FocusView(tv.Name())

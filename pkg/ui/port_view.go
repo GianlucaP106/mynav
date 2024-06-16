@@ -76,6 +76,14 @@ func (p *PortView) Init(ui *UI) {
 	_, sizeY := view.Size()
 	p.listRenderer = newListRenderer(0, sizeY, 0)
 
+	moveUp := func() {
+		ui.FocusTopicsView()
+	}
+
+	moveRight := func() {
+		ui.FocusTmuxView()
+	}
+
 	KeyBinding(p.Name()).
 		set('j', func() {
 			p.listRenderer.increment()
@@ -83,15 +91,11 @@ func (p *PortView) Init(ui *UI) {
 		set('k', func() {
 			p.listRenderer.decrement()
 		}).
-		set(gocui.KeyArrowUp, func() {
-			ui.FocusTopicsView()
-		}).
-		set(gocui.KeyArrowRight, func() {
-			ui.FocusTmuxView()
-		}).
-		set(gocui.KeyEsc, func() {
-			ui.FocusTopicsView()
-		}).
+		set(gocui.KeyArrowUp, moveUp).
+		set(gocui.KeyCtrlK, moveUp).
+		set(gocui.KeyEsc, moveUp).
+		set(gocui.KeyArrowRight, moveRight).
+		set(gocui.KeyCtrlL, moveRight).
 		set(gocui.KeyEnter, func() {
 			port := p.getSelectedPort()
 			if port == nil {

@@ -83,6 +83,16 @@ func (tv *TopicsView) Init(ui *UI) {
 		tv.selectTopicByName(topicName)
 	}
 
+	moveRight := func() {
+		if Api().GetTopicCount() > 0 {
+			ui.FocusWorkspacesView()
+		}
+	}
+
+	moveDown := func() {
+		ui.FocusPortView()
+	}
+
 	KeyBinding(tv.Name()).
 		set('j', func() {
 			tv.listRenderer.increment()
@@ -94,9 +104,11 @@ func (tv *TopicsView) Init(ui *UI) {
 			wv := GetView[*WorkspacesView](ui)
 			wv.refreshWorkspaces()
 		}).
-		set(gocui.KeyArrowDown, func() {
-			ui.FocusPortView()
-		}).
+		set(gocui.KeyEnter, moveRight).
+		set(gocui.KeyArrowRight, moveRight).
+		set(gocui.KeyCtrlL, moveRight).
+		set(gocui.KeyArrowDown, moveDown).
+		set(gocui.KeyCtrlJ, moveDown).
 		set('/', func() {
 			GetDialog[*EditorDialog](ui).Open(func(s string) {
 				tv.search = s
@@ -161,16 +173,6 @@ func (tv *TopicsView) Init(ui *UI) {
 				}
 				ui.FocusTopicsView()
 			}, "Are you sure you want to delete this topic? All its content will be deleted.")
-		}).
-		set(gocui.KeyEnter, func() {
-			if Api().GetTopicCount() > 0 {
-				ui.FocusWorkspacesView()
-			}
-		}).
-		set(gocui.KeyArrowRight, func() {
-			if Api().GetTopicCount() > 0 {
-				ui.FocusWorkspacesView()
-			}
 		}).
 		set('?', func() {
 			GetDialog[*HelpView](ui).Open(topicKeyBindings, func() {

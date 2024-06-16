@@ -102,6 +102,14 @@ func (wv *WorkspacesView) Init(ui *UI) {
 		wv.selectWorkspaceByShortPath(selectedWorkspace.ShortPath())
 	}
 
+	moveDown := func() {
+		ui.FocusTmuxView()
+	}
+
+	moveLeft := func() {
+		ui.FocusTopicsView()
+	}
+
 	KeyBinding(wv.Name()).
 		set('j', func() {
 			wv.listRenderer.increment()
@@ -109,12 +117,10 @@ func (wv *WorkspacesView) Init(ui *UI) {
 		set('k', func() {
 			wv.listRenderer.decrement()
 		}).
-		set(gocui.KeyArrowDown, func() {
-			ui.FocusTmuxView()
-		}).
-		set(gocui.KeyArrowLeft, func() {
-			ui.FocusTopicsView()
-		}).
+		set(gocui.KeyArrowDown, moveDown).
+		set(gocui.KeyCtrlJ, moveDown).
+		set(gocui.KeyArrowLeft, moveLeft).
+		set(gocui.KeyCtrlH, moveLeft).
 		set(gocui.KeyEsc, func() {
 			if wv.search != "" {
 				wv.search = ""
