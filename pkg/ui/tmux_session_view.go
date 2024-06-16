@@ -26,13 +26,6 @@ func newTmuxSessionView() *TmuxSessionView {
 	return ts
 }
 
-func (tv *TmuxSessionView) refresh(ui *UI) {
-	tv.refreshTmuxSessions()
-	if !tv.standalone {
-		ui.RefreshMainView()
-	}
-}
-
 func (tv *TmuxSessionView) RequiresManager() bool {
 	return false
 }
@@ -80,7 +73,7 @@ func (tv *TmuxSessionView) Init(ui *UI) {
 						})
 						return
 					}
-					tv.refresh(ui)
+					ui.RefreshMainView()
 				}
 				FocusView(tv.Name())
 			}, "Are you sure you want to delete this session?")
@@ -98,7 +91,7 @@ func (tv *TmuxSessionView) Init(ui *UI) {
 						})
 						return
 					}
-					tv.refresh(ui)
+					ui.RefreshMainView()
 				}
 				FocusView(tv.Name())
 			}, "Are you sure you want to delete ALL tmux sessions?")
@@ -116,7 +109,7 @@ func (tv *TmuxSessionView) Init(ui *UI) {
 						})
 						return
 					}
-					tv.refresh(ui)
+					ui.RefreshMainView()
 				}
 				FocusView(tv.Name())
 			}, "Are you sure you want to delete ALL non-external tmux sessions?")
@@ -138,7 +131,7 @@ func (tv *TmuxSessionView) Init(ui *UI) {
 			}, "New session name", Small)
 		}).
 		set('?', func() {
-			GetDialog[*HelpView](ui).Open(getKeyBindings(tv.Name()), func() {
+			GetDialog[*HelpView](ui).Open(getTmuxKeyBindings(tv.standalone), func() {
 				FocusView(tv.Name())
 			})
 		}).

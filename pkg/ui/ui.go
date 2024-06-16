@@ -75,22 +75,22 @@ func SetViewLayout(viewName string) *gocui.View {
 	maxX, maxY := ScreenSize()
 	views := map[string]func() *gocui.View{}
 	views[WorkspacesViewName] = func() *gocui.View {
-		view, _ := SetView(WorkspacesViewName, (maxX/3)+1, 8, maxX-2, (maxY/2)-4, 0)
+		view, _ := SetView(WorkspacesViewName, (maxX/3)+1, 8, maxX-2, (maxY / 2), 0)
 		return view
 	}
 
 	views[TmuxSessionViewName] = func() *gocui.View {
-		view, _ := SetView(TmuxSessionViewName, (maxX/3)+1, (maxY/2)-3, maxX-2, maxY-4, 0)
+		view, _ := SetView(TmuxSessionViewName, (maxX/3)+1, (maxY/2)+1, maxX-2, maxY-4, 0)
 		return view
 	}
 
 	views[TopicViewName] = func() *gocui.View {
-		view, _ := SetView(TopicViewName, 2, 8, maxX/3-1, (maxY/2)-4, 0)
+		view, _ := SetView(TopicViewName, 2, 8, maxX/3-1, (maxY / 2), 0)
 		return view
 	}
 
 	views[PortViewName] = func() *gocui.View {
-		view, _ := SetView(PortViewName, 2, (maxY/2)-3, maxX/3-1, maxY-4, 0)
+		view, _ := SetView(PortViewName, 2, (maxY/2)+1, maxX/3-1, maxY-4, 0)
 		return view
 	}
 
