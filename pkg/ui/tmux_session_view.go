@@ -150,8 +150,6 @@ func (tv *TmuxSessionView) Init(ui *UI) {
 				ui.FocusPortView()
 			}
 		})
-
-	FocusView(tv.Name())
 }
 
 func (tv *TmuxSessionView) getSelectedSession() *api.TmuxSession {
@@ -244,7 +242,12 @@ func (tv *TmuxSessionView) Render(ui *UI) error {
 			potentialWorkspace = Api().GetWorkspaceByTmuxSession(session)
 		}
 
-		line := tv.format(session, tv.Name() == GetFocusedView().Name() && idx == tv.listRenderer.selected, potentialWorkspace)
+		isViewFocused := false
+		if fv := GetFocusedView(); fv != nil {
+			isViewFocused = tv.Name() == GetFocusedView().Name()
+		}
+
+		line := tv.format(session, isViewFocused && idx == tv.listRenderer.selected, potentialWorkspace)
 		fmt.Fprintln(view, line)
 	})
 

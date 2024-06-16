@@ -87,7 +87,7 @@ func (wv *WorkspacesView) Init(ui *UI) {
 	view.TitleColor = gocui.ColorBlue
 	view.FrameColor = gocui.ColorBlue
 
-	// TODO: change
+	// FIX: this is not the best place to but this
 	if Api().GetSelectedWorkspace() != nil {
 		ui.FocusWorkspacesView()
 	} else {
