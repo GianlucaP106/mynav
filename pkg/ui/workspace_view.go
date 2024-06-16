@@ -284,13 +284,14 @@ func (wv *WorkspacesView) Init(ui *UI) {
 				GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
 					if b {
 						Api().DeleteWorkspaceTmuxSession(curWorkspace)
+						ui.RefreshMainView()
 					}
 					ui.FocusWorkspacesView()
 				}, "Are you sure you want to delete the tmux session?")
 			}
 		}).
 		set('?', func() {
-			GetDialog[*HelpView](ui).Open(getKeyBindings(wv.Name()), func() {
+			GetDialog[*HelpView](ui).Open(workspaceKeyBindings, func() {
 				ui.FocusWorkspacesView()
 			})
 		})

@@ -86,11 +86,13 @@ func (tv *TopicsView) Init(ui *UI) {
 	KeyBinding(tv.Name()).
 		set('j', func() {
 			tv.listRenderer.increment()
-			ui.RefreshWorkspaces()
+			wv := GetView[*WorkspacesView](ui)
+			wv.refreshWorkspaces()
 		}).
 		set('k', func() {
 			tv.listRenderer.decrement()
-			ui.RefreshWorkspaces()
+			wv := GetView[*WorkspacesView](ui)
+			wv.refreshWorkspaces()
 		}).
 		set(gocui.KeyArrowDown, func() {
 			ui.FocusPortView()
@@ -171,7 +173,7 @@ func (tv *TopicsView) Init(ui *UI) {
 			}
 		}).
 		set('?', func() {
-			GetDialog[*HelpView](ui).Open(getKeyBindings(tv.Name()), func() {
+			GetDialog[*HelpView](ui).Open(topicKeyBindings, func() {
 				ui.FocusTopicsView()
 			})
 		})

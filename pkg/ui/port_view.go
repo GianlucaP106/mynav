@@ -119,7 +119,7 @@ func (p *PortView) Init(ui *UI) {
 			}
 		}).
 		set('?', func() {
-			GetDialog[*HelpView](ui).Open(getKeyBindings(p.Name()), func() {
+			GetDialog[*HelpView](ui).Open(portKeyBindings, func() {
 				ui.FocusPortView()
 			})
 		})

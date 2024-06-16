@@ -16,7 +16,7 @@ func (ui *UI) InitDialogs() []gocui.Manager {
 		newConfirmationDialogState(),
 		newToastDialogState(),
 		newEditorDialogState(),
-		newHelpState(getKeyBindings("global")),
+		newHelpState(globalKeyBindings),
 	)
 
 	managers := []gocui.Manager{}

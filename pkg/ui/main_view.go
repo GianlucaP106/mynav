@@ -50,38 +50,24 @@ func (ui *UI) FocusTmuxView() {
 	ui.focusMainView(TmuxSessionViewName)
 }
 
-func (ui *UI) focusMainView(window string) {
-	FocusView(window)
+func (ui *UI) focusMainView(viewName string) {
+	FocusView(viewName)
 
 	wv := GetInternalView(WorkspacesViewName)
 	tv := GetInternalView(TopicViewName)
 	pv := GetInternalView(PortViewName)
 	tmv := GetInternalView(TmuxSessionViewName)
+	views := []*gocui.View{wv, tv, pv, tmv}
 
 	off := gocui.ColorBlue
 	on := gocui.ColorGreen
 
-	switch window {
-	case WorkspacesViewName:
-		wv.FrameColor = on
-		tv.FrameColor = off
-		pv.FrameColor = off
-		tmv.FrameColor = off
-	case TopicViewName:
-		tv.FrameColor = on
-		wv.FrameColor = off
-		pv.FrameColor = off
-		tmv.FrameColor = off
-	case PortViewName:
-		pv.FrameColor = on
-		tv.FrameColor = off
-		wv.FrameColor = off
-		tmv.FrameColor = off
-	case TmuxSessionViewName:
-		tmv.FrameColor = on
-		pv.FrameColor = off
-		tv.FrameColor = off
-		wv.FrameColor = off
+	for _, v := range views {
+		if v.Name() == viewName {
+			v.FrameColor = on
+		} else {
+			v.FrameColor = off
+		}
 	}
 }
 
@@ -137,12 +123,11 @@ func (ui *UI) RefreshMainView() {
 	tv := GetView[*TopicsView](ui)
 	wv := GetView[*WorkspacesView](ui)
 	pv := GetView[*PortView](ui)
-	tv.refreshTopics()
-	wv.refreshWorkspaces()
-	pv.refreshPorts()
-}
-
-func (ui *UI) RefreshWorkspaces() {
-	wv := GetView[*WorkspacesView](ui)
-	wv.refreshWorkspaces()
+	tmv := GetView[*TmuxSessionView](ui)
+	if !tmv.standalone {
+		tv.refreshTopics()
+		pv.refreshPorts()
+		wv.refreshWorkspaces()
+	}
+	tmv.refreshTmuxSessions()
 }
