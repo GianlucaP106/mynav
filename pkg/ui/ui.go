@@ -38,6 +38,10 @@ func Start() *Action {
 	KeyBinding("").
 		setKeybinding("", gocui.KeyCtrlC, quit).
 		setKeybinding("", 'q', quit).
+		setKeybinding("", 'q', quit).
+		set('t', func() {
+			ui.FocusTmuxView()
+		}).
 		set('?', func() {
 			GetDialog[*HelpView](ui).Open(nil, func() {
 				ui.FocusTopicsView()
