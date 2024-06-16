@@ -165,6 +165,11 @@ func (tv *TopicsView) Init(ui *UI) {
 				ui.FocusWorkspacesView()
 			}
 		}).
+		set(gocui.KeyArrowRight, func() {
+			if Api().GetTopicCount() > 0 {
+				ui.FocusWorkspacesView()
+			}
+		}).
 		set('?', func() {
 			GetDialog[*HelpView](ui).Open(getKeyBindings(tv.Name()), func() {
 				ui.FocusTopicsView()

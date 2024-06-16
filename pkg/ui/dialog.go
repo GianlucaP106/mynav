@@ -12,7 +12,6 @@ type Dialog interface {
 func (ui *UI) InitDialogs() []gocui.Manager {
 	ui.dialogs = map[string]Dialog{}
 	ui.SetDialogs(
-		newTmuxSessionView(),
 		newWorkspaceInfoDialogState(),
 		newConfirmationDialogState(),
 		newToastDialogState(),

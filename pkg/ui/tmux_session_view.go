@@ -13,14 +13,12 @@ import (
 const TmuxSessionViewName = "TmuxSessionView"
 
 type TmuxSessionView struct {
-	editor       Editor
 	listRenderer *ListRenderer
 	sessions     []*api.TmuxSession
 	standalone   bool
-	quit         bool
 }
 
-var _ Dialog = &TmuxSessionView{}
+var _ View = &TmuxSessionView{}
 
 func newTmuxSessionView() *TmuxSessionView {
 	ts := &TmuxSessionView{}
@@ -35,9 +33,18 @@ func (tv *TmuxSessionView) refresh(ui *UI) {
 	}
 }
 
-func (tv *TmuxSessionView) Open(ui *UI, standalone bool) {
-	tv.standalone = standalone
-	view := SetViewLayout(tv.Name())
+func (tv *TmuxSessionView) RequiresManager() bool {
+	return false
+}
+
+func (tv *TmuxSessionView) Init(ui *UI) {
+	var view *gocui.View
+	if tv.standalone {
+		screenX, screenY := ScreenSize()
+		view = SetCenteredView(TmuxSessionViewName, screenX/2, screenY/3, 0)
+	} else {
+		view = SetViewLayout(tv.Name())
+	}
 
 	view.Title = withSurroundingSpaces("TMUX Sessions")
 	view.TitleColor = gocui.ColorBlue
@@ -47,11 +54,8 @@ func (tv *TmuxSessionView) Open(ui *UI, standalone bool) {
 	tv.listRenderer = newListRenderer(0, sizeY, 0)
 	tv.refreshTmuxSessions()
 
-	previousViewName := GetFocusedView().Name()
-
-	tv.editor = gocui.EditorFunc(func(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
-		switch {
-		case key == gocui.KeyEnter:
+	KeyBinding(TmuxSessionViewName).
+		set(gocui.KeyEnter, func() {
 			if utils.IsTmuxSession() {
 				GetDialog[*ToastDialog](ui).Open("You are already in a tmux session. Nested tmux sessions are not supported yet.", func() {
 					FocusView(tv.Name())
@@ -61,7 +65,8 @@ func (tv *TmuxSessionView) Open(ui *UI, standalone bool) {
 
 			session := tv.getSelectedSession()
 			ui.setAction(utils.AttachTmuxSessionCmd(session.Name))
-		case ch == 'd':
+		}).
+		set('d', func() {
 			if Api().GetTmuxSessionCount() == 0 {
 				return
 			}
@@ -79,7 +84,8 @@ func (tv *TmuxSessionView) Open(ui *UI, standalone bool) {
 				}
 				FocusView(tv.Name())
 			}, "Are you sure you want to delete this session?")
-		case ch == 'x':
+		}).
+		set('x', func() {
 			if Api().GetTmuxSessionCount() == 0 {
 				return
 			}
@@ -96,7 +102,8 @@ func (tv *TmuxSessionView) Open(ui *UI, standalone bool) {
 				}
 				FocusView(tv.Name())
 			}, "Are you sure you want to delete ALL tmux sessions?")
-		case ch == 'w':
+		}).
+		set('w', func() {
 			if tv.standalone || Api().GetWorkspaceTmuxSessionCount() == 0 {
 				return
 			}
@@ -113,18 +120,14 @@ func (tv *TmuxSessionView) Open(ui *UI, standalone bool) {
 				}
 				FocusView(tv.Name())
 			}, "Are you sure you want to delete ALL non-external tmux sessions?")
-		case key == gocui.KeyEsc:
-			if !tv.standalone {
-				tv.Close()
-				FocusView(previousViewName)
-			}
-		case ch == 'j':
+		}).
+		set('j', func() {
 			tv.listRenderer.increment()
-		case ch == 'k':
+		}).
+		set('k', func() {
 			tv.listRenderer.decrement()
-		case ch == 'q':
-			tv.quit = true
-		case ch == 'a':
+		}).
+		set('a', func() {
 			if utils.IsTmuxSession() {
 				return
 			}
@@ -133,24 +136,33 @@ func (tv *TmuxSessionView) Open(ui *UI, standalone bool) {
 			}, func() {
 				FocusView(tv.Name())
 			}, "New session name", Small)
-		case ch == '?':
+		}).
+		set('?', func() {
 			GetDialog[*HelpView](ui).Open(getKeyBindings(tv.Name()), func() {
 				FocusView(tv.Name())
 			})
-		}
-	})
+		}).
+		set(gocui.KeyEsc, func() {
+			if !tv.standalone {
+				ui.FocusWorkspacesView()
+			}
+		}).
+		set(gocui.KeyArrowUp, func() {
+			if !tv.standalone {
+				ui.FocusWorkspacesView()
+			}
+		}).
+		set(gocui.KeyArrowLeft, func() {
+			if !tv.standalone {
+				ui.FocusPortView()
+			}
+		})
 
-	view.Editor = tv.editor
-	view.Editable = true
 	FocusView(tv.Name())
 }
 
 func (tv *TmuxSessionView) getSelectedSession() *api.TmuxSession {
 	return tv.sessions[tv.listRenderer.selected]
-}
-
-func (tv *TmuxSessionView) Close() {
-	DeleteView(tv.Name())
 }
 
 func (ts *TmuxSessionView) refreshTmuxSessions() {
@@ -222,10 +234,11 @@ func (tv *TmuxSessionView) format(session *api.TmuxSession, selected bool, w *ap
 func (tv *TmuxSessionView) Render(ui *UI) error {
 	view := GetInternalView(tv.Name())
 	if view == nil {
-		return nil
+		tv.Init(ui)
+		view = GetInternalView(tv.Name())
 	}
 
-	if ui.action.Command != nil || tv.quit {
+	if ui.action.Command != nil {
 		return gocui.ErrQuit
 	}
 
@@ -237,7 +250,8 @@ func (tv *TmuxSessionView) Render(ui *UI) error {
 		if !tv.standalone {
 			potentialWorkspace = Api().GetWorkspaceByTmuxSession(session)
 		}
-		line := tv.format(session, idx == tv.listRenderer.selected, potentialWorkspace)
+
+		line := tv.format(session, tv.Name() == GetFocusedView().Name() && idx == tv.listRenderer.selected, potentialWorkspace)
 		fmt.Fprintln(view, line)
 	})
 

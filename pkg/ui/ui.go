@@ -38,9 +38,6 @@ func Start() *Action {
 	KeyBinding("").
 		setKeybinding("", gocui.KeyCtrlC, quit).
 		setKeybinding("", 'q', quit).
-		set('t', func() {
-			GetDialog[*TmuxSessionView](ui).Open(ui, false)
-		}).
 		set('?', func() {
 			GetDialog[*HelpView](ui).Open(nil, func() {
 				ui.FocusTopicsView()
@@ -78,7 +75,12 @@ func SetViewLayout(viewName string) *gocui.View {
 	maxX, maxY := ScreenSize()
 	views := map[string]func() *gocui.View{}
 	views[WorkspacesViewName] = func() *gocui.View {
-		view, _ := SetView(WorkspacesViewName, (maxX)/3+1, 8, maxX-2, maxY-4, 0)
+		view, _ := SetView(WorkspacesViewName, (maxX/3)+1, 8, maxX-2, (maxY/2)-4, 0)
+		return view
+	}
+
+	views[TmuxSessionViewName] = func() *gocui.View {
+		view, _ := SetView(TmuxSessionViewName, (maxX/3)+1, (maxY/2)-3, maxX-2, maxY-4, 0)
 		return view
 	}
 
@@ -95,10 +97,6 @@ func SetViewLayout(viewName string) *gocui.View {
 	views[HeaderStateName] = func() *gocui.View {
 		view, _ := SetView(HeaderStateName, 2, 1, maxX-2, 5, 0)
 		return view
-	}
-
-	views[TmuxSessionViewName] = func() *gocui.View {
-		return SetCenteredView(TmuxSessionViewName, maxX/2, maxY/3, 0)
 	}
 
 	f := views[viewName]

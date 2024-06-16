@@ -4,10 +4,6 @@ func getKeyBindings(viewName string) []*KeyBindingMapping {
 	keys := map[string][]*KeyBindingMapping{}
 	keys["global"] = []*KeyBindingMapping{
 		{
-			key:    "t",
-			action: "Tmux session view",
-		},
-		{
 			key:    "q | Ctrl-c",
 			action: "Quit",
 		},
@@ -25,6 +21,14 @@ func getKeyBindings(viewName string) []*KeyBindingMapping {
 		{
 			key:    "k",
 			action: "Move up",
+		},
+		{
+			key:    "down arrow",
+			action: "Focus Tmux view",
+		},
+		{
+			key:    "left arrow",
+			action: "Go back",
 		},
 		{
 			key:    "a",
@@ -86,8 +90,12 @@ func getKeyBindings(viewName string) []*KeyBindingMapping {
 			action: "Move up",
 		},
 		{
-			key:    "Arrow Down",
+			key:    "arrow down",
 			action: "Focus Port View",
+		},
+		{
+			key:    "enter | arrow right",
+			action: "Open topic",
 		},
 		{
 			key:    "r",
@@ -102,10 +110,6 @@ func getKeyBindings(viewName string) []*KeyBindingMapping {
 			action: "Delete a topic",
 		},
 		{
-			key:    "enter",
-			action: "Open topic",
-		},
-		{
 			key:    "/",
 			action: "Search by name",
 		},
@@ -117,8 +121,12 @@ func getKeyBindings(viewName string) []*KeyBindingMapping {
 
 	keys[TmuxSessionViewName] = []*KeyBindingMapping{
 		{
-			key:    "esc",
-			action: "Exit view",
+			key:    "esc | arrow up",
+			action: "Focus Workspace View",
+		},
+		{
+			key:    "arrow left",
+			action: "Focus Port View",
 		},
 		{
 			key:    "d",
@@ -144,8 +152,12 @@ func getKeyBindings(viewName string) []*KeyBindingMapping {
 
 	keys[PortViewName] = []*KeyBindingMapping{
 		{
-			key:    "esc | Arrow Up",
+			key:    "esc | arrow up",
 			action: "Focus Topic View",
+		},
+		{
+			key:    "arrow right",
+			action: "Focus Tmux View",
 		},
 		{
 			key:    "enter",
