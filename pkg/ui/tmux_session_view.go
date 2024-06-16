@@ -150,6 +150,10 @@ func (tv *TmuxSessionView) Init(ui *UI) {
 				ui.FocusPortView()
 			}
 		})
+
+	if tv.standalone {
+		FocusView(tv.Name())
+	}
 }
 
 func (tv *TmuxSessionView) getSelectedSession() *api.TmuxSession {

@@ -86,7 +86,6 @@ func (mv *MainView) Render(ui *UI) error {
 		cwd, _ := os.Getwd()
 		if homeDir == cwd {
 			mv.tmv.standalone = true
-			return nil
 		}
 
 		GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
