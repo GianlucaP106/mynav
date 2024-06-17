@@ -62,9 +62,7 @@ func (tv *TmuxSessionView) Init(ui *UI) {
 	KeyBinding(TmuxSessionViewName).
 		set(gocui.KeyEnter, func() {
 			if utils.IsTmuxSession() {
-				GetDialog[*ToastDialog](ui).Open("You are already in a tmux session. Nested tmux sessions are not supported yet.", func() {
-					FocusView(tv.Name())
-				})
+				GetDialog[*ToastDialog](ui).Open("You are already in a tmux session. Nested tmux sessions are not supported yet.", func() {})
 				return
 			}
 
@@ -80,14 +78,11 @@ func (tv *TmuxSessionView) Init(ui *UI) {
 				if b {
 					session := tv.getSelectedSession()
 					if err := Api().DeleteTmuxSession(session); err != nil {
-						GetDialog[*ToastDialog](ui).Open(err.Error(), func() {
-							FocusView(tv.Name())
-						})
+						GetDialog[*ToastDialog](ui).Open(err.Error(), func() {})
 						return
 					}
 					ui.RefreshMainView()
 				}
-				FocusView(tv.Name())
 			}, "Are you sure you want to delete this session?")
 		}).
 		set('x', func() {
@@ -98,14 +93,11 @@ func (tv *TmuxSessionView) Init(ui *UI) {
 			GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
 				if b {
 					if err := Api().DeleteAllTmuxSessions(); err != nil {
-						GetDialog[*ToastDialog](ui).Open(err.Error(), func() {
-							FocusView(tv.Name())
-						})
+						GetDialog[*ToastDialog](ui).Open(err.Error(), func() {})
 						return
 					}
 					ui.RefreshMainView()
 				}
-				FocusView(tv.Name())
 			}, "Are you sure you want to delete ALL tmux sessions?")
 		}).
 		set('w', func() {
@@ -116,14 +108,11 @@ func (tv *TmuxSessionView) Init(ui *UI) {
 			GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
 				if b {
 					if err := Api().DeleteAllWorkspaceTmuxSessions(); err != nil {
-						GetDialog[*ToastDialog](ui).Open(err.Error(), func() {
-							FocusView(tv.Name())
-						})
+						GetDialog[*ToastDialog](ui).Open(err.Error(), func() {})
 						return
 					}
 					ui.RefreshMainView()
 				}
-				FocusView(tv.Name())
 			}, "Are you sure you want to delete ALL non-external tmux sessions?")
 		}).
 		set('j', func() {
@@ -138,14 +127,10 @@ func (tv *TmuxSessionView) Init(ui *UI) {
 			}
 			GetDialog[*EditorDialog](ui).Open(func(s string) {
 				ui.setAction(utils.NewTmuxSessionCmd(s, "~"))
-			}, func() {
-				FocusView(tv.Name())
-			}, "New session name", Small)
+			}, func() {}, "New session name", Small)
 		}).
 		set('?', func() {
-			GetDialog[*HelpView](ui).Open(getTmuxKeyBindings(tv.standalone), func() {
-				FocusView(tv.Name())
-			})
+			GetDialog[*HelpView](ui).Open(getTmuxKeyBindings(tv.standalone), func() {})
 		}).
 		set(gocui.KeyEsc, moveUp).
 		set(gocui.KeyArrowUp, moveUp).

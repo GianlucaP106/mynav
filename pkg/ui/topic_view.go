@@ -113,10 +113,7 @@ func (tv *TopicsView) Init(ui *UI) {
 			GetDialog[*EditorDialog](ui).Open(func(s string) {
 				tv.search = s
 				ui.RefreshMainView()
-				ui.FocusTopicsView()
-			}, func() {
-				ui.FocusTopicsView()
-			}, "Search", Small)
+			}, func() {}, "Search", Small)
 		}).
 		set(gocui.KeyEsc, func() {
 			if tv.search != "" {
@@ -127,9 +124,7 @@ func (tv *TopicsView) Init(ui *UI) {
 		set('a', func() {
 			GetDialog[*EditorDialog](ui).Open(func(s string) {
 				if err := Api().CreateTopic(s); err != nil {
-					GetDialog[*ToastDialog](ui).Open(err.Error(), func() {
-						ui.FocusTopicsView()
-					})
+					GetDialog[*ToastDialog](ui).Open(err.Error(), func() {})
 					return
 				}
 
@@ -138,10 +133,7 @@ func (tv *TopicsView) Init(ui *UI) {
 				// because we are sorting by modifed time
 				tv.listRenderer.setSelected(0)
 				ui.RefreshMainView()
-				ui.FocusTopicsView()
-			}, func() {
-				ui.FocusTopicsView()
-			}, "Topic name", Small)
+			}, func() {}, "Topic name", Small)
 		}).
 		set('r', func() {
 			t := tv.getSelectedTopic()
@@ -151,16 +143,11 @@ func (tv *TopicsView) Init(ui *UI) {
 
 			GetDialog[*EditorDialog](ui).Open(func(s string) {
 				if err := Api().RenameTopic(t, s); err != nil {
-					GetDialog[*ToastDialog](ui).Open(err.Error(), func() {
-						ui.FocusTopicsView()
-					})
+					GetDialog[*ToastDialog](ui).Open(err.Error(), func() {})
 					return
 				}
 				ui.RefreshMainView()
-				ui.FocusTopicsView()
-			}, func() {
-				ui.FocusTopicsView()
-			}, "New topic name", Small)
+			}, func() {}, "New topic name", Small)
 		}).
 		set('D', func() {
 			if Api().GetTopicCount() <= 0 {
@@ -171,13 +158,10 @@ func (tv *TopicsView) Init(ui *UI) {
 					Api().DeleteTopic(tv.getSelectedTopic())
 					ui.RefreshMainView()
 				}
-				ui.FocusTopicsView()
 			}, "Are you sure you want to delete this topic? All its content will be deleted.")
 		}).
 		set('?', func() {
-			GetDialog[*HelpView](ui).Open(topicKeyBindings, func() {
-				ui.FocusTopicsView()
-			})
+			GetDialog[*HelpView](ui).Open(topicKeyBindings, func() {})
 		})
 }
 

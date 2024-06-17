@@ -51,6 +51,7 @@ func NewHelpViewEditor(up func(), down func(), enter func(), exit func()) gocui.
 func (hv *HelpView) Open(mappings []*KeyBindingMapping, exit func()) {
 	hv.mappings = mappings
 	x, _ := ScreenSize()
+	prevView := GetFocusedView()
 	hv.editor = NewHelpViewEditor(func() {
 		hv.listRenderer.decrement()
 	}, func() {
@@ -58,12 +59,16 @@ func (hv *HelpView) Open(mappings []*KeyBindingMapping, exit func()) {
 	}, func() {
 	}, func() {
 		hv.Close()
+		if prevView != nil {
+			FocusView(prevView.Name())
+		}
 		exit()
 	})
 
 	view := SetCenteredView(hv.Name(), x/2, 12, 0)
 	view.Editable = true
 	view.Editor = hv.editor
+	view.FrameColor = gocui.ColorGreen
 
 	FocusView(hv.Name())
 
