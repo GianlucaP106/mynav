@@ -135,9 +135,7 @@ func (wv *WorkspacesView) Init(ui *UI) {
 			if curWorkspace == nil {
 				return
 			}
-			GetDialog[*WorkspaceInfoDialogState](ui).Open(curWorkspace, func() {
-				ui.FocusWorkspacesView()
-			})
+			GetDialog[*WorkspaceInfoDialogState](ui).Open(curWorkspace, func() {})
 		}).
 		set('g', func() {
 			curWorkspace := wv.getSelectedWorkspace()
@@ -147,14 +145,9 @@ func (wv *WorkspacesView) Init(ui *UI) {
 
 			GetDialog[*EditorDialog](ui).Open(func(s string) {
 				if err := Api().CloneRepo(s, curWorkspace); err != nil {
-					GetDialog[*ToastDialog](ui).Open(err.Error(), func() {
-						ui.FocusWorkspacesView()
-					})
+					GetDialog[*ToastDialog](ui).Open(err.Error(), func() {})
 				}
-				ui.FocusWorkspacesView()
-			}, func() {
-				ui.FocusWorkspacesView()
-			}, "Git repo URL", Small)
+			}, func() {}, "Git repo URL", Small)
 		}).
 		set('G', func() {
 			curWorkspace := wv.getSelectedWorkspace()
@@ -167,19 +160,14 @@ func (wv *WorkspacesView) Init(ui *UI) {
 			}
 
 			if err := utils.OpenBrowser(*curWorkspace.GitRemote); err != nil {
-				GetDialog[*ToastDialog](ui).Open(err.Error(), func() {
-					ui.FocusWorkspacesView()
-				})
+				GetDialog[*ToastDialog](ui).Open(err.Error(), func() {})
 			}
 		}).
 		set('/', func() {
 			GetDialog[*EditorDialog](ui).Open(func(s string) {
 				wv.search = s
 				wv.refreshWorkspaces()
-				ui.FocusWorkspacesView()
-			}, func() {
-				ui.FocusWorkspacesView()
-			}, "Search", Small)
+			}, func() {}, "Search", Small)
 		}).
 		setKeybinding(wv.Name(), gocui.KeyEnter, func(g *gocui.Gui, v *gocui.View) error {
 			curWorkspace := wv.getSelectedWorkspace()
@@ -215,9 +203,7 @@ func (wv *WorkspacesView) Init(ui *UI) {
 
 			openTermCmd, err := utils.GetOpenTerminalCmd(curWorkspace.Path)
 			if err != nil {
-				GetDialog[*ToastDialog](ui).Open(err.Error(), func() {
-					ui.FocusWorkspacesView()
-				})
+				GetDialog[*ToastDialog](ui).Open(err.Error(), func() {})
 				return nil
 			}
 
@@ -238,7 +224,6 @@ func (wv *WorkspacesView) Init(ui *UI) {
 					wv.tv.listRenderer.setSelected(0)
 					ui.RefreshMainView()
 				}
-				ui.FocusWorkspacesView()
 			}, "Are you sure you want to delete this workspace?")
 		}).
 		set('r', func() {
@@ -249,15 +234,10 @@ func (wv *WorkspacesView) Init(ui *UI) {
 
 			GetDialog[*EditorDialog](ui).Open(func(s string) {
 				if err := Api().RenameWorkspace(curWorkspace, s); err != nil {
-					GetDialog[*ToastDialog](ui).Open(err.Error(), func() {
-						ui.FocusWorkspacesView()
-					})
+					GetDialog[*ToastDialog](ui).Open(err.Error(), func() {})
 					return
 				}
-				ui.FocusWorkspacesView()
-			}, func() {
-				ui.FocusWorkspacesView()
-			}, "New workspace name", Small)
+			}, func() {}, "New workspace name", Small)
 		}).
 		set('e', func() {
 			curWorkspace := wv.getSelectedWorkspace()
@@ -269,19 +249,14 @@ func (wv *WorkspacesView) Init(ui *UI) {
 				if desc != "" {
 					Api().SetDescription(desc, curWorkspace)
 				}
-				ui.FocusWorkspacesView()
-			}, func() {
-				ui.FocusWorkspacesView()
-			}, "Description", Large)
+			}, func() {}, "Description", Large)
 		}).
 		set('a', func() {
 			tv := wv.tv
 			curTopic := tv.getSelectedTopic()
 			GetDialog[*EditorDialog](ui).Open(func(name string) {
 				if _, err := Api().CreateWorkspace(name, curTopic); err != nil {
-					GetDialog[*ToastDialog](ui).Open(err.Error(), func() {
-						ui.FocusWorkspacesView()
-					})
+					GetDialog[*ToastDialog](ui).Open(err.Error(), func() {})
 					return
 				}
 
@@ -291,10 +266,7 @@ func (wv *WorkspacesView) Init(ui *UI) {
 				tv.listRenderer.setSelected(0)
 				wv.listRenderer.setSelected(0)
 				ui.RefreshMainView()
-				ui.FocusWorkspacesView()
-			}, func() {
-				ui.FocusWorkspacesView()
-			}, "Workspace name ", Small)
+			}, func() {}, "Workspace name ", Small)
 		}).
 		set('x', func() {
 			curWorkspace := wv.getSelectedWorkspace()
@@ -308,14 +280,11 @@ func (wv *WorkspacesView) Init(ui *UI) {
 						Api().DeleteWorkspaceTmuxSession(curWorkspace)
 						ui.RefreshMainView()
 					}
-					ui.FocusWorkspacesView()
 				}, "Are you sure you want to delete the tmux session?")
 			}
 		}).
 		set('?', func() {
-			GetDialog[*HelpView](ui).Open(workspaceKeyBindings, func() {
-				ui.FocusWorkspacesView()
-			})
+			GetDialog[*HelpView](ui).Open(workspaceKeyBindings, func() {})
 		})
 }
 

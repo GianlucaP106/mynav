@@ -39,11 +39,18 @@ func (w *WorkspaceInfoDialogState) Init(height int) *gocui.View {
 }
 
 func (wd *WorkspaceInfoDialogState) Open(w *api.Workspace, exit func()) {
+	prevView := GetFocusedView()
 	wd.editor = NewConfirmationEditor(func() {
 		wd.Close()
+		if prevView != nil {
+			FocusView(prevView.Name())
+		}
 		exit()
 	}, func() {
 		wd.Close()
+		if prevView != nil {
+			FocusView(prevView.Name())
+		}
 		exit()
 	})
 

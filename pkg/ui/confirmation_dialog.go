@@ -19,11 +19,18 @@ func newConfirmationDialogState() *ConfirmationDialog {
 
 func (cd *ConfirmationDialog) Open(onConfirm func(bool), title string) {
 	cd.title = title
+	prevView := GetFocusedView()
 	cd.editor = NewConfirmationEditor(func() {
 		cd.Close()
+		if prevView != nil {
+			FocusView(prevView.Name())
+		}
 		onConfirm(true)
 	}, func() {
 		cd.Close()
+		if prevView != nil {
+			FocusView(prevView.Name())
+		}
 		onConfirm(false)
 	})
 

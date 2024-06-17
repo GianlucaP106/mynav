@@ -112,20 +112,15 @@ func (p *PortView) Init(ui *UI) {
 				GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
 					if b {
 						if err := Api().KillPort(port); err != nil {
-							GetDialog[*ToastDialog](ui).Open(err.Error(), func() {
-								ui.FocusPortView()
-							})
+							GetDialog[*ToastDialog](ui).Open(err.Error(), func() {})
 						}
 						p.refreshPorts()
 					}
-					ui.FocusPortView()
 				}, "Are you sure you want to kill this port?")
 			}
 		}).
 		set('?', func() {
-			GetDialog[*HelpView](ui).Open(portKeyBindings, func() {
-				ui.FocusPortView()
-			})
+			GetDialog[*HelpView](ui).Open(portKeyBindings, func() {})
 		})
 }
 

@@ -43,9 +43,7 @@ func Start() *Action {
 			ui.FocusTmuxView()
 		}).
 		set('?', func() {
-			GetDialog[*HelpView](ui).Open(nil, func() {
-				ui.FocusTopicsView()
-			})
+			GetDialog[*HelpView](ui).Open(nil, func() {})
 		})
 
 	err := g.MainLoop()
@@ -67,7 +65,6 @@ func (ui *UI) handleUpdate() bool {
 				if b {
 					ui.setActionEnd(Api().GetUpdateSystemCmd())
 				}
-				ui.FocusTopicsView()
 			}, "A new update of mynav is available! Would you like to update to version "+newTag+"?")
 			return true
 		}

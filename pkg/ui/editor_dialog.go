@@ -36,11 +36,19 @@ func (ed *EditorDialog) Open(onEnter func(string), onEsc func(), title string, s
 		ed.height = 7
 	}
 	ed.title = title
+
+	prevView := GetFocusedView()
 	ed.editor = NewSimpleEditor(func(s string) {
 		ed.Close()
+		if prevView != nil {
+			FocusView(prevView.Name())
+		}
 		onEnter(s)
 	}, func() {
 		ed.Close()
+		if prevView != nil {
+			FocusView(prevView.Name())
+		}
 		onEsc()
 	})
 

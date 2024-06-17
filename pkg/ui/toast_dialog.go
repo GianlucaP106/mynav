@@ -37,8 +37,12 @@ func (td *ToastDialog) Open(message string, exit func()) {
 		gocui.KeyEsc,
 	}
 
+	prevView := GetFocusedView()
 	td.editor = NewSingleActionEditor(keys, func() {
 		td.Close()
+		if prevView != nil {
+			FocusView(prevView.Name())
+		}
 		exit()
 	})
 	view.Editor = td.editor
