@@ -26,7 +26,7 @@ const HelpStateName = "HelpView"
 func newHelpState(globalMappings []*KeyBindingMapping) *HelpView {
 	return &HelpView{
 		globalMappings: globalMappings,
-		listRenderer:   newListRenderer(0, 10, 0),
+		listRenderer:   newListRenderer(0, 14, 0),
 	}
 }
 
@@ -65,7 +65,7 @@ func (hv *HelpView) Open(mappings []*KeyBindingMapping, exit func()) {
 		exit()
 	})
 
-	view := SetCenteredView(hv.Name(), x/2, 12, 0)
+	view := SetCenteredView(hv.Name(), (x*2)/3, 16, 0)
 	view.Editable = true
 	view.Editor = hv.editor
 	view.FrameColor = gocui.ColorGreen
