@@ -69,7 +69,7 @@ func (tv *TmuxSessionView) Init(ui *UI) {
 			session := tv.getSelectedSession()
 			ui.setAction(utils.AttachTmuxSessionCmd(session.Name))
 		}).
-		set('d', func() {
+		set('D', func() {
 			if Api().GetTmuxSessionCount() == 0 {
 				return
 			}
@@ -85,7 +85,7 @@ func (tv *TmuxSessionView) Init(ui *UI) {
 				}
 			}, "Are you sure you want to delete this session?")
 		}).
-		set('x', func() {
+		set('X', func() {
 			if Api().GetTmuxSessionCount() == 0 {
 				return
 			}
@@ -100,7 +100,7 @@ func (tv *TmuxSessionView) Init(ui *UI) {
 				}
 			}, "Are you sure you want to delete ALL tmux sessions?")
 		}).
-		set('w', func() {
+		set('W', func() {
 			if tv.standalone || Api().GetWorkspaceTmuxSessionCount() == 0 {
 				return
 			}

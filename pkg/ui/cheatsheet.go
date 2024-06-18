@@ -73,7 +73,7 @@ var workspaceKeyBindings []*KeyBindingMapping = []*KeyBindingMapping{
 		action: "See workspace information",
 	},
 	{
-		key:    "x",
+		key:    "X",
 		action: "Kill tmux session",
 	},
 	{
@@ -147,15 +147,15 @@ var portKeyBindings []*KeyBindingMapping = []*KeyBindingMapping{
 func getTmuxKeyBindings(standalone bool) []*KeyBindingMapping {
 	var tmuxKeyBindings []*KeyBindingMapping = []*KeyBindingMapping{
 		{
-			key:    "d",
+			key:    "D",
 			action: "Delete session",
 		},
 		{
-			key:    "x",
+			key:    "X",
 			action: "Kill ALL tmux sessions",
 		},
 		{
-			key:    "w",
+			key:    "W",
 			action: "Kill ALL non-external (has a workspace) tmux sessions",
 		},
 		{

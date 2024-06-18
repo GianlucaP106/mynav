@@ -268,7 +268,7 @@ func (wv *WorkspacesView) Init(ui *UI) {
 				ui.RefreshMainView()
 			}, func() {}, "Workspace name ", Small)
 		}).
-		set('x', func() {
+		set('X', func() {
 			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
 				return
