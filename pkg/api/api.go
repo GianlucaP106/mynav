@@ -11,6 +11,7 @@ type Api struct {
 	*TopicController
 	*PortController
 	*Configuration
+	*GithubController
 }
 
 func NewApi() (*Api, error) {
@@ -58,7 +59,7 @@ func (api *Api) InitControllers() {
 			api.TmuxController,
 			api.PortController,
 		)
-
+		api.GithubController = NewGithubController()
 		api.TopicController.WorkspaceController = api.WorkspaceController
 	}
 }
