@@ -45,21 +45,21 @@ func (hv *HeaderView) Render(ui *UI) error {
 	sizeX, _ := view.Size()
 	view.Clear()
 	fmt.Fprintln(view, blankLine(sizeX))
-	if !Api().IsConfigInitialized {
+	if !Api().Core.IsConfigInitialized {
 		fmt.Fprintln(view, displayWhiteText("Welcome to mynav, a workspace manager", Center, sizeX))
 		return nil
 	}
 
 	line := ""
 
-	if w := Api().GetSelectedWorkspace(); w != nil {
+	if w := Api().Core.GetSelectedWorkspace(); w != nil {
 		selected := withSpacePadding("", 5)
 		selected += withSurroundingSpaces("Last seen: ")
 		selected += color.New(color.Blue).Sprint(w.ShortPath())
 		line += selected
 	}
 
-	sessionCount, windowCount := Api().GetTmuxStats()
+	sessionCount, windowCount := Api().Tmux.GetTmuxStats()
 	tmux := withSpacePadding("", 5)
 	tmux += strconv.Itoa(sessionCount) + withSurroundingSpaces("tmux sessions |")
 	tmux += strconv.Itoa(windowCount) + withSurroundingSpaces("windows open")

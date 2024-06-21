@@ -2,8 +2,7 @@ package ui
 
 import (
 	"fmt"
-	"mynav/pkg/api"
-	"mynav/pkg/utils"
+	"mynav/pkg/system"
 
 	"github.com/awesome-gocui/gocui"
 	"github.com/gookit/color"
@@ -13,8 +12,8 @@ const PortViewName = "PortView"
 
 type PortView struct {
 	listRenderer  *ListRenderer
-	ports         api.PortList
-	externalPorts api.PortList
+	ports         system.PortList
+	externalPorts system.PortList
 }
 
 var _ View = &PortView{}
@@ -35,10 +34,15 @@ func (p *PortView) RequiresManager() bool {
 }
 
 func (pv *PortView) refreshPorts() {
-	externalPorts := make(api.PortList, 0)
-	ports := make(api.PortList, 0)
-	for _, p := range Api().GetPorts().ToList().Sorted() {
-		if p.IsInternal() {
+	externalPorts := make(system.PortList, 0)
+	ports := make(system.PortList, 0)
+
+	if len(Api().Port.GetPorts()) == 0 {
+		Api().Tmux.SyncPorts()
+	}
+
+	for _, p := range Api().Port.GetPorts().ToList().Sorted() {
+		if Api().Tmux.GetTmuxSessionByPort(p) != nil {
 			ports = append(ports, p)
 		} else {
 			externalPorts = append(externalPorts, p)
@@ -54,7 +58,7 @@ func (pv *PortView) refreshPorts() {
 	}
 }
 
-func (p *PortView) getSelectedPort() *api.Port {
+func (p *PortView) getSelectedPort() *system.Port {
 	if len(p.ports) <= 0 {
 		return nil
 	}
@@ -102,8 +106,8 @@ func (p *PortView) Init(ui *UI) {
 				return
 			}
 
-			if port.TmuxSession != nil {
-				ui.setAction(utils.AttachTmuxSessionCmd(port.TmuxSession.Name))
+			if ts := Api().Tmux.GetTmuxSessionByPort(port); ts != nil {
+				ui.setAction(system.GetAttachTmuxSessionCmd(ts.Name))
 			}
 		}).
 		set('D', func() {
@@ -111,9 +115,10 @@ func (p *PortView) Init(ui *UI) {
 			if port != nil {
 				GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
 					if b {
-						if err := Api().KillPort(port); err != nil {
+						if err := Api().Port.KillPort(port); err != nil {
 							GetDialog[*ToastDialog](ui).Open(err.Error(), func() {})
 						}
+						Api().Tmux.SyncPorts()
 						p.refreshPorts()
 					}
 				}, "Are you sure you want to kill this port?")
@@ -124,7 +129,7 @@ func (p *PortView) Init(ui *UI) {
 		})
 }
 
-func (p *PortView) formatPort(port *api.Port, selected bool) string {
+func (p *PortView) formatPort(port *system.Port, selected bool) string {
 	view := GetInternalView(p.Name())
 	sizeX, _ := view.Size()
 
@@ -138,12 +143,12 @@ func (p *PortView) formatPort(port *api.Port, selected bool) string {
 	tmuxSessionLine := ""
 	tmuxSize := fifth*3 + 5
 	tmuxContent := ""
-	if port.TmuxSession != nil {
-		workspace := Api().GetWorkspaceByTmuxSession(port.TmuxSession)
+	if ts := Api().Tmux.GetTmuxSessionByPort(port); ts != nil {
+		workspace := Api().Core.GetWorkspaceByTmuxSession(ts)
 		if workspace != nil {
 			tmuxContent = "workspace: " + workspace.ShortPath()
 		} else {
-			tmuxContent = "tmux: " + port.TmuxSession.Name
+			tmuxContent = "tmux: " + ts.Name
 		}
 	} else {
 		tmuxContent = "external"

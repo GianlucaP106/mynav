@@ -145,7 +145,7 @@ var portKeyBindings []*KeyBindingMapping = []*KeyBindingMapping{
 }
 
 func getTmuxKeyBindings(standalone bool) []*KeyBindingMapping {
-	var tmuxKeyBindings []*KeyBindingMapping = []*KeyBindingMapping{
+	tmuxKeyBindings := []*KeyBindingMapping{
 		{
 			key:    "D",
 			action: "Delete session",

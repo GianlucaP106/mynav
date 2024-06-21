@@ -2,7 +2,7 @@ package ui
 
 import (
 	"fmt"
-	"mynav/pkg/api"
+	"mynav/pkg/core"
 	"strings"
 
 	"github.com/awesome-gocui/gocui"
@@ -12,7 +12,7 @@ import (
 type TopicsView struct {
 	listRenderer *ListRenderer
 	search       string
-	topics       api.Topics
+	topics       core.Topics
 }
 
 const TopicViewName = "TopicsView"
@@ -29,7 +29,7 @@ func (tv *TopicsView) RequiresManager() bool {
 }
 
 func (tv *TopicsView) refreshTopics() {
-	topics := Api().GetTopics().Sorted()
+	topics := Api().Core.GetTopics().Sorted()
 
 	if tv.search != "" {
 		topics = topics.FilterByNameContaining(tv.search)
@@ -43,7 +43,7 @@ func (tv *TopicsView) refreshTopics() {
 	}
 }
 
-func (tv *TopicsView) getSelectedTopic() *api.Topic {
+func (tv *TopicsView) getSelectedTopic() *core.Topic {
 	if tv.topics.Len() <= 0 {
 		return nil
 	}
@@ -78,13 +78,13 @@ func (tv *TopicsView) Init(ui *UI) {
 	tv.listRenderer = newListRenderer(0, sizeY, 0)
 	tv.refreshTopics()
 
-	if selectedWorkspace := Api().GetSelectedWorkspace(); selectedWorkspace != nil {
+	if selectedWorkspace := Api().Core.GetSelectedWorkspace(); selectedWorkspace != nil {
 		topicName := strings.Split(selectedWorkspace.ShortPath(), "/")[0]
 		tv.selectTopicByName(topicName)
 	}
 
 	moveRight := func() {
-		if Api().GetTopicCount() > 0 {
+		if Api().Core.GetTopicCount() > 0 {
 			ui.FocusWorkspacesView()
 		}
 	}
@@ -123,7 +123,7 @@ func (tv *TopicsView) Init(ui *UI) {
 		}).
 		set('a', func() {
 			GetDialog[*EditorDialog](ui).Open(func(s string) {
-				if err := Api().CreateTopic(s); err != nil {
+				if err := Api().Core.CreateTopic(s); err != nil {
 					GetDialog[*ToastDialog](ui).Open(err.Error(), func() {})
 					return
 				}
@@ -142,7 +142,7 @@ func (tv *TopicsView) Init(ui *UI) {
 			}
 
 			GetDialog[*EditorDialog](ui).Open(func(s string) {
-				if err := Api().RenameTopic(t, s); err != nil {
+				if err := Api().Core.RenameTopic(t, s); err != nil {
 					GetDialog[*ToastDialog](ui).Open(err.Error(), func() {})
 					return
 				}
@@ -150,12 +150,12 @@ func (tv *TopicsView) Init(ui *UI) {
 			}, func() {}, "New topic name", Small)
 		}).
 		set('D', func() {
-			if Api().GetTopicCount() <= 0 {
+			if Api().Core.GetTopicCount() <= 0 {
 				return
 			}
 			GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
 				if b {
-					Api().DeleteTopic(tv.getSelectedTopic())
+					Api().Core.DeleteTopic(tv.getSelectedTopic())
 					ui.RefreshMainView()
 				}
 			}, "Are you sure you want to delete this topic? All its content will be deleted.")
@@ -165,7 +165,7 @@ func (tv *TopicsView) Init(ui *UI) {
 		})
 }
 
-func (tv *TopicsView) formatTopic(topic *api.Topic, selected bool) []string {
+func (tv *TopicsView) formatTopic(topic *core.Topic, selected bool) []string {
 	sizeX, _ := GetInternalView(tv.Name()).Size()
 	style, _ := func() (color.Style, string) {
 		if selected {

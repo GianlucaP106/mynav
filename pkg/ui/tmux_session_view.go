@@ -2,8 +2,9 @@ package ui
 
 import (
 	"fmt"
-	"mynav/pkg/api"
-	"mynav/pkg/utils"
+	"mynav/pkg/core"
+	"mynav/pkg/system"
+	"mynav/pkg/tmux"
 	"strconv"
 
 	"github.com/awesome-gocui/gocui"
@@ -14,7 +15,7 @@ const TmuxSessionViewName = "TmuxSessionView"
 
 type TmuxSessionView struct {
 	listRenderer *ListRenderer
-	sessions     []*api.TmuxSession
+	sessions     []*tmux.TmuxSession
 	standalone   bool
 }
 
@@ -61,23 +62,23 @@ func (tv *TmuxSessionView) Init(ui *UI) {
 
 	KeyBinding(TmuxSessionViewName).
 		set(gocui.KeyEnter, func() {
-			if utils.IsTmuxSession() {
+			if system.IsTmuxSession() {
 				GetDialog[*ToastDialog](ui).Open("You are already in a tmux session. Nested tmux sessions are not supported yet.", func() {})
 				return
 			}
 
 			session := tv.getSelectedSession()
-			ui.setAction(utils.AttachTmuxSessionCmd(session.Name))
+			ui.setAction(system.GetAttachTmuxSessionCmd(session.Name))
 		}).
 		set('D', func() {
-			if Api().GetTmuxSessionCount() == 0 {
+			if Api().Tmux.GetTmuxSessionCount() == 0 {
 				return
 			}
 
 			GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
 				if b {
 					session := tv.getSelectedSession()
-					if err := Api().DeleteTmuxSession(session); err != nil {
+					if err := Api().Tmux.DeleteTmuxSession(session); err != nil {
 						GetDialog[*ToastDialog](ui).Open(err.Error(), func() {})
 						return
 					}
@@ -86,13 +87,13 @@ func (tv *TmuxSessionView) Init(ui *UI) {
 			}, "Are you sure you want to delete this session?")
 		}).
 		set('X', func() {
-			if Api().GetTmuxSessionCount() == 0 {
+			if Api().Tmux.GetTmuxSessionCount() == 0 {
 				return
 			}
 
 			GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
 				if b {
-					if err := Api().DeleteAllTmuxSessions(); err != nil {
+					if err := Api().Tmux.DeleteAllTmuxSessions(); err != nil {
 						GetDialog[*ToastDialog](ui).Open(err.Error(), func() {})
 						return
 					}
@@ -101,13 +102,13 @@ func (tv *TmuxSessionView) Init(ui *UI) {
 			}, "Are you sure you want to delete ALL tmux sessions?")
 		}).
 		set('W', func() {
-			if tv.standalone || Api().GetWorkspaceTmuxSessionCount() == 0 {
+			if tv.standalone || Api().Core.GetWorkspaceTmuxSessionCount() == 0 {
 				return
 			}
 
 			GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
 				if b {
-					if err := Api().DeleteAllWorkspaceTmuxSessions(); err != nil {
+					if err := Api().Core.DeleteAllWorkspaceTmuxSessions(); err != nil {
 						GetDialog[*ToastDialog](ui).Open(err.Error(), func() {})
 						return
 					}
@@ -122,11 +123,11 @@ func (tv *TmuxSessionView) Init(ui *UI) {
 			tv.listRenderer.decrement()
 		}).
 		set('a', func() {
-			if utils.IsTmuxSession() {
+			if system.IsTmuxSession() {
 				return
 			}
 			GetDialog[*EditorDialog](ui).Open(func(s string) {
-				ui.setAction(utils.NewTmuxSessionCmd(s, "~"))
+				ui.setAction(system.GetNewTmuxSessionCmd(s, "~"))
 			}, func() {}, "New session name", Small)
 		}).
 		set('?', func() {
@@ -143,13 +144,13 @@ func (tv *TmuxSessionView) Init(ui *UI) {
 	}
 }
 
-func (tv *TmuxSessionView) getSelectedSession() *api.TmuxSession {
+func (tv *TmuxSessionView) getSelectedSession() *tmux.TmuxSession {
 	return tv.sessions[tv.listRenderer.selected]
 }
 
 func (ts *TmuxSessionView) refreshTmuxSessions() {
-	out := make([]*api.TmuxSession, 0)
-	for _, session := range Api().GetTmuxSessions() {
+	out := make([]*tmux.TmuxSession, 0)
+	for _, session := range Api().Tmux.GetTmuxSessions() {
 		out = append(out, session)
 	}
 
@@ -181,7 +182,7 @@ func (tv *TmuxSessionView) formatTitles() string {
 	return line
 }
 
-func (tv *TmuxSessionView) format(session *api.TmuxSession, selected bool, w *api.Workspace) string {
+func (tv *TmuxSessionView) format(session *tmux.TmuxSession, selected bool, w *core.Workspace) string {
 	view := GetInternalView(tv.Name())
 	sizeX, _ := view.Size()
 
@@ -228,9 +229,9 @@ func (tv *TmuxSessionView) Render(ui *UI) error {
 	fmt.Fprintln(view, tv.formatTitles())
 	tv.listRenderer.forEach(func(idx int) {
 		session := tv.sessions[idx]
-		var potentialWorkspace *api.Workspace
+		var potentialWorkspace *core.Workspace
 		if !tv.standalone {
-			potentialWorkspace = Api().GetWorkspaceByTmuxSession(session)
+			potentialWorkspace = Api().Core.GetWorkspaceByTmuxSession(session)
 		}
 
 		isViewFocused := false
