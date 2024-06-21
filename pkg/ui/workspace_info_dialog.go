@@ -2,8 +2,7 @@ package ui
 
 import (
 	"fmt"
-	"mynav/pkg/api"
-	"mynav/pkg/utils"
+	"mynav/pkg/core"
 	"strconv"
 
 	"github.com/awesome-gocui/gocui"
@@ -14,7 +13,7 @@ const WorkspaceInfoDialogStateName = "WorkspaceInfoDialog"
 
 type WorkspaceInfoDialogState struct {
 	editor    Editor
-	workspace *api.Workspace
+	workspace *core.Workspace
 	title     string
 }
 
@@ -38,7 +37,7 @@ func (w *WorkspaceInfoDialogState) Init(height int) *gocui.View {
 	return view
 }
 
-func (wd *WorkspaceInfoDialogState) Open(w *api.Workspace, exit func()) {
+func (wd *WorkspaceInfoDialogState) Open(w *core.Workspace, exit func()) {
 	prevView := GetFocusedView()
 	wd.editor = NewConfirmationEditor(func() {
 		wd.Close()
@@ -65,7 +64,7 @@ func (wd *WorkspaceInfoDialogState) Close() {
 	DeleteView(wd.Name())
 }
 
-func (wd *WorkspaceInfoDialogState) formatWorkspaceInfo(w *api.Workspace) []string {
+func (wd *WorkspaceInfoDialogState) formatWorkspaceInfo(w *core.Workspace) []string {
 	sizeX := 100
 
 	formatItem := func(title string, content string) []string {
@@ -81,7 +80,7 @@ func (wd *WorkspaceInfoDialogState) formatWorkspaceInfo(w *api.Workspace) []stri
 			return out
 		}
 		out = append(out, withSpacePadding(color.Blue.Sprint("Description: "), sizeX))
-		desc := utils.SplitStringByLength(w.Metadata.Description, sizeX)
+		desc := splitStringByLength(w.Metadata.Description, sizeX)
 		out = append(out, desc...)
 		return out
 	}()
@@ -101,13 +100,13 @@ func (wd *WorkspaceInfoDialogState) formatWorkspaceInfo(w *api.Workspace) []stri
 		out = append(out, blankLine(sizeX))
 	}
 
-	if s := Api().GetTmuxSessionByWorkspace(w); s != nil {
+	if s := Api().Tmux.GetTmuxSessionByName(w.Path); s != nil {
 		out = append(out, formatItem("Tmux session: ", s.Name)...)
 		out = append(out, withSpacePadding(strconv.Itoa(s.NumWindows)+" window(s)", sizeX))
 		out = append(out, blankLine(sizeX))
 	}
 
-	if pw := Api().GetPortsByWorkspace(w); pw != nil && pw.Len() > 0 {
+	if pw := Api().Core.GetPortsByWorkspace(w); pw != nil && pw.Len() > 0 {
 		ports := ""
 		for _, p := range pw {
 			ports += p.GetPortStr() + ", "
@@ -141,4 +140,18 @@ func (w *WorkspaceInfoDialogState) Render(ui *UI) error {
 	}
 
 	return nil
+}
+
+func splitStringByLength(input string, chunkSize int) []string {
+	var chunks []string
+	for len(input) > 0 {
+		if len(input) >= chunkSize {
+			chunks = append(chunks, input[:chunkSize])
+			input = input[chunkSize:]
+		} else {
+			chunks = append(chunks, input)
+			break
+		}
+	}
+	return chunks
 }

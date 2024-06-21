@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"mynav/pkg/system"
 
 	"github.com/awesome-gocui/gocui"
 )
@@ -57,13 +58,13 @@ func Start() *Action {
 }
 
 func (ui *UI) handleUpdate() bool {
-	if Api().IsConfigInitialized && !Api().IsUpdateAsked() {
-		Api().SetUpdateAsked()
-		update, newTag := Api().DetectUpdate()
+	if Api().Core.IsConfigInitialized && !Api().Core.IsUpdateAsked() {
+		Api().Core.SetUpdateAsked()
+		update, newTag := Api().Core.DetectUpdate()
 		if update {
 			GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
 				if b {
-					ui.setActionEnd(Api().GetUpdateSystemCmd())
+					ui.setActionEnd(system.GetUpdateSystemCmd())
 				}
 			}, "A new update of mynav is available! Would you like to update to version "+newTag+"?")
 			return true

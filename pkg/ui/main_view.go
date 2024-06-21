@@ -79,7 +79,7 @@ func (mv *MainView) Init(ui *UI) {
 }
 
 func (mv *MainView) Render(ui *UI) error {
-	if !Api().IsConfigInitialized && !mv.configAsked {
+	if !Api().Core.IsConfigInitialized && !mv.configAsked {
 		mv.configAsked = true
 
 		homeDir, _ := os.UserHomeDir()
@@ -101,7 +101,7 @@ func (mv *MainView) Render(ui *UI) error {
 		return nil
 	}
 
-	if Api().IsConfigInitialized {
+	if Api().Core.IsConfigInitialized {
 		mv.tv.Render(ui)
 		mv.pv.Render(ui)
 		mv.tmv.Render(ui)

@@ -2,23 +2,32 @@ package api
 
 import (
 	"errors"
+	"mynav/pkg/core"
+	"mynav/pkg/github"
+	"mynav/pkg/system"
+	"mynav/pkg/tmux"
 	"os"
 )
 
 type Api struct {
-	*TmuxController
-	*WorkspaceController
-	*TopicController
-	*PortController
-	*Configuration
-	*GithubController
+	Tmux   *tmux.TmuxController
+	Core   *Core
+	Github *github.GithubController
+	Port   *system.PortController
+}
+
+type Core struct {
+	*core.TopicController
+	*core.WorkspaceController
+	*core.Configuration
 }
 
 func NewApi() (*Api, error) {
 	api := &Api{}
-	api.Configuration = NewConfiguration()
+	api.Core = &Core{}
+	api.Core.Configuration = core.NewConfiguration()
 
-	if api.IsConfigInitialized {
+	if api.Core.IsConfigInitialized {
 		api.InitControllers()
 	} else {
 		api.InitTmuxController()
@@ -28,14 +37,14 @@ func NewApi() (*Api, error) {
 }
 
 func (api *Api) GetSystemStats() (numTopics int, numWorkspaces int) {
-	numTopics = api.GetTopicCount()
-	numWorkspaces = api.GetWorkspaceCount()
+	numTopics = api.Core.GetTopicCount()
+	numWorkspaces = api.Core.GetWorkspaceCount()
 	return
 }
 
 func (api *Api) InitConfiguration() error {
 	dir, _ := os.Getwd()
-	if _, err := api.InitConfig(dir); err != nil {
+	if _, err := api.Core.InitConfig(dir); err != nil {
 		return errors.New("cannot initialize mynav in the home directory")
 	}
 
@@ -44,22 +53,21 @@ func (api *Api) InitConfiguration() error {
 }
 
 func (api *Api) InitTmuxController() {
-	api.PortController = NewPortController()
-	api.TmuxController = NewTmuxController(api.PortController)
-	api.PortController.TmuxController = api.TmuxController
+	api.Port = system.NewPortController()
+	api.Tmux = tmux.NewTmuxController(api.Port)
 }
 
 func (api *Api) InitControllers() {
-	if api.IsConfigInitialized {
+	if api.Core.IsConfigInitialized {
 		api.InitTmuxController()
-		api.TopicController = NewTopicController(api.path, api.TmuxController)
-		api.WorkspaceController = NewWorkspaceController(
-			api.GetTopics(),
-			api.GetWorkspaceStorePath(),
-			api.TmuxController,
-			api.PortController,
+		api.Core.TopicController = core.NewTopicController(api.Core.GetConfigDir(), api.Tmux)
+		api.Core.WorkspaceController = core.NewWorkspaceController(
+			api.Core.GetTopics(),
+			api.Core.GetWorkspaceStorePath(),
+			api.Tmux,
+			api.Port,
 		)
-		api.GithubController = NewGithubController()
-		api.TopicController.WorkspaceController = api.WorkspaceController
+		api.Github = github.NewGithubController()
+		api.Core.TopicController.WorkspaceController = api.Core.WorkspaceController
 	}
 }
