@@ -4,6 +4,8 @@ import (
 	"mynav/pkg/filesystem"
 	"os/exec"
 	"runtime"
+
+	"golang.design/x/clipboard"
 )
 
 type OS = uint
@@ -52,4 +54,13 @@ func OpenBrowser(url string) error {
 	}
 
 	return exec.Command(cmd, url).Start()
+}
+
+func CopyToClip(s string) error {
+	if err := clipboard.Init(); err != nil {
+		return err
+	}
+
+	clipboard.Write(clipboard.FmtText, []byte(s))
+	return nil
 }

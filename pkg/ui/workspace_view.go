@@ -1,24 +1,20 @@
 package ui
 
 import (
-	"fmt"
 	"mynav/pkg/core"
-	"mynav/pkg/git"
 	"mynav/pkg/system"
 	"strconv"
-	"strings"
 
 	"github.com/awesome-gocui/gocui"
-	"github.com/gookit/color"
 )
 
 const WorkspacesViewName = "WorkspacesView"
 
 type WorkspacesView struct {
-	listRenderer *ListRenderer
-	tv           *TopicsView
-	search       string
-	workspaces   core.Workspaces
+	tableRenderer *TableRenderer
+	tv            *TopicsView
+	search        string
+	workspaces    core.Workspaces
 }
 
 var _ View = &WorkspacesView{}
@@ -33,7 +29,7 @@ func newWorkspacesView(tv *TopicsView) *WorkspacesView {
 func (wv *WorkspacesView) selectWorkspaceByShortPath(shortPath string) {
 	for idx, w := range wv.workspaces {
 		if w.ShortPath() == shortPath {
-			wv.listRenderer.setSelected(idx)
+			wv.tv.tableRenderer.SetSelectedRow(idx)
 		}
 	}
 }
@@ -52,17 +48,39 @@ func (wv *WorkspacesView) refreshWorkspaces() {
 	}
 
 	wv.workspaces = workspaces
+	wv.syncWorkspacesToTable()
+}
 
-	if wv.listRenderer != nil {
-		newListSize := len(wv.workspaces)
-		if wv.listRenderer.listSize != newListSize {
-			wv.listRenderer.setListSize(newListSize)
-		}
+func (wv *WorkspacesView) syncWorkspacesToTable() {
+	rows := make([][]string, 0)
+	for _, w := range wv.workspaces {
+		tmux := func() string {
+			if tm := Api().Tmux.GetTmuxSessionByName(w.Path); tm != nil {
+				numWindows := strconv.Itoa(tm.NumWindows)
+				// TODO:add color to tmux
+				return numWindows + " - tmux"
+			}
+
+			return ""
+		}()
+
+		// TODO: handle
+		remote, _ := w.GetGitRemote()
+
+		rows = append(rows, []string{
+			w.Name,
+			w.GetDescription(),
+			remote,
+			w.GetLastModifiedTimeFormatted(),
+			tmux,
+		})
 	}
+
+	wv.tableRenderer.FillTable(rows)
 }
 
 func (wv *WorkspacesView) getSelectedWorkspace() *core.Workspace {
-	idx := wv.listRenderer.selected
+	idx := wv.tableRenderer.GetSelectedRowIndex()
 	if idx >= len(wv.workspaces) || idx < 0 {
 		return nil
 	}
@@ -95,8 +113,24 @@ func (wv *WorkspacesView) Init(ui *UI) {
 		ui.FocusTopicsView()
 	}
 
-	_, sizeY := view.Size()
-	wv.listRenderer = newListRenderer(0, sizeY, 0)
+	sizeX, sizeY := view.Size()
+
+	titles := []string{
+		"Name",
+		"Description",
+		"Git remote",
+		"Last Modified",
+		"Tmux Session",
+	}
+	proportions := []float64{
+		0.2,
+		0.2,
+		0.2,
+		0.2,
+		0.2,
+	}
+	wv.tableRenderer = NewTableRenderer()
+	wv.tableRenderer.InitTable(sizeX, sizeY, titles, proportions)
 	wv.refreshWorkspaces()
 
 	if selectedWorkspace := Api().Core.GetSelectedWorkspace(); selectedWorkspace != nil {
@@ -113,10 +147,10 @@ func (wv *WorkspacesView) Init(ui *UI) {
 
 	KeyBinding(wv.Name()).
 		set('j', func() {
-			wv.listRenderer.increment()
+			wv.tableRenderer.Down()
 		}).
 		set('k', func() {
-			wv.listRenderer.decrement()
+			wv.tableRenderer.Up()
 		}).
 		set(gocui.KeyArrowDown, moveDown).
 		set(gocui.KeyCtrlJ, moveDown).
@@ -136,7 +170,7 @@ func (wv *WorkspacesView) Init(ui *UI) {
 			if curWorkspace == nil {
 				return
 			}
-			GetDialog[*WorkspaceInfoDialogState](ui).Open(curWorkspace, func() {})
+			GetDialog[*WorkspaceInfoDialog](ui).Open(curWorkspace, func() {})
 		}).
 		set('g', func() {
 			curWorkspace := wv.getSelectedWorkspace()
@@ -146,8 +180,9 @@ func (wv *WorkspacesView) Init(ui *UI) {
 
 			GetDialog[*EditorDialog](ui).Open(func(s string) {
 				if err := Api().Core.CloneRepo(s, curWorkspace); err != nil {
-					GetDialog[*ToastDialog](ui).Open(err.Error(), func() {})
+					GetDialog[*ToastDialog](ui).OpenError(err.Error())
 				}
+				wv.syncWorkspacesToTable()
 			}, func() {}, "Git repo URL", Small)
 		}).
 		set('G', func() {
@@ -161,7 +196,7 @@ func (wv *WorkspacesView) Init(ui *UI) {
 			}
 
 			if err := system.OpenBrowser(*curWorkspace.GitRemote); err != nil {
-				GetDialog[*ToastDialog](ui).Open(err.Error(), func() {})
+				GetDialog[*ToastDialog](ui).OpenError(err.Error())
 			}
 		}).
 		set('/', func() {
@@ -204,7 +239,7 @@ func (wv *WorkspacesView) Init(ui *UI) {
 
 			openTermCmd, err := system.GetOpenTerminalCmd(curWorkspace.Path)
 			if err != nil {
-				GetDialog[*ToastDialog](ui).Open(err.Error(), func() {})
+				GetDialog[*ToastDialog](ui).OpenError(err.Error())
 				return nil
 			}
 
@@ -222,7 +257,7 @@ func (wv *WorkspacesView) Init(ui *UI) {
 					Api().Core.DeleteWorkspace(curWorkspace)
 
 					// HACK: same as below
-					wv.tv.listRenderer.setSelected(0)
+					wv.tv.tableRenderer.SetSelectedRow(0)
 					ui.RefreshMainView()
 				}
 			}, "Are you sure you want to delete this workspace?")
@@ -235,9 +270,10 @@ func (wv *WorkspacesView) Init(ui *UI) {
 
 			GetDialog[*EditorDialog](ui).Open(func(s string) {
 				if err := Api().Core.RenameWorkspace(curWorkspace, s); err != nil {
-					GetDialog[*ToastDialog](ui).Open(err.Error(), func() {})
+					GetDialog[*ToastDialog](ui).OpenError(err.Error())
 					return
 				}
+				wv.syncWorkspacesToTable()
 			}, func() {}, "New workspace name", Small)
 		}).
 		set('e', func() {
@@ -249,6 +285,7 @@ func (wv *WorkspacesView) Init(ui *UI) {
 			GetDialog[*EditorDialog](ui).Open(func(desc string) {
 				if desc != "" {
 					Api().Core.SetDescription(desc, curWorkspace)
+					wv.syncWorkspacesToTable()
 				}
 			}, func() {}, "Description", Large)
 		}).
@@ -257,15 +294,15 @@ func (wv *WorkspacesView) Init(ui *UI) {
 			curTopic := tv.getSelectedTopic()
 			GetDialog[*EditorDialog](ui).Open(func(name string) {
 				if _, err := Api().Core.CreateWorkspace(name, curTopic); err != nil {
-					GetDialog[*ToastDialog](ui).Open(err.Error(), func() {})
+					GetDialog[*ToastDialog](ui).OpenError(err.Error())
 					return
 				}
 
 				// HACK: when there a is a new workspace
 				// This will result in the workspace and the corresponding topic going to the top
 				// because we are sorting by modifed time
-				tv.listRenderer.setSelected(0)
-				wv.listRenderer.setSelected(0)
+				tv.tableRenderer.SetSelectedRow(0)
+				wv.tableRenderer.SetSelectedRow(0)
 				ui.RefreshMainView()
 			}, func() {}, "Workspace name ", Small)
 		}).
@@ -289,65 +326,6 @@ func (wv *WorkspacesView) Init(ui *UI) {
 		})
 }
 
-func (wv *WorkspacesView) formatWorkspaceRow(workspace *core.Workspace, selected bool) []string {
-	sizeX, _ := GetInternalView(wv.Name()).Size()
-	style, _ := func() (color.Style, string) {
-		if selected {
-			return color.New(color.Black, color.BgCyan), highlightedBlankLine(sizeX + 5) // +5 for extra padding
-		}
-		return color.New(color.Blue), blankLine(sizeX)
-	}()
-
-	lastModTime := workspace.GetLastModifiedTimeFormatted()
-	gitRemote := func() string {
-		// TODO: handle error
-		remote, _ := workspace.GetGitRemote()
-		if remote != "" {
-			return git.TrimGithubUrl(remote)
-		}
-		return ""
-	}()
-
-	fifth := sizeX / 5
-
-	description := ""
-	if workspace.GetDescription() != "" {
-		description = withSpacePadding("Description: "+workspace.GetDescription(), fifth)
-	}
-
-	url := withSpacePadding(gitRemote, fifth)
-	time := withSpacePadding(lastModTime, fifth)
-
-	name := withSurroundingSpaces(workspace.Name)
-	tmux := func() string {
-		if tm := Api().Tmux.GetTmuxSessionByName(workspace.Path); tm != nil {
-			numWindows := strconv.Itoa(tm.NumWindows)
-			var line string
-			if selected {
-				c := color.New(color.BgCyan, color.Black)
-				numWindows = c.Sprint(numWindows)
-				line = numWindows + c.Sprint(" - tmux")
-			} else {
-				numWindows = color.New(color.BgGreen, color.Black).Sprint(numWindows)
-				line = numWindows + color.Green.Sprint(" - tmux")
-			}
-			return line
-		}
-		return ""
-	}()
-
-	if description == "" {
-		name = withSpacePadding(name, 2*fifth)
-	} else {
-		name = withSpacePadding(name, fifth)
-	}
-
-	line := style.Sprint(name+description+url+time) + tmux + style.Sprint(strings.Repeat(" ", fifth+5)) // +5 for extra padding
-	return []string{
-		line,
-	}
-}
-
 func (wv *WorkspacesView) Render(ui *UI) error {
 	view := GetInternalView(wv.Name())
 	if view == nil {
@@ -362,26 +340,10 @@ func (wv *WorkspacesView) Render(ui *UI) error {
 	}
 
 	view.Clear()
-	content := func() []string {
-		if wv.workspaces == nil {
-			return []string{}
-		}
-
-		out := make([]string, 0)
-		wv.listRenderer.forEach(func(i int) {
-			w := wv.workspaces[i]
-			selected := i == wv.listRenderer.selected && GetFocusedView().Name() == wv.Name()
-
-			// TODO: https://github.com/GianlucaP106/mynav/issues/18
-			workspace := wv.formatWorkspaceRow(w, selected)
-			out = append(out, workspace...)
-		})
-
-		return out
-	}()
-	for _, line := range content {
-		fmt.Fprintln(view, line)
-	}
+	isFocused := GetFocusedView().Name() == wv.Name()
+	wv.tableRenderer.RenderWithSelectCallBack(view, func(_ int, _ *TableRow) bool {
+		return isFocused
+	})
 
 	return nil
 }

@@ -11,23 +11,23 @@ import (
 
 const WorkspaceInfoDialogStateName = "WorkspaceInfoDialog"
 
-type WorkspaceInfoDialogState struct {
+type WorkspaceInfoDialog struct {
 	editor    Editor
 	workspace *core.Workspace
 	title     string
 }
 
-var _ Dialog = &WorkspaceInfoDialogState{}
+var _ Dialog = &WorkspaceInfoDialog{}
 
-func newWorkspaceInfoDialogState() *WorkspaceInfoDialogState {
-	return &WorkspaceInfoDialogState{}
+func newWorkspaceInfoDialogState() *WorkspaceInfoDialog {
+	return &WorkspaceInfoDialog{}
 }
 
-func (w *WorkspaceInfoDialogState) Name() string {
+func (w *WorkspaceInfoDialog) Name() string {
 	return WorkspaceInfoDialogStateName
 }
 
-func (w *WorkspaceInfoDialogState) Init(height int) *gocui.View {
+func (w *WorkspaceInfoDialog) Init(height int) *gocui.View {
 	view := SetCenteredView(w.Name(), 100, height, 0)
 	view.Title = withSurroundingSpaces(w.title)
 	view.TitleColor = gocui.ColorBlue
@@ -37,7 +37,7 @@ func (w *WorkspaceInfoDialogState) Init(height int) *gocui.View {
 	return view
 }
 
-func (wd *WorkspaceInfoDialogState) Open(w *core.Workspace, exit func()) {
+func (wd *WorkspaceInfoDialog) Open(w *core.Workspace, exit func()) {
 	prevView := GetFocusedView()
 	wd.editor = NewConfirmationEditor(func() {
 		wd.Close()
@@ -60,11 +60,11 @@ func (wd *WorkspaceInfoDialogState) Open(w *core.Workspace, exit func()) {
 	wd.Init(len(content))
 }
 
-func (wd *WorkspaceInfoDialogState) Close() {
+func (wd *WorkspaceInfoDialog) Close() {
 	DeleteView(wd.Name())
 }
 
-func (wd *WorkspaceInfoDialogState) formatWorkspaceInfo(w *core.Workspace) []string {
+func (wd *WorkspaceInfoDialog) formatWorkspaceInfo(w *core.Workspace) []string {
 	sizeX := 100
 
 	formatItem := func(title string, content string) []string {
@@ -127,7 +127,7 @@ func (wd *WorkspaceInfoDialogState) formatWorkspaceInfo(w *core.Workspace) []str
 	return out
 }
 
-func (w *WorkspaceInfoDialogState) Render(ui *UI) error {
+func (w *WorkspaceInfoDialog) Render(ui *UI) error {
 	view := GetInternalView(WorkspaceInfoDialogStateName)
 	if view == nil {
 		return nil

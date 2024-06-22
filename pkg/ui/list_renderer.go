@@ -51,7 +51,6 @@ func (lr *ListRenderer) setSelected(idx int) {
 
 	size := min(lr.renderSize, lr.listSize)
 	lr.selected = idx
-	// lr.startIdx = min(lr.startIdx, min(lr.selected, lr.listSize-size))
 	lr.startIdx = min(lr.selected, lr.listSize-size)
 	lr.endIdx = lr.startIdx + size
 }
@@ -70,5 +69,11 @@ func (lr *ListRenderer) setListSize(listSize int) {
 func (lr *ListRenderer) forEach(f func(idx int)) {
 	for i := lr.startIdx; i < lr.endIdx; i++ {
 		f(i)
+	}
+}
+
+func (lr *ListRenderer) resetSize(newSize int) {
+	if newSize != lr.listSize {
+		lr.setListSize(newSize)
 	}
 }

@@ -20,7 +20,8 @@ type GithubDevicePreAuthentication struct {
 }
 
 type GithubAuthenticationToken struct {
-	*oauth2.Token
+	PersonalAccessToken *string
+	DeviceToken         *oauth2.Token
 }
 
 func NewGithubAuthenticator(clientId string, scopes ...string) *GithubAuthenticator {
@@ -60,12 +61,12 @@ func (ga *GithubAuthenticator) Authenticate(da *GithubDevicePreAuthentication) *
 	}
 
 	return &GithubAuthenticationToken{
-		Token: token,
+		DeviceToken: token,
 	}
 }
 
 func (ga *GithubAuthenticator) HttpClient(auth *GithubAuthenticationToken) *http.Client {
-	return ga.oauthConfig.Client(context.TODO(), auth.Token)
+	return ga.oauthConfig.Client(context.Background(), auth.DeviceToken)
 }
 
 func (gda *GithubDevicePreAuthentication) OpenBrowser() {

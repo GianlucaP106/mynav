@@ -11,17 +11,19 @@ type MainView struct {
 	tv          *TopicsView
 	pv          *PortView
 	tmv         *TmuxSessionView
+	gprv        *GithubPrView
 	configAsked bool
 }
 
 var _ View = &MainView{}
 
-func newMainView(wv *WorkspacesView, tv *TopicsView, pv *PortView, tmv *TmuxSessionView) *MainView {
+func newMainView(wv *WorkspacesView, tv *TopicsView, pv *PortView, tmv *TmuxSessionView, gprv *GithubPrView) *MainView {
 	return &MainView{
 		wv:          wv,
 		tv:          tv,
 		pv:          pv,
 		tmv:         tmv,
+		gprv:        gprv,
 		configAsked: false,
 	}
 }
@@ -50,6 +52,10 @@ func (ui *UI) FocusTmuxView() {
 	ui.focusMainView(TmuxSessionViewName)
 }
 
+func (ui *UI) FocusPrView() {
+	ui.focusMainView(GithubPrViewName)
+}
+
 func (ui *UI) focusMainView(viewName string) {
 	FocusView(viewName)
 
@@ -57,7 +63,8 @@ func (ui *UI) focusMainView(viewName string) {
 	tv := GetInternalView(TopicViewName)
 	pv := GetInternalView(PortViewName)
 	tmv := GetInternalView(TmuxSessionViewName)
-	views := []*gocui.View{wv, tv, pv, tmv}
+	gprv := GetInternalView(GithubPrViewName)
+	views := []*gocui.View{wv, tv, pv, tmv, gprv}
 
 	off := gocui.ColorBlue
 	on := gocui.ColorGreen
@@ -74,6 +81,7 @@ func (ui *UI) focusMainView(viewName string) {
 func (mv *MainView) Init(ui *UI) {
 	mv.tv.Init(ui)
 	mv.pv.Init(ui)
+	mv.gprv.Init(ui)
 	mv.tmv.Init(ui)
 	mv.wv.Init(ui)
 }
@@ -104,6 +112,7 @@ func (mv *MainView) Render(ui *UI) error {
 	if Api().Core.IsConfigInitialized {
 		mv.tv.Render(ui)
 		mv.pv.Render(ui)
+		mv.gprv.Render(ui)
 		mv.tmv.Render(ui)
 		mv.wv.Render(ui)
 	} else if mv.tmv.standalone {

@@ -52,7 +52,7 @@ func WriteFile(path string, b []byte) error {
 	return os.WriteFile(path, b, 0644)
 }
 
-func Save[T any](data *T, store string) {
+func SaveJson[T any](data *T, store string) {
 	if !Exists(store) {
 		os.Create(store)
 	}
@@ -69,7 +69,7 @@ func Save[T any](data *T, store string) {
 	}
 }
 
-func Load[T any](store string) *T {
+func LoadJson[T any](store string) *T {
 	file, err := os.Open(store)
 	if err != nil {
 		if os.IsNotExist(err) {

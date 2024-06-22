@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"mynav/pkg/logger"
 	"mynav/pkg/system"
 
 	"github.com/awesome-gocui/gocui"
@@ -17,6 +18,7 @@ type UI struct {
 }
 
 func Start() *Action {
+	logger.Init("debug.log")
 	if err := InitApi(); err != nil {
 		fmt.Println(err.Error())
 		return nil
@@ -82,7 +84,7 @@ func SetViewLayout(viewName string) *gocui.View {
 	}
 
 	views[TmuxSessionViewName] = func() *gocui.View {
-		view, _ := SetView(TmuxSessionViewName, (maxX/3)+1, (maxY/2)+1, maxX-2, maxY-4, 0)
+		view, _ := SetView(TmuxSessionViewName, (maxX/3)+1, (maxY/2)+1, ((2*maxX)/3)-1, maxY-4, 0)
 		return view
 	}
 
@@ -93,6 +95,11 @@ func SetViewLayout(viewName string) *gocui.View {
 
 	views[PortViewName] = func() *gocui.View {
 		view, _ := SetView(PortViewName, 2, (maxY/2)+1, maxX/3-1, maxY-4, 0)
+		return view
+	}
+
+	views[GithubPrViewName] = func() *gocui.View {
+		view, _ := SetView(GithubPrViewName, ((2*maxX)/3)+1, (maxY/2)+1, maxX-2, maxY-4, 0)
 		return view
 	}
 

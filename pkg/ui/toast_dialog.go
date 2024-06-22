@@ -23,12 +23,16 @@ func (td *ToastDialog) Name() string {
 	return ToastDialogStateName
 }
 
-func (td *ToastDialog) Open(message string, exit func()) {
+func (td *ToastDialog) Open(message string, error bool, title string, exit func()) {
 	td.message = message
 	messageLength := len(td.message)
-	view := SetCenteredView(td.Name(), messageLength+5, 3, 0)
-	view.FrameColor = gocui.ColorRed
-	view.Title = withSurroundingSpaces("Error")
+	view := SetCenteredView(td.Name(), max(messageLength, len(title))+5, 3, 0)
+	if error {
+		view.FrameColor = gocui.ColorRed
+	} else {
+		view.FrameColor = gocui.ColorGreen
+	}
+	view.Title = withSurroundingSpaces(title)
 	view.Editable = true
 	keys := []gocui.Key{
 		gocui.KeyEnter,
@@ -47,6 +51,10 @@ func (td *ToastDialog) Open(message string, exit func()) {
 	})
 	view.Editor = td.editor
 	FocusView(td.Name())
+}
+
+func (td *ToastDialog) OpenError(message string) {
+	td.Open(message, true, "Error", func() {})
 }
 
 func (td *ToastDialog) Close() {
