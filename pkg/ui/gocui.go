@@ -55,6 +55,10 @@ func GetFocusedView() *gocui.View {
 	return gui.CurrentView()
 }
 
+func UpdateGui(f func(g *gocui.Gui) error) {
+	gui.Update(f)
+}
+
 func SetScreenManagers(managers ...gocui.Manager) {
 	gui.SetManager(managers...)
 }
