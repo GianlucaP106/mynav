@@ -144,6 +144,37 @@ var portKeyBindings []*KeyBindingMapping = []*KeyBindingMapping{
 	},
 }
 
+var githubPrViewKeyBindings []*KeyBindingMapping = []*KeyBindingMapping{
+	{
+		key:    "j",
+		action: "Move down",
+	},
+	{
+		key:    "k",
+		action: "Move up",
+	},
+	{
+		key:    "esc | up arrow | ctrl-k",
+		action: "Focus Workspace View",
+	},
+	{
+		key:    "left arrow | ctrl-h",
+		action: "Focus Tmux View",
+	},
+	{
+		key:    "L",
+		action: "Login with device code and browser",
+	},
+	{
+		key:    "P",
+		action: "Login with personal access token",
+	},
+	{
+		key:    "O",
+		action: "Logout",
+	},
+}
+
 func getTmuxKeyBindings(standalone bool) []*KeyBindingMapping {
 	tmuxKeyBindings := []*KeyBindingMapping{
 		{
@@ -177,6 +208,10 @@ func getTmuxKeyBindings(standalone bool) []*KeyBindingMapping {
 			{
 				key:    "left arrow | ctrl-h",
 				action: "Focus Port View",
+			},
+			{
+				key:    "right arrow | ctrl-l",
+				action: "Focus Github View",
 			},
 		}, tmuxKeyBindings...)
 	}

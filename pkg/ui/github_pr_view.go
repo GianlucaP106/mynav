@@ -73,7 +73,7 @@ func (g *GithubPrView) Init(ui *UI) {
 
 	go func() {
 		g.refreshPrs()
-		gui.Update(func(_ *gocui.Gui) error {
+		UpdateGui(func(_ *gocui.Gui) error {
 			g.Render(ui)
 			return nil
 		})
@@ -101,6 +101,10 @@ func (g *GithubPrView) Init(ui *UI) {
 
 			deviceAuth := Api().Github.AuthenticateWithDeviceAuth(func() {
 				g.refreshPrs()
+				UpdateGui(func(_ *gocui.Gui) error {
+					g.Render(ui)
+					return nil
+				})
 			})
 
 			if deviceAuth != nil {
@@ -130,7 +134,10 @@ func (g *GithubPrView) Init(ui *UI) {
 		set(gocui.KeyArrowUp, moveUp).
 		set(gocui.KeyCtrlK, moveUp).
 		set(gocui.KeyArrowLeft, moveLeft).
-		set(gocui.KeyCtrlH, moveLeft)
+		set(gocui.KeyCtrlH, moveLeft).
+		set('?', func() {
+			GetDialog[*HelpView](ui).Open(githubPrViewKeyBindings, func() {})
+		})
 }
 
 func (g *GithubPrView) Name() string {

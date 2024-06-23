@@ -125,7 +125,7 @@ func (p *PortView) Init(ui *UI) {
 
 	go func() {
 		p.refreshPorts()
-		gui.Update(func(_ *gocui.Gui) error {
+		UpdateGui(func(_ *gocui.Gui) error {
 			p.Render(ui)
 			return nil
 		})
