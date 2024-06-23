@@ -3,6 +3,7 @@ package app
 import (
 	"flag"
 	"fmt"
+	"mynav/pkg"
 	"mynav/pkg/ui"
 )
 
@@ -11,7 +12,7 @@ func Main() {
 	flag.Parse()
 
 	if *version {
-		fmt.Println(VERSION)
+		fmt.Println(pkg.VERSION)
 		return
 	}
 

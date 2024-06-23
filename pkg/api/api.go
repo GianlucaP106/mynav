@@ -19,13 +19,15 @@ type Api struct {
 type Core struct {
 	*core.TopicController
 	*core.WorkspaceController
-	*core.Configuration
+	*core.LocalConfiguration
+	*core.GlobalConfiguration
 }
 
 func NewApi() (*Api, error) {
 	api := &Api{}
 	api.Core = &Core{}
-	api.Core.Configuration = core.NewConfiguration()
+	api.Core.LocalConfiguration = core.NewLocalConfiguration()
+	api.Core.GlobalConfiguration = core.NewGlobalConfiguration()
 
 	if api.Core.IsConfigInitialized {
 		api.InitControllers()
@@ -60,14 +62,19 @@ func (api *Api) InitTmuxController() {
 func (api *Api) InitControllers() {
 	if api.Core.IsConfigInitialized {
 		api.InitTmuxController()
-		api.Core.TopicController = core.NewTopicController(api.Core.GetConfigDir(), api.Tmux)
+		api.Core.TopicController = core.NewTopicController(api.Core.GetLocalConfigDir(), api.Tmux)
 		api.Core.WorkspaceController = core.NewWorkspaceController(
 			api.Core.GetTopics(),
 			api.Core.GetWorkspaceStorePath(),
 			api.Tmux,
 			api.Port,
 		)
-		api.Github = github.NewGithubController()
+
+		api.Github = github.NewGithubController(api.Core.GetGithubToken(), func(gat *github.GithubAuthenticationToken) {
+			api.Core.SetGithubToken(gat)
+		}, func() {
+			api.Core.SetGithubToken(nil)
+		})
 		api.Core.TopicController.WorkspaceController = api.Core.WorkspaceController
 	}
 }

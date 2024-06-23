@@ -14,7 +14,7 @@ type KeyBindingMapping struct {
 
 type HelpView struct {
 	editor         Editor
-	listRenderer   *ListRenderer
+	tableRenderer  *TableRenderer
 	globalMappings []*KeyBindingMapping
 	mappings       []*KeyBindingMapping
 }
@@ -26,7 +26,7 @@ const HelpStateName = "HelpView"
 func newHelpState(globalMappings []*KeyBindingMapping) *HelpView {
 	return &HelpView{
 		globalMappings: globalMappings,
-		listRenderer:   newListRenderer(0, 14, 0),
+		tableRenderer:  NewTableRenderer(),
 	}
 }
 
@@ -53,9 +53,9 @@ func (hv *HelpView) Open(mappings []*KeyBindingMapping, exit func()) {
 	x, _ := ScreenSize()
 	prevView := GetFocusedView()
 	hv.editor = NewHelpViewEditor(func() {
-		hv.listRenderer.decrement()
+		hv.tableRenderer.Up()
 	}, func() {
-		hv.listRenderer.increment()
+		hv.tableRenderer.Down()
 	}, func() {
 	}, func() {
 		hv.Close()
@@ -70,9 +70,19 @@ func (hv *HelpView) Open(mappings []*KeyBindingMapping, exit func()) {
 	view.Editor = hv.editor
 	view.FrameColor = gocui.ColorGreen
 
-	FocusView(hv.Name())
+	sizeX, _ := view.Size()
+	title := []string{
+		"Key",
+		"Action",
+	}
+	proportions := []float64{
+		0.33,
+		0.66,
+	}
 
-	hv.refreshHelpListRenderer()
+	hv.tableRenderer.InitTable(sizeX, 13, title, proportions)
+	hv.refreshTable()
+	FocusView(hv.Name())
 }
 
 func (hv *HelpView) Close() {
@@ -84,27 +94,22 @@ func (hv *HelpView) Name() string {
 	return HelpStateName
 }
 
-func (hv *HelpView) refreshHelpListRenderer() {
-	newSize := len(hv.mappings) + len(hv.globalMappings)
-	if newSize != hv.listRenderer.listSize {
-		hv.listRenderer.setListSize(newSize)
+func (hv *HelpView) refreshTable() {
+	rows := make([][]string, 0)
+	for _, m := range hv.mappings {
+		rows = append(rows, []string{
+			m.key,
+			m.action,
+		})
 	}
-}
 
-func (hv *HelpView) formatHelpMessage(key *KeyBindingMapping, selected bool) string {
-	view := GetInternalView(hv.Name())
-	sizeX, _ := view.Size()
-
-	color := func() color.Style {
-		if selected {
-			return color.New(color.Black, color.BgCyan)
-		}
-		return color.New(color.Blue)
-	}()
-
-	keyMap := withSpacePadding("[ "+key.key+" ]", sizeX/3)
-	action := withSpacePadding(key.action, (sizeX*2)/3)
-	return color.Sprint(keyMap + action)
+	for _, gm := range hv.globalMappings {
+		rows = append(rows, []string{
+			gm.key,
+			gm.action,
+		})
+	}
+	hv.tableRenderer.FillTable(rows)
 }
 
 func (hv *HelpView) Render(ui *UI) error {
@@ -113,23 +118,10 @@ func (hv *HelpView) Render(ui *UI) error {
 		return nil
 	}
 
-	mappings := append(hv.mappings, hv.globalMappings...)
-	content := func() []string {
-		out := make([]string, 0)
-		hv.listRenderer.forEach(func(idx int) {
-			helpMessage := mappings[idx]
-			selected := idx == hv.listRenderer.selected
-			out = append(out, hv.formatHelpMessage(helpMessage, selected))
-		})
-		return out
-	}()
-
 	view.Clear()
 	sizeX, _ := view.Size()
 	title := displayLine("Cheatsheet", Center, sizeX, color.New(color.White))
 	fmt.Fprintln(view, title)
-	for _, line := range content {
-		fmt.Fprintln(view, line)
-	}
+	hv.tableRenderer.Render(view)
 	return nil
 }

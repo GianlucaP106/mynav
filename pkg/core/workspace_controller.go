@@ -78,7 +78,7 @@ func (wc *WorkspaceController) RenameWorkspace(w *Workspace, newName string) err
 
 func (wc *WorkspaceController) GetWorkspaceTmuxSessionCount() int {
 	out := 0
-	for _, w := range wc.WorkspaceRepository.WorkspaceContainer {
+	for _, w := range wc.WorkspaceRepository.Container {
 		if wc.TmuxController.GetTmuxSessionByName(w.Path) != nil {
 			out++
 		}
@@ -143,7 +143,7 @@ func (wc *WorkspaceController) GetWorkspaceByTmuxSession(s *tmux.TmuxSession) *W
 }
 
 func (wc *WorkspaceController) GetWorkspaceCount() int {
-	return len(wc.WorkspaceRepository.GetContainer())
+	return len(wc.WorkspaceRepository.Container)
 }
 
 func (wc *WorkspaceController) GetWorkspacesByTopicCount(t *Topic) int {
@@ -151,11 +151,11 @@ func (wc *WorkspaceController) GetWorkspacesByTopicCount(t *Topic) int {
 }
 
 func (wc *WorkspaceController) GetWorkspaces() Workspaces {
-	return wc.WorkspaceRepository.GetContainer().ToList()
+	return wc.WorkspaceRepository.Container.ToList()
 }
 
 func (wc *WorkspaceController) DeleteWorkspacesByTopic(t *Topic) {
-	for _, w := range wc.WorkspaceRepository.WorkspaceContainer.ToList().ByTopic(t) {
+	for _, w := range wc.WorkspaceRepository.Container.ToList().ByTopic(t) {
 		wc.DeleteWorkspace(w)
 	}
 }

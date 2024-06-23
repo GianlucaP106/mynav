@@ -1,18 +1,16 @@
 package ui
 
 import (
-	"fmt"
 	"mynav/pkg/core"
 	"strings"
 
 	"github.com/awesome-gocui/gocui"
-	"github.com/gookit/color"
 )
 
 type TopicsView struct {
-	listRenderer *ListRenderer
-	search       string
-	topics       core.Topics
+	tableRenderer *TableRenderer
+	search        string
+	topics        core.Topics
 }
 
 const TopicViewName = "TopicsView"
@@ -36,11 +34,19 @@ func (tv *TopicsView) refreshTopics() {
 	}
 
 	tv.topics = topics
+	tv.syncTopicsToTable()
+}
 
-	newListSize := tv.topics.Len()
-	if tv.listRenderer != nil && newListSize != tv.listRenderer.listSize {
-		tv.listRenderer.setListSize(newListSize)
+func (tv *TopicsView) syncTopicsToTable() {
+	rows := make([][]string, 0)
+	for _, topic := range tv.topics {
+		rows = append(rows, []string{
+			topic.Name,
+			topic.GetLastModifiedTimeFormatted(),
+		})
 	}
+
+	tv.tableRenderer.FillTable(rows)
 }
 
 func (tv *TopicsView) getSelectedTopic() *core.Topic {
@@ -48,13 +54,13 @@ func (tv *TopicsView) getSelectedTopic() *core.Topic {
 		return nil
 	}
 
-	return tv.topics[tv.listRenderer.selected]
+	return tv.topics[tv.tableRenderer.GetSelectedRowIndex()]
 }
 
 func (tv *TopicsView) selectTopicByName(name string) {
 	for idx, t := range tv.topics {
 		if t.Name == name {
-			tv.listRenderer.setSelected(idx)
+			tv.tableRenderer.SetSelectedRow(idx)
 		}
 	}
 }
@@ -74,8 +80,17 @@ func (tv *TopicsView) Init(ui *UI) {
 	view.Title = withSurroundingSpaces("Topics")
 	view.TitleColor = gocui.ColorBlue
 
-	_, sizeY := view.Size()
-	tv.listRenderer = newListRenderer(0, sizeY, 0)
+	sizeX, sizeY := view.Size()
+	tv.tableRenderer = NewTableRenderer()
+	titles := []string{
+		"Name",
+		"Last Modified",
+	}
+	colProportions := []float64{
+		0.5,
+		0.5,
+	}
+	tv.tableRenderer.InitTable(sizeX, sizeY, titles, colProportions)
 	tv.refreshTopics()
 
 	if selectedWorkspace := Api().Core.GetSelectedWorkspace(); selectedWorkspace != nil {
@@ -95,12 +110,12 @@ func (tv *TopicsView) Init(ui *UI) {
 
 	KeyBinding(tv.Name()).
 		set('j', func() {
-			tv.listRenderer.increment()
+			tv.tableRenderer.Down()
 			wv := GetView[*WorkspacesView](ui)
 			wv.refreshWorkspaces()
 		}).
 		set('k', func() {
-			tv.listRenderer.decrement()
+			tv.tableRenderer.Up()
 			wv := GetView[*WorkspacesView](ui)
 			wv.refreshWorkspaces()
 		}).
@@ -124,14 +139,14 @@ func (tv *TopicsView) Init(ui *UI) {
 		set('a', func() {
 			GetDialog[*EditorDialog](ui).Open(func(s string) {
 				if err := Api().Core.CreateTopic(s); err != nil {
-					GetDialog[*ToastDialog](ui).Open(err.Error(), func() {})
+					GetDialog[*ToastDialog](ui).OpenError(err.Error())
 					return
 				}
 
 				// HACK: when there a is a new topic
 				// This will result in the corresponding topic going to the top
 				// because we are sorting by modifed time
-				tv.listRenderer.setSelected(0)
+				tv.tableRenderer.SetSelectedRow(0)
 				ui.RefreshMainView()
 			}, func() {}, "Topic name", Small)
 		}).
@@ -143,7 +158,7 @@ func (tv *TopicsView) Init(ui *UI) {
 
 			GetDialog[*EditorDialog](ui).Open(func(s string) {
 				if err := Api().Core.RenameTopic(t, s); err != nil {
-					GetDialog[*ToastDialog](ui).Open(err.Error(), func() {})
+					GetDialog[*ToastDialog](ui).OpenError(err.Error())
 					return
 				}
 				ui.RefreshMainView()
@@ -165,27 +180,6 @@ func (tv *TopicsView) Init(ui *UI) {
 		})
 }
 
-func (tv *TopicsView) formatTopic(topic *core.Topic, selected bool) []string {
-	sizeX, _ := GetInternalView(tv.Name()).Size()
-	style, _ := func() (color.Style, string) {
-		if selected {
-			return color.New(color.Black, color.BgCyan), highlightedBlankLine(sizeX + 5) // +5 for extra padding
-		}
-		return color.New(color.Blue), blankLine(sizeX)
-	}()
-
-	modTime := topic.GetLastModifiedTimeFormatted()
-	name := withSpacePadding(withSurroundingSpaces(topic.Name), sizeX/3)
-	modTime = withSpacePadding(modTime, ((sizeX*2)/3)+5) // +5 for extra padding
-
-	line := style.Sprint(name + modTime)
-
-	out := []string{
-		line,
-	}
-	return out
-}
-
 func (tv *TopicsView) Render(ui *UI) error {
 	view := GetInternalView(tv.Name())
 	if view == nil {
@@ -205,15 +199,8 @@ func (tv *TopicsView) Render(ui *UI) error {
 		currentViewSelected = true
 	}
 
-	topics := tv.topics
-	content := make([]string, 0)
-	tv.listRenderer.forEach(func(idx int) {
-		topic := topics[idx]
-		selected := (idx == tv.listRenderer.selected) && currentViewSelected
-		content = append(content, tv.formatTopic(topic, selected)...)
+	tv.tableRenderer.RenderWithSelectCallBack(view, func(_ int, _ *TableRow) bool {
+		return currentViewSelected
 	})
-	for _, line := range content {
-		fmt.Fprintln(view, line)
-	}
 	return nil
 }

@@ -16,12 +16,14 @@ func (ui *UI) InitViews() []gocui.Manager {
 	wv := newWorkspacesView(tv)
 	pv := newPortView()
 	tmsv := newTmuxSessionView()
+	gprv := NewGithubPrView()
 	ui.SetViews(
-		newMainView(wv, tv, pv, tmsv),
+		newMainView(wv, tv, pv, tmsv, gprv),
 		tv,
 		wv,
 		pv,
 		tmsv,
+		gprv,
 		newHeaderView(),
 	)
 

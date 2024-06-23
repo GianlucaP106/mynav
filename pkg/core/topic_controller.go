@@ -59,22 +59,22 @@ func (tc *TopicController) RenameTopic(t *Topic, newName string) error {
 		newWorkspacePath := filepath.Join(newTopicPath, w.Name)
 		newShortPath := filepath.Join(newName, w.Name)
 
-		wr.WorkspaceContainer.Delete(w)
-		wr.WorkspaceDatasource.DeleteMetadata(w)
+		wr.Container.Delete(w)
+		wr.DeleteMetadata(w)
 
-		if wr.WorkspaceDatasource.Data.SelectedWorkspace == w.ShortPath() {
-			wr.WorkspaceDatasource.Data.SelectedWorkspace = newShortPath
+		if wr.Datasource.Data.SelectedWorkspace == w.ShortPath() {
+			wr.Datasource.Data.SelectedWorkspace = newShortPath
 		}
 
 		if s := tc.TmuxController.GetTmuxSessionByName(w.Path); s != nil {
 			tc.TmuxController.RenameTmuxSession(s, newWorkspacePath)
 		}
 
-		wr.WorkspaceContainer[newShortPath] = w
+		wr.Container[newShortPath] = w
 		w.Path = newWorkspacePath
 
-		wr.WorkspaceDatasource.Data.Workspaces[newShortPath] = w.Metadata
-		wr.WorkspaceDatasource.SaveStore()
+		wr.Datasource.Data.Workspaces[newShortPath] = w.Metadata
+		wr.Datasource.SaveData()
 
 	}
 
