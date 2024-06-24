@@ -1,71 +1,56 @@
 package ui
 
 type EditorDialog struct {
-	editor Editor
-	title  string
-	height int
+	view *View
 }
-
-var _ Dialog = &EditorDialog{}
 
 type EditorSize = uint
 
-const EditorDialogStateName = "EditorDialog"
+const EditorDialogName = "EditorDialog"
 
 const (
 	Small EditorSize = iota
 	Large
 )
 
-func newEditorDialogState() *EditorDialog {
-	editor := &EditorDialog{
-		height: 3,
-	}
-	return editor
-}
+func OpenEditorDialog(onEnter func(string), onEsc func(), title string, size EditorSize) *EditorDialog {
+	ed := &EditorDialog{}
 
-func (eds *EditorDialog) Name() string {
-	return EditorDialogStateName
-}
-
-func (ed *EditorDialog) Open(onEnter func(string), onEsc func(), title string, size EditorSize) {
+	var height int
 	switch size {
 	case Small:
-		ed.height = 3
+		height = 3
 	case Large:
-		ed.height = 7
+		height = 7
 	}
-	ed.title = title
+
+	ed.view = SetCenteredView(EditorDialogName, 80, height, 0)
+	ed.view.Editable = true
+	ed.view.Title = withSurroundingSpaces(title)
+	ed.view.Wrap = true
+	ToggleCursor(true)
 
 	prevView := GetFocusedView()
-	ed.editor = NewSimpleEditor(func(s string) {
+	ed.view.Editor = NewSimpleEditor(func(s string) {
 		ed.Close()
 		if prevView != nil {
-			FocusView(prevView.Name())
+			FocusViewInternal(prevView.Name())
 		}
 		onEnter(s)
 	}, func() {
 		ed.Close()
 		if prevView != nil {
-			FocusView(prevView.Name())
+			FocusViewInternal(prevView.Name())
 		}
 		onEsc()
 	})
 
-	view := SetCenteredView(ed.Name(), 80, ed.height, 0)
-	FocusView(ed.Name())
-	view.Editable = true
-	view.Editor = ed.editor
-	view.Title = withSurroundingSpaces(ed.title)
-	view.Wrap = true
-	ToggleCursor(true)
+	FocusViewInternal(ed.view.Name())
+
+	return ed
 }
 
 func (ed *EditorDialog) Close() {
 	ToggleCursor(false)
-	DeleteView(ed.Name())
-}
-
-func (eds *EditorDialog) Render(ui *UI) error {
-	return nil
+	DeleteView(ed.view.Name())
 }

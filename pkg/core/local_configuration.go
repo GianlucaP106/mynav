@@ -3,7 +3,7 @@ package core
 import (
 	"errors"
 	"log"
-	"mynav/pkg/filesystem"
+	"mynav/pkg/system"
 	"os"
 	"path/filepath"
 	"time"
@@ -22,7 +22,7 @@ func NewLocalConfiguration() *LocalConfiguration {
 
 func (c *LocalConfiguration) InitConfig(dir string) (string, error) {
 	path := filepath.Join(dir, ".mynav")
-	if err := filesystem.CreateDir(path); err != nil {
+	if err := system.CreateDir(path); err != nil {
 		return "", err
 	}
 
@@ -44,7 +44,7 @@ func (c *LocalConfiguration) DetectConfig() bool {
 	if err != nil {
 		log.Panicln(err)
 	}
-	dirEntries := filesystem.GetDirEntries(cwd)
+	dirEntries := system.GetDirEntries(cwd)
 	homeDir, _ := os.UserHomeDir()
 
 	configPath, err := func() (string, error) {
@@ -68,7 +68,7 @@ func (c *LocalConfiguration) DetectConfig() bool {
 				}
 			}
 			cwd = filepath.Dir(cwd)
-			dirEntries = filesystem.GetDirEntries(cwd)
+			dirEntries = system.GetDirEntries(cwd)
 		}
 	}()
 	if err != nil {

@@ -8,9 +8,8 @@ import (
 	"github.com/awesome-gocui/gocui"
 )
 
-const PortViewName = "PortView"
-
 type PortView struct {
+	view          *View
 	tableRenderer *TableRenderer
 	ports         []*Port
 }
@@ -20,21 +19,100 @@ type Port struct {
 	*system.Port
 }
 
-var _ View = &PortView{}
+const PortViewName = "PortView"
 
-func newPortView() *PortView {
-	pv := &PortView{
-		ports: nil,
+func NewPortView() *PortView {
+	return &PortView{}
+}
+
+func (p *PortView) Init() {
+	p.view = SetViewLayout(PortViewName)
+
+	p.view.FrameColor = gocui.ColorBlue
+	p.view.Title = withSurroundingSpaces("Open Ports")
+	p.view.TitleColor = gocui.ColorBlue
+
+	sizeX, sizeY := p.view.Size()
+	p.tableRenderer = NewTableRenderer()
+	p.tableRenderer.InitTable(
+		sizeX,
+		sizeY,
+		[]string{
+			"Port",
+			"Exe",
+			"Linked to",
+		},
+		[]float64{
+			0.25,
+			0.25,
+			0.5,
+		})
+
+	go func() {
+		p.refreshPorts()
+		UpdateGui(func(_ *gocui.Gui) error {
+			p.Render()
+			return nil
+		})
+	}()
+
+	moveUp := func() {
+		FocusTopicsView()
 	}
-	return pv
-}
 
-func (p *PortView) Name() string {
-	return PortViewName
-}
+	moveRight := func() {
+		FocusTmuxView()
+	}
 
-func (p *PortView) RequiresManager() bool {
-	return false
+	KeyBinding(p.view.Name()).
+		set('j', func() {
+			p.tableRenderer.Down()
+		}).
+		set('k', func() {
+			p.tableRenderer.Up()
+		}).
+		set(gocui.KeyArrowUp, moveUp).
+		set(gocui.KeyCtrlK, moveUp).
+		set(gocui.KeyEsc, moveUp).
+		set(gocui.KeyArrowRight, moveRight).
+		set(gocui.KeyCtrlL, moveRight).
+		setWithQuit(gocui.KeyEnter, func() bool {
+			port := p.getSelectedPort()
+			if port == nil {
+				return false
+			}
+
+			if port.tmux == nil {
+				return false
+			}
+
+			SetAction(system.GetAttachTmuxSessionCmd(port.tmux.Name))
+			return true
+		}).
+		set('D', func() {
+			port := p.getSelectedPort()
+			if port == nil {
+				return
+			}
+
+			if port.tmux == nil {
+				OpenToastDialogError("Operation not allowed on external port")
+				return
+			}
+
+			OpenConfirmationDialog(func(b bool) {
+				if b {
+					if err := Api().Port.KillPort(port.Port); err != nil {
+						OpenToastDialogError(err.Error())
+					}
+					Api().Tmux.SyncPorts()
+					p.refreshPorts()
+				}
+			}, "Are you sure you want to kill this port?")
+		}).
+		set('?', func() {
+			OpenHelpView(portKeyBindings, func() {})
+		})
 }
 
 func (pv *PortView) refreshPorts() {
@@ -96,120 +174,28 @@ func (p *PortView) getSelectedPort() *Port {
 	return p.ports[p.tableRenderer.GetSelectedRowIndex()]
 }
 
-func (p *PortView) Init(ui *UI) {
-	if GetInternalView(p.Name()) != nil {
-		return
-	}
+func (p *PortView) Render() error {
+	// if p.view == nil {
+	// 	p.Init()
+	// }
 
-	view := SetViewLayout(p.Name())
-
-	view.FrameColor = gocui.ColorBlue
-	view.Title = withSurroundingSpaces("Open Ports")
-	view.TitleColor = gocui.ColorBlue
-
-	sizeX, sizeY := view.Size()
-	p.tableRenderer = NewTableRenderer()
-	p.tableRenderer.InitTable(
-		sizeX,
-		sizeY,
-		[]string{
-			"Port",
-			"Exe",
-			"Linked to",
-		},
-		[]float64{
-			0.25,
-			0.25,
-			0.5,
-		})
-
-	go func() {
-		p.refreshPorts()
-		UpdateGui(func(_ *gocui.Gui) error {
-			p.Render(ui)
-			return nil
-		})
-	}()
-
-	moveUp := func() {
-		ui.FocusTopicsView()
-	}
-
-	moveRight := func() {
-		ui.FocusTmuxView()
-	}
-
-	KeyBinding(p.Name()).
-		set('j', func() {
-			p.tableRenderer.Down()
-		}).
-		set('k', func() {
-			p.tableRenderer.Up()
-		}).
-		set(gocui.KeyArrowUp, moveUp).
-		set(gocui.KeyCtrlK, moveUp).
-		set(gocui.KeyEsc, moveUp).
-		set(gocui.KeyArrowRight, moveRight).
-		set(gocui.KeyCtrlL, moveRight).
-		set(gocui.KeyEnter, func() {
-			port := p.getSelectedPort()
-			if port == nil {
-				return
-			}
-
-			if port.tmux == nil {
-				return
-			}
-
-			ui.setAction(system.GetAttachTmuxSessionCmd(port.tmux.Name))
-		}).
-		set('D', func() {
-			port := p.getSelectedPort()
-			if port == nil {
-				return
-			}
-
-			if port.tmux == nil {
-				GetDialog[*ToastDialog](ui).OpenError("Operation not allowed on external port")
-				return
-			}
-
-			GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
-				if b {
-					if err := Api().Port.KillPort(port.Port); err != nil {
-						GetDialog[*ToastDialog](ui).OpenError(err.Error())
-					}
-					Api().Tmux.SyncPorts()
-					p.refreshPorts()
-				}
-			}, "Are you sure you want to kill this port?")
-		}).
-		set('?', func() {
-			GetDialog[*HelpView](ui).Open(portKeyBindings, func() {})
-		})
-}
-
-func (p *PortView) Render(ui *UI) error {
-	p.Init(ui)
-	view := GetInternalView(p.Name())
-	view.Clear()
+	p.view.Clear()
 
 	currentViewSelected := false
-	if v := GetFocusedView(); v != nil && v.Name() == p.Name() {
+	if v := GetFocusedView(); v != nil && v.Name() == p.view.Name() {
 		currentViewSelected = true
 	}
 
-	p.tableRenderer.RenderWithSelectCallBack(view, func(_ int, _ *TableRow) bool {
+	p.tableRenderer.RenderWithSelectCallBack(p.view, func(_ int, _ *TableRow) bool {
 		return currentViewSelected
 	})
 
 	if p.ports == nil {
-		fmt.Fprintln(view, "Loading...")
+		fmt.Fprintln(p.view, "Loading...")
 	}
 
-	if ui.action.Command != nil {
-		return gocui.ErrQuit
-	}
-
+	// if ui.action.Command != nil {
+	// 	return
+	// }
 	return nil
 }

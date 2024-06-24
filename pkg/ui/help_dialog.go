@@ -12,23 +12,14 @@ type KeyBindingMapping struct {
 	action string
 }
 
-type HelpView struct {
-	editor         Editor
+type HelpDialog struct {
+	view           *View
 	tableRenderer  *TableRenderer
 	globalMappings []*KeyBindingMapping
 	mappings       []*KeyBindingMapping
 }
 
-var _ Dialog = &HelpView{}
-
-const HelpStateName = "HelpView"
-
-func newHelpState(globalMappings []*KeyBindingMapping) *HelpView {
-	return &HelpView{
-		globalMappings: globalMappings,
-		tableRenderer:  NewTableRenderer(),
-	}
-}
+const HelpDialogName = "HelpDialog"
 
 func NewHelpViewEditor(up func(), down func(), enter func(), exit func()) gocui.EditorFunc {
 	return gocui.EditorFunc(
@@ -48,29 +39,33 @@ func NewHelpViewEditor(up func(), down func(), enter func(), exit func()) gocui.
 		})
 }
 
-func (hv *HelpView) Open(mappings []*KeyBindingMapping, exit func()) {
+func OpenHelpView(mappings []*KeyBindingMapping, exit func()) *HelpDialog {
+	hv := &HelpDialog{}
 	hv.mappings = mappings
+
 	x, _ := ScreenSize()
+	hv.view = SetCenteredView(HelpDialogName, (x*2)/3, 16, 0)
+	hv.view.Editable = true
+	hv.view.FrameColor = gocui.ColorGreen
+
 	prevView := GetFocusedView()
-	hv.editor = NewHelpViewEditor(func() {
+	hv.view.Editor = NewHelpViewEditor(func() {
 		hv.tableRenderer.Up()
+		hv.render()
 	}, func() {
 		hv.tableRenderer.Down()
+		hv.render()
 	}, func() {
 	}, func() {
 		hv.Close()
 		if prevView != nil {
-			FocusView(prevView.Name())
+			FocusViewInternal(prevView.Name())
 		}
 		exit()
 	})
 
-	view := SetCenteredView(hv.Name(), (x*2)/3, 16, 0)
-	view.Editable = true
-	view.Editor = hv.editor
-	view.FrameColor = gocui.ColorGreen
-
-	sizeX, _ := view.Size()
+	sizeX, _ := hv.view.Size()
+	hv.tableRenderer = NewTableRenderer()
 	title := []string{
 		"Key",
 		"Action",
@@ -82,19 +77,17 @@ func (hv *HelpView) Open(mappings []*KeyBindingMapping, exit func()) {
 
 	hv.tableRenderer.InitTable(sizeX, 13, title, proportions)
 	hv.refreshTable()
-	FocusView(hv.Name())
+	hv.render()
+	FocusViewInternal(hv.view.Name())
+	return hv
 }
 
-func (hv *HelpView) Close() {
+func (hv *HelpDialog) Close() {
 	hv.mappings = nil
-	DeleteView(hv.Name())
+	DeleteView(hv.view.Name())
 }
 
-func (hv *HelpView) Name() string {
-	return HelpStateName
-}
-
-func (hv *HelpView) refreshTable() {
+func (hv *HelpDialog) refreshTable() {
 	rows := make([][]string, 0)
 	for _, m := range hv.mappings {
 		rows = append(rows, []string{
@@ -112,16 +105,11 @@ func (hv *HelpView) refreshTable() {
 	hv.tableRenderer.FillTable(rows)
 }
 
-func (hv *HelpView) Render(ui *UI) error {
-	view := GetInternalView(hv.Name())
-	if view == nil {
-		return nil
-	}
-
-	view.Clear()
-	sizeX, _ := view.Size()
+func (hv *HelpDialog) render() error {
+	hv.view.Clear()
+	sizeX, _ := hv.view.Size()
 	title := displayLine("Cheatsheet", Center, sizeX, color.New(color.White))
-	fmt.Fprintln(view, title)
-	hv.tableRenderer.Render(view)
+	fmt.Fprintln(hv.view, title)
+	hv.tableRenderer.Render(hv.view)
 	return nil
 }

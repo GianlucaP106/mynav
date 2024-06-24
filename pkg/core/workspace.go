@@ -1,8 +1,8 @@
 package core
 
 import (
-	"mynav/pkg/filesystem"
 	"mynav/pkg/git"
+	"mynav/pkg/system"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -37,7 +37,7 @@ func (w *Workspace) ShortPath() string {
 }
 
 func (w *Workspace) GetLastModifiedTime() time.Time {
-	time, _ := filesystem.GetLastModifiedTime(w.Path)
+	time, _ := system.GetLastModifiedTime(w.Path)
 	return time
 }
 
@@ -56,7 +56,7 @@ func (w *Workspace) GetDescription() string {
 func (w *Workspace) GetGitRemote() (string, error) {
 	if w.GitRemote == nil {
 		gitPath := filepath.Join(w.Path, ".git")
-		if !filesystem.Exists(gitPath) {
+		if !system.Exists(gitPath) {
 			return "", nil
 		}
 

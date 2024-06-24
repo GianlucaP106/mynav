@@ -5,15 +5,21 @@ type Action struct {
 	End     bool
 }
 
-func (ui *UI) setAction(command []string) {
-	ui.action.Command = command
+var action *Action
+
+func SetAction(command []string) {
+	action = &Action{
+		Command: command,
+	}
 }
 
-func (ui *UI) setActionEnd(command []string) {
-	ui.action.End = true
-	ui.action.Command = command
+func SetActionEnd(command []string) {
+	action = &Action{
+		Command: command,
+		End:     true,
+	}
 }
 
-func (ui *UI) isActionReady() bool {
-	return ui.action.Command != nil
+func IssActionReady() bool {
+	return action != nil && action.Command != nil
 }

@@ -6,61 +6,77 @@ import (
 	"github.com/awesome-gocui/gocui"
 )
 
-var gui *gocui.Gui
+type View struct {
+	*gocui.View
+}
+
+var _gui *gocui.Gui
+
+func NewView(v *gocui.View) *View {
+	return &View{
+		View: v,
+	}
+}
 
 func NewGui() *gocui.Gui {
 	g, err := gocui.NewGui(gocui.OutputNormal, true)
 	if err != nil {
 		log.Panicln(err)
 	}
-	gui = g
-	return gui
+	_gui = g
+	return _gui
 }
 
-func GetInternalView(name string) *gocui.View {
-	view, err := gui.View(name)
+func GetView(name string) *View {
+	view, err := _gui.View(name)
 	if err != nil {
 		return nil
 	}
-	return view
+	return NewView(view)
 }
 
-func FocusView(name string) *gocui.View {
-	v, err := gui.SetCurrentView(name)
+func FocusViewInternal(name string) *View {
+	v, err := _gui.SetCurrentView(name)
 	if err != nil {
 		return nil
 	}
-	return v
+	return NewView(v)
 }
 
-func SetCenteredView(name string, sizeX int, sizeY int, verticalOffset int) *gocui.View {
+func SetCenteredView(name string, sizeX int, sizeY int, verticalOffset int) *View {
 	maxX, maxY := ScreenSize()
 	view, _ := SetView(name, maxX/2-sizeX/2, maxY/2-sizeY/2+verticalOffset, maxX/2+sizeX/2, maxY/2+sizeY/2+verticalOffset, 0)
 	return view
 }
 
 func DeleteView(name string) {
-	gui.DeleteView(name)
+	_gui.DeleteView(name)
 }
 
 func ToggleCursor(c bool) {
-	gui.Cursor = c
+	_gui.Cursor = c
 }
 
-func SetView(name string, x0 int, y0 int, x1 int, y1 int, overlaps byte) (*gocui.View, error) {
-	return gui.SetView(name, x0, y0, x1, y1, overlaps)
+func SetView(name string, x0 int, y0 int, x1 int, y1 int, overlaps byte) (*View, error) {
+	v, err := _gui.SetView(name, x0, y0, x1, y1, overlaps)
+	return NewView(v), err
 }
 
-func GetFocusedView() *gocui.View {
-	return gui.CurrentView()
+func GetFocusedView() *View {
+	v := _gui.CurrentView()
+	if v != nil {
+		return NewView(v)
+	}
+
+	return nil
 }
 
 func UpdateGui(f func(g *gocui.Gui) error) {
-	gui.Update(f)
+	_gui.Update(f)
 }
 
 func SetScreenManagers(managers ...gocui.Manager) {
-	gui.SetManager(managers...)
+	_gui.SetManager(managers...)
 }
 
 type KeyBindingBuilder struct {
@@ -73,25 +89,26 @@ func KeyBinding(viewName string) *KeyBindingBuilder {
 	}
 }
 
-func (kb *KeyBindingBuilder) setKeybinding(
-	viewName string,
-	key interface{},
-	handler func(g *gocui.Gui, v *gocui.View) error,
-) *KeyBindingBuilder {
-	if err := gui.SetKeybinding(viewName, key, gocui.ModNone, handler); err != nil {
-		log.Panicln(err)
-	}
-	return kb
+func ScreenSize() (x int, y int) {
+	return _gui.Size()
 }
 
 func (kb *KeyBindingBuilder) set(key interface{}, action func()) *KeyBindingBuilder {
-	kb.setKeybinding(kb.viewName, key, func(g *gocui.Gui, v *gocui.View) error {
+	kb.setWithQuit(key, func() bool {
 		action()
-		return nil
+		return false
 	})
 	return kb
 }
 
-func ScreenSize() (x int, y int) {
-	return gui.Size()
+func (kb *KeyBindingBuilder) setWithQuit(key interface{}, action func() bool) *KeyBindingBuilder {
+	if err := _gui.SetKeybinding(kb.viewName, key, gocui.ModNone, func(_ *gocui.Gui, _ *gocui.View) error {
+		if action() {
+			return gocui.ErrQuit
+		}
+		return nil
+	}); err != nil {
+		log.Panicln(err)
+	}
+	return kb
 }

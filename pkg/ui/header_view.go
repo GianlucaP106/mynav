@@ -7,51 +7,30 @@ import (
 	"github.com/gookit/color"
 )
 
-const HeaderStateName = "HeaderView"
-
-type HeaderView struct{}
-
-var _ View = &HeaderView{}
-
-func newHeaderView() *HeaderView {
-	titleView := &HeaderView{}
-
-	return titleView
+type HeaderView struct {
+	view *View
 }
 
-func (hv *HeaderView) Name() string {
-	return HeaderStateName
+const HeaderViewName = "HeaderView"
+
+func NewHeaderView() *HeaderView {
+	return &HeaderView{}
 }
 
-func (hv *HeaderView) RequiresManager() bool {
-	return true
+func (hv *HeaderView) Init() {
+	hv.view = SetViewLayout(HeaderViewName)
 }
 
-func (hv *HeaderView) Init(ui *UI) {
-	if GetInternalView(hv.Name()) != nil {
-		return
-	}
-
-	SetViewLayout(hv.Name())
-}
-
-func (hv *HeaderView) Render(ui *UI) error {
-	view := GetInternalView(hv.Name())
-	if view == nil {
-		hv.Init(ui)
-		view = GetInternalView(hv.Name())
-	}
-
-	sizeX, _ := view.Size()
-	view.Clear()
-	fmt.Fprintln(view, blankLine(sizeX))
+func (hv *HeaderView) Render() error {
+	sizeX, _ := hv.view.Size()
+	hv.view.Clear()
+	fmt.Fprintln(hv.view, blankLine(sizeX))
 	if !Api().Core.IsConfigInitialized {
-		fmt.Fprintln(view, displayWhiteText("Welcome to mynav, a workspace manager", Center, sizeX))
+		fmt.Fprintln(hv.view, displayWhiteText("Welcome to mynav, a workspace manager", Center, sizeX))
 		return nil
 	}
 
 	line := ""
-
 	if w := Api().Core.GetSelectedWorkspace(); w != nil {
 		selected := withSpacePadding("", 5)
 		selected += withSurroundingSpaces("Last seen: ")
@@ -74,7 +53,7 @@ func (hv *HeaderView) Render(ui *UI) error {
 	line += generalStats
 
 	line = display(line, Center, sizeX)
-	fmt.Fprintln(view, line)
+	fmt.Fprintln(hv.view, line)
 
 	return nil
 }

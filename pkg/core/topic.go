@@ -1,7 +1,7 @@
 package core
 
 import (
-	"mynav/pkg/filesystem"
+	"mynav/pkg/system"
 	"sort"
 	"strings"
 	"time"
@@ -57,7 +57,7 @@ func (t Topics) GetTopic(idx int) *Topic {
 }
 
 func (t *Topic) GetLastModifiedTime() time.Time {
-	time, _ := filesystem.GetLastModifiedTime(t.Path)
+	time, _ := system.GetLastModifiedTime(t.Path)
 	return time
 }
 
