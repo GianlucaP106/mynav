@@ -187,6 +187,10 @@ func (tv *TmuxSessionView) syncSessionsToTable() {
 }
 
 func (tv *TmuxSessionView) Render() error {
+	if IssActionReady() {
+		return gocui.ErrQuit
+	}
+
 	isViewFocused := false
 	if fv := GetFocusedView(); fv != nil {
 		isViewFocused = tv.view.Name() == GetFocusedView().Name()

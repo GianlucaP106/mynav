@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	"errors"
+	"sync"
 
 	gh "github.com/google/go-github/v62/github"
 )
@@ -10,12 +11,11 @@ import (
 type GithubController struct {
 	client        GithubClient
 	authenticator *GithubAuthenticator
-
-	onLogin  func(*GithubAuthenticationToken)
-	onLogout func()
-
-	login        string
-	PullRequests GithubPullRequests
+	onLogin       func(*GithubAuthenticationToken)
+	onLogout      func()
+	login         string
+	PullRequests  GithubPullRequests
+	clientMutex   sync.Mutex
 }
 
 type GithubClient = *gh.Client
@@ -75,6 +75,8 @@ func (gs *GithubController) AuthenticateWithPersonalAccessToken(token string) er
 }
 
 func (gs *GithubController) LogoutUser() {
+	gs.clientMutex.Lock()
+	defer gs.clientMutex.Unlock()
 	gs.client = nil
 	gs.login = ""
 	gs.onLogout()
@@ -114,6 +116,8 @@ func (gs *GithubController) GetUserPullRequests() (GithubPullRequests, error) {
 }
 
 func (gs *GithubController) FetchUserPullRequests() (GithubPullRequests, error) {
+	gs.clientMutex.Lock()
+	defer gs.clientMutex.Unlock()
 	allRepos := make(map[string]*gh.Repository)
 
 	userRepos, _, err := gs.client.Repositories.ListByAuthenticatedUser(context.Background(), nil)
