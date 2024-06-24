@@ -15,7 +15,7 @@ var globalKeyBindings []*KeyBindingMapping = []*KeyBindingMapping{
 	},
 }
 
-var workspaceKeyBindings []*KeyBindingMapping = []*KeyBindingMapping{
+var workspaceKeyBindings []*KeyBindingMapping = append([]*KeyBindingMapping{
 	{
 		key:    "j",
 		action: "Move down",
@@ -84,9 +84,9 @@ var workspaceKeyBindings []*KeyBindingMapping = []*KeyBindingMapping{
 		key:    "esc",
 		action: "Escape search / Go back",
 	},
-}
+}, globalKeyBindings...)
 
-var topicKeyBindings []*KeyBindingMapping = []*KeyBindingMapping{
+var topicKeyBindings []*KeyBindingMapping = append([]*KeyBindingMapping{
 	{
 		key:    "j",
 		action: "Move down",
@@ -123,9 +123,9 @@ var topicKeyBindings []*KeyBindingMapping = []*KeyBindingMapping{
 		key:    "esc",
 		action: "Escape search",
 	},
-}
+}, globalKeyBindings...)
 
-var portKeyBindings []*KeyBindingMapping = []*KeyBindingMapping{
+var portKeyBindings []*KeyBindingMapping = append([]*KeyBindingMapping{
 	{
 		key:    "esc | up arrow | ctrl-k",
 		action: "Focus Topic View",
@@ -142,9 +142,9 @@ var portKeyBindings []*KeyBindingMapping = []*KeyBindingMapping{
 		key:    "D",
 		action: "Kill port",
 	},
-}
+}, globalKeyBindings...)
 
-var githubPrViewKeyBindings []*KeyBindingMapping = []*KeyBindingMapping{
+var githubPrViewKeyBindings []*KeyBindingMapping = append([]*KeyBindingMapping{
 	{
 		key:    "j",
 		action: "Move down",
@@ -162,6 +162,10 @@ var githubPrViewKeyBindings []*KeyBindingMapping = []*KeyBindingMapping{
 		action: "Focus Tmux View",
 	},
 	{
+		key:    "o",
+		action: "Open Browser to PR",
+	},
+	{
 		key:    "L",
 		action: "Login with device code and browser",
 	},
@@ -173,7 +177,7 @@ var githubPrViewKeyBindings []*KeyBindingMapping = []*KeyBindingMapping{
 		key:    "O",
 		action: "Logout",
 	},
-}
+}, globalKeyBindings...)
 
 func getTmuxKeyBindings(standalone bool) []*KeyBindingMapping {
 	tmuxKeyBindings := []*KeyBindingMapping{
@@ -216,5 +220,5 @@ func getTmuxKeyBindings(standalone bool) []*KeyBindingMapping {
 		}, tmuxKeyBindings...)
 	}
 
-	return tmuxKeyBindings
+	return append(tmuxKeyBindings, globalKeyBindings...)
 }

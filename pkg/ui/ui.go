@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"mynav/pkg/logger"
 	"mynav/pkg/system"
 
 	"github.com/awesome-gocui/gocui"
@@ -23,6 +24,7 @@ type UI struct {
 var _ui *UI
 
 func Start() *Action {
+	logger.Init("debug.log")
 	if err := InitApi(); err != nil {
 		fmt.Println(err.Error())
 		return nil

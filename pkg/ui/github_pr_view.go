@@ -67,6 +67,14 @@ func (g *GithubPrView) Init() {
 		set('k', func() {
 			g.tableRenderer.Up()
 		}).
+		set('o', func() {
+			pr := g.getSelectedPr()
+			if pr == nil {
+				return
+			}
+
+			system.OpenBrowser(pr.GetHTMLURL())
+		}).
 		set('L', func() {
 			if Api().Github.IsAuthenticated() {
 				return
@@ -125,6 +133,14 @@ func (g *GithubPrView) refreshPrs() {
 
 	g.prs = gpr
 	g.syncPrsToTable()
+}
+
+func (g *GithubPrView) getSelectedPr() *github.GithubPullRequest {
+	idx := g.tableRenderer.GetSelectedRowIndex()
+	if idx < 0 || idx >= len(g.prs) {
+		return nil
+	}
+	return g.prs[idx]
 }
 
 func (g *GithubPrView) syncPrsToTable() {

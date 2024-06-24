@@ -2,7 +2,6 @@ package github
 
 import (
 	"context"
-	"errors"
 	"sync"
 
 	gh "github.com/google/go-github/v62/github"
@@ -31,28 +30,19 @@ func NewGithubController(token *GithubAuthenticationToken, onLogin func(*GithubA
 	}
 
 	if token != nil {
-		gs.InitGithubClient(token)
+		gs.client = gs.authenticator.InitClient(token)
+		gs.onLogin(token)
 	}
 
 	return gs
 }
 
-func (gs *GithubController) InitGithubClient(auth *GithubAuthenticationToken) {
-	if auth.PersonalAccessToken != nil {
-		gs.client = gh.NewClient(nil).WithAuthToken(*auth.PersonalAccessToken)
-	} else {
-		http := gs.authenticator.HttpClient(auth)
-		client := gh.NewClient(http)
-		gs.client = client
-	}
-	gs.onLogin(auth)
-}
-
 func (gs *GithubController) AuthenticateWithDeviceAuth(callback func()) *GithubDevicePreAuthentication {
-	gda := gs.authenticator.InitAuth()
+	gda := gs.authenticator.InitDeviceAuth()
 	go func() {
-		auth := gs.authenticator.Authenticate(gda)
-		gs.InitGithubClient(auth)
+		auth := gs.authenticator.AuthenticateDevice(gda)
+		gs.client = gs.authenticator.InitClient(auth)
+		gs.onLogin(auth)
 		callback()
 	}()
 
@@ -60,16 +50,13 @@ func (gs *GithubController) AuthenticateWithDeviceAuth(callback func()) *GithubD
 }
 
 func (gs *GithubController) AuthenticateWithPersonalAccessToken(token string) error {
-	gt := &GithubAuthenticationToken{
-		PersonalAccessToken: &token,
+	client, auth, err := gs.authenticator.AuthenticateWithPersonalAccessToken(token)
+	if err != nil {
+		return err
 	}
 
-	gs.InitGithubClient(gt)
-
-	if gs.Principal() == nil {
-		gs.client = nil
-		return errors.New("invalid token")
-	}
+	gs.client = client
+	gs.onLogin(auth)
 
 	return nil
 }
@@ -119,8 +106,13 @@ func (gs *GithubController) FetchUserPullRequests() (GithubPullRequests, error) 
 	gs.clientMutex.Lock()
 	defer gs.clientMutex.Unlock()
 	allRepos := make(map[string]*gh.Repository)
+	const limit = 1000
 
-	userRepos, _, err := gs.client.Repositories.ListByAuthenticatedUser(context.Background(), nil)
+	userRepos, _, err := gs.client.Repositories.ListByAuthenticatedUser(context.Background(), &gh.RepositoryListByAuthenticatedUserOptions{
+		ListOptions: gh.ListOptions{
+			PerPage: limit,
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -129,13 +121,19 @@ func (gs *GithubController) FetchUserPullRequests() (GithubPullRequests, error) 
 		allRepos[repo.GetFullName()] = repo
 	}
 
-	orgs, _, err := gs.client.Organizations.List(context.Background(), "", nil)
+	orgs, _, err := gs.client.Organizations.List(context.Background(), "", &gh.ListOptions{
+		PerPage: limit,
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	for _, org := range orgs {
-		orgRepos, _, err := gs.client.Repositories.ListByOrg(context.Background(), *org.Login, nil)
+		orgRepos, _, err := gs.client.Repositories.ListByOrg(context.Background(), *org.Login, &gh.RepositoryListByOrgOptions{
+			ListOptions: gh.ListOptions{
+				PerPage: limit,
+			},
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -147,7 +145,11 @@ func (gs *GithubController) FetchUserPullRequests() (GithubPullRequests, error) 
 
 	allPrs := NewGithubPrContainer()
 	for _, repo := range allRepos {
-		prs, _, err := gs.client.PullRequests.List(context.Background(), *repo.GetOwner().Login, *repo.Name, nil)
+		prs, _, err := gs.client.PullRequests.List(context.Background(), *repo.GetOwner().Login, *repo.Name, &gh.PullRequestListOptions{
+			ListOptions: gh.ListOptions{
+				PerPage: limit,
+			},
+		})
 		if err != nil {
 			return nil, err
 		}
