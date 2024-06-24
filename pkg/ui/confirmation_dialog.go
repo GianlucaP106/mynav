@@ -5,59 +5,41 @@ import (
 )
 
 type ConfirmationDialog struct {
-	editor Editor
-	title  string
+	view  *View
+	title string
 }
 
-var _ Dialog = &ConfirmationDialog{}
+const ConfirmationDialogName = "ConfirmationDialog"
 
-const ConfirmationDialogStateName = "ConfirmationDialog"
-
-func newConfirmationDialogState() *ConfirmationDialog {
-	return &ConfirmationDialog{}
-}
-
-func (cd *ConfirmationDialog) Open(onConfirm func(bool), title string) {
+func OpenConfirmationDialog(onConfirm func(bool), title string) *ConfirmationDialog {
+	cd := &ConfirmationDialog{}
 	cd.title = title
 	prevView := GetFocusedView()
-	cd.editor = NewConfirmationEditor(func() {
+	cd.view = SetCenteredView(ConfirmationDialogName, len(title)+5, 3, 0)
+	cd.view.Title = withSurroundingSpaces("Confirm")
+	cd.view.Wrap = true
+	cd.view.Editable = true
+	cd.view.Editor = NewConfirmationEditor(func() {
 		cd.Close()
 		if prevView != nil {
-			FocusView(prevView.Name())
+			FocusViewInternal(prevView.Name())
 		}
 		onConfirm(true)
 	}, func() {
 		cd.Close()
 		if prevView != nil {
-			FocusView(prevView.Name())
+			FocusViewInternal(prevView.Name())
 		}
 		onConfirm(false)
 	})
 
-	sizeX := len(cd.title)
-	view := SetCenteredView(cd.Name(), sizeX+5, 3, 0)
-	FocusView(cd.Name())
-	view.Title = withSurroundingSpaces("Confirm")
-	view.Wrap = true
-	view.Editor = cd.editor
-	view.Editable = true
-}
-
-func (cd *ConfirmationDialog) Name() string {
-	return ConfirmationDialogStateName
+	sizeX, _ := cd.view.Size()
+	FocusViewInternal(cd.view.Name())
+	cd.view.Clear()
+	fmt.Fprintln(cd.view, displayWhiteText(cd.title, Left, sizeX))
+	return cd
 }
 
 func (cd *ConfirmationDialog) Close() {
-	DeleteView(cd.Name())
-}
-
-func (cd *ConfirmationDialog) Render(ui *UI) error {
-	view := GetInternalView(cd.Name())
-	if view == nil {
-		return nil
-	}
-
-	sizeX, _ := view.Size()
-	fmt.Fprintln(view, displayWhiteText(cd.title, Left, sizeX))
-	return nil
+	DeleteView(cd.view.Name())
 }

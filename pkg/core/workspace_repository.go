@@ -2,7 +2,7 @@ package core
 
 import (
 	"errors"
-	"mynav/pkg/filesystem"
+	"mynav/pkg/system"
 	"os"
 	"path/filepath"
 )
@@ -36,7 +36,7 @@ func NewWorkspaceRepository(topics Topics, storePath string) *WorkspaceRepositor
 func (w *WorkspaceRepository) Save(workspace *Workspace) error {
 	existing := w.Container.Get(workspace.ShortPath())
 	if existing == nil {
-		if err := filesystem.CreateDir(workspace.Path); err != nil {
+		if err := system.CreateDir(workspace.Path); err != nil {
 			return err
 		}
 	}
@@ -109,7 +109,7 @@ func (w *WorkspaceRepository) LoadContainer(topics Topics) {
 	wc := NewWorkspaceContainer()
 	w.Container = wc
 	for _, topic := range topics {
-		workspaceDirEntries := filesystem.GetDirEntries(topic.Path)
+		workspaceDirEntries := system.GetDirEntries(topic.Path)
 		for _, dirEntry := range workspaceDirEntries {
 			if !dirEntry.IsDir() {
 				continue

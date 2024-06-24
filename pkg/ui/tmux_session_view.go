@@ -9,39 +9,33 @@ import (
 )
 
 type TmuxSessionView struct {
+	view          *View
+	ui            *UI
 	tableRenderer *TableRenderer
 	sessions      []*tmux.TmuxSession
-	standalone    bool
 }
 
 const TmuxSessionViewName = "TmuxSessionView"
 
-var _ View = &TmuxSessionView{}
-
-func newTmuxSessionView() *TmuxSessionView {
-	ts := &TmuxSessionView{}
-
-	return ts
+func NewTmuxSessionView(ui *UI) *TmuxSessionView {
+	return &TmuxSessionView{
+		ui: ui,
+	}
 }
 
-func (tv *TmuxSessionView) RequiresManager() bool {
-	return false
-}
-
-func (tv *TmuxSessionView) Init(ui *UI) {
-	var view *gocui.View
-	if tv.standalone {
+func (tv *TmuxSessionView) Init() {
+	if tv.ui.Standalone {
 		screenX, screenY := ScreenSize()
-		view = SetCenteredView(TmuxSessionViewName, screenX/2, screenY/3, 0)
+		tv.view = SetCenteredView(TmuxSessionViewName, screenX/2, screenY/3, 0)
 	} else {
-		view = SetViewLayout(tv.Name())
+		tv.view = SetViewLayout(TmuxSessionViewName)
 	}
 
-	view.Title = withSurroundingSpaces("TMUX Sessions")
-	view.TitleColor = gocui.ColorBlue
-	view.FrameColor = gocui.ColorGreen
+	tv.view.Title = withSurroundingSpaces("TMUX Sessions")
+	tv.view.TitleColor = gocui.ColorBlue
+	tv.view.FrameColor = gocui.ColorGreen
 
-	sizeX, sizeY := view.Size()
+	sizeX, sizeY := tv.view.Size()
 	tv.tableRenderer = NewTableRenderer()
 	titles := []string{
 		"workspace",
@@ -57,46 +51,47 @@ func (tv *TmuxSessionView) Init(ui *UI) {
 	tv.refreshTmuxSessions()
 
 	moveUp := func() {
-		if !tv.standalone {
-			ui.FocusWorkspacesView()
+		if !tv.ui.Standalone {
+			FocusWorkspacesView()
 		}
 	}
 
 	moveLeft := func() {
-		if !tv.standalone {
-			ui.FocusPortView()
+		if !tv.ui.Standalone {
+			FocusPortView()
 		}
 	}
 
 	moveRight := func() {
-		if !tv.standalone {
-			ui.FocusPrView()
+		if !tv.ui.Standalone {
+			FocusPrView()
 		}
 	}
 
 	KeyBinding(TmuxSessionViewName).
-		set(gocui.KeyEnter, func() {
+		setWithQuit(gocui.KeyEnter, func() bool {
 			if system.IsTmuxSession() {
-				GetDialog[*ToastDialog](ui).OpenError("You are already in a tmux session. Nested tmux sessions are not supported yet.")
-				return
+				OpenToastDialogError("You are already in a tmux session. Nested tmux sessions are not supported yet.")
+				return false
 			}
 
 			session := tv.getSelectedSession()
-			ui.setAction(system.GetAttachTmuxSessionCmd(session.Name))
+			SetAction(system.GetAttachTmuxSessionCmd(session.Name))
+			return true
 		}).
 		set('D', func() {
 			if Api().Tmux.GetTmuxSessionCount() == 0 {
 				return
 			}
 
-			GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
+			OpenConfirmationDialog(func(b bool) {
 				if b {
 					session := tv.getSelectedSession()
 					if err := Api().Tmux.DeleteTmuxSession(session); err != nil {
-						GetDialog[*ToastDialog](ui).OpenError(err.Error())
+						OpenToastDialogError(err.Error())
 						return
 					}
-					ui.RefreshMainView()
+					tv.ui.RefreshAllViews()
 				}
 			}, "Are you sure you want to delete this session?")
 		}).
@@ -105,28 +100,28 @@ func (tv *TmuxSessionView) Init(ui *UI) {
 				return
 			}
 
-			GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
+			OpenConfirmationDialog(func(b bool) {
 				if b {
 					if err := Api().Tmux.DeleteAllTmuxSessions(); err != nil {
-						GetDialog[*ToastDialog](ui).OpenError(err.Error())
+						OpenToastDialogError(err.Error())
 						return
 					}
-					ui.RefreshMainView()
+					tv.ui.RefreshAllViews()
 				}
 			}, "Are you sure you want to delete ALL tmux sessions?")
 		}).
 		set('W', func() {
-			if tv.standalone || Api().Core.GetWorkspaceTmuxSessionCount() == 0 {
+			if tv.ui.Standalone || Api().Core.GetWorkspaceTmuxSessionCount() == 0 {
 				return
 			}
 
-			GetDialog[*ConfirmationDialog](ui).Open(func(b bool) {
+			OpenConfirmationDialog(func(b bool) {
 				if b {
 					if err := Api().Core.DeleteAllWorkspaceTmuxSessions(); err != nil {
-						GetDialog[*ToastDialog](ui).OpenError(err.Error())
+						OpenToastDialogError(err.Error())
 						return
 					}
-					ui.RefreshMainView()
+					tv.ui.RefreshAllViews()
 				}
 			}, "Are you sure you want to delete ALL non-external tmux sessions?")
 		}).
@@ -140,12 +135,12 @@ func (tv *TmuxSessionView) Init(ui *UI) {
 			if system.IsTmuxSession() {
 				return
 			}
-			GetDialog[*EditorDialog](ui).Open(func(s string) {
-				ui.setAction(system.GetNewTmuxSessionCmd(s, "~"))
+			OpenEditorDialog(func(s string) {
+				SetAction(system.GetNewTmuxSessionCmd(s, "~"))
 			}, func() {}, "New session name", Small)
 		}).
 		set('?', func() {
-			GetDialog[*HelpView](ui).Open(getTmuxKeyBindings(tv.standalone), func() {})
+			OpenHelpView(getTmuxKeyBindings(tv.ui.Standalone), func() {})
 		}).
 		set(gocui.KeyEsc, moveUp).
 		set(gocui.KeyArrowUp, moveUp).
@@ -154,10 +149,6 @@ func (tv *TmuxSessionView) Init(ui *UI) {
 		set(gocui.KeyCtrlH, moveLeft).
 		set(gocui.KeyArrowRight, moveRight).
 		set(gocui.KeyCtrlL, moveRight)
-
-	if tv.standalone {
-		FocusView(tv.Name())
-	}
 }
 
 func (tv *TmuxSessionView) getSelectedSession() *tmux.TmuxSession {
@@ -174,11 +165,11 @@ func (ts *TmuxSessionView) refreshTmuxSessions() {
 	ts.syncSessionsToTable()
 }
 
-func (ts *TmuxSessionView) syncSessionsToTable() {
+func (tv *TmuxSessionView) syncSessionsToTable() {
 	rows := make([][]string, 0)
-	for _, session := range ts.sessions {
+	for _, session := range tv.sessions {
 		workspace := "external"
-		if !ts.standalone {
+		if !tv.ui.Standalone {
 			w := Api().Core.GetWorkspaceByTmuxSession(session)
 			if w != nil {
 				workspace = w.ShortPath()
@@ -192,31 +183,17 @@ func (ts *TmuxSessionView) syncSessionsToTable() {
 			session.Name,
 		})
 	}
-	ts.tableRenderer.FillTable(rows)
+	tv.tableRenderer.FillTable(rows)
 }
 
-func (tv *TmuxSessionView) Name() string {
-	return TmuxSessionViewName
-}
-
-func (tv *TmuxSessionView) Render(ui *UI) error {
-	view := GetInternalView(tv.Name())
-	if view == nil {
-		tv.Init(ui)
-		view = GetInternalView(tv.Name())
-	}
-
-	if ui.action.Command != nil {
-		return gocui.ErrQuit
-	}
-
+func (tv *TmuxSessionView) Render() error {
 	isViewFocused := false
 	if fv := GetFocusedView(); fv != nil {
-		isViewFocused = tv.Name() == GetFocusedView().Name()
+		isViewFocused = tv.view.Name() == GetFocusedView().Name()
 	}
 
-	view.Clear()
-	tv.tableRenderer.RenderWithSelectCallBack(view, func(_ int, _ *TableRow) bool {
+	tv.view.Clear()
+	tv.tableRenderer.RenderWithSelectCallBack(tv.view, func(_ int, _ *TableRow) bool {
 		return isViewFocused
 	})
 

@@ -1,7 +1,7 @@
 package core
 
 import (
-	"mynav/pkg/filesystem"
+	"mynav/pkg/system"
 	"os"
 	"path/filepath"
 )
@@ -19,7 +19,7 @@ func NewTopicRepository(rootPath string) *TopicRepository {
 func (tr *TopicRepository) LoadContainer(rootPath string) {
 	tc := NewTopicContainer()
 	tr.TopicContainer = tc
-	for _, topicDirEntry := range filesystem.GetDirEntries(rootPath) {
+	for _, topicDirEntry := range system.GetDirEntries(rootPath) {
 		if !topicDirEntry.IsDir() || topicDirEntry.Name() == ".mynav" {
 			continue
 		}
@@ -33,7 +33,7 @@ func (tr *TopicRepository) LoadContainer(rootPath string) {
 func (tr *TopicRepository) Save(t *Topic) error {
 	existing := tr.TopicContainer.Get(t.Name)
 	if existing == nil {
-		if err := filesystem.CreateDir(t.Path); err != nil {
+		if err := system.CreateDir(t.Path); err != nil {
 			return err
 		}
 	}

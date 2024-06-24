@@ -1,6 +1,6 @@
 package core
 
-import "mynav/pkg/filesystem"
+import "mynav/pkg/system"
 
 type Datasource[T any] struct {
 	Data *T
@@ -18,9 +18,9 @@ func NewDatasource[T any](path string) *Datasource[T] {
 }
 
 func (d *Datasource[T]) LoadData() {
-	d.Data = filesystem.LoadJson[T](d.Path)
+	d.Data = system.LoadJson[T](d.Path)
 }
 
 func (d *Datasource[T]) SaveData() {
-	filesystem.SaveJson(d.Data, d.Path)
+	system.SaveJson(d.Data, d.Path)
 }

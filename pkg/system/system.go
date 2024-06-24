@@ -1,7 +1,6 @@
 package system
 
 import (
-	"mynav/pkg/filesystem"
 	"os/exec"
 	"runtime"
 
@@ -32,7 +31,7 @@ func IsWarpInstalled() bool {
 		return false
 	}
 
-	return filesystem.Exists("/Applications/Warp.app")
+	return Exists("/Applications/Warp.app")
 }
 
 func IsItermInstalled() bool {
@@ -40,7 +39,7 @@ func IsItermInstalled() bool {
 		return false
 	}
 
-	return filesystem.Exists("/Applications/iTerm.app")
+	return Exists("/Applications/iTerm.app")
 }
 
 func OpenBrowser(url string) error {

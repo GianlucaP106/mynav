@@ -9,62 +9,53 @@ import (
 	"github.com/gookit/color"
 )
 
-const WorkspaceInfoDialogStateName = "WorkspaceInfoDialog"
-
 type WorkspaceInfoDialog struct {
-	editor    Editor
+	view      *View
 	workspace *core.Workspace
-	title     string
 }
 
-var _ Dialog = &WorkspaceInfoDialog{}
+const WorkspaceInfoDialogName = "WorkspaceInfoDialog"
 
-func newWorkspaceInfoDialogState() *WorkspaceInfoDialog {
-	return &WorkspaceInfoDialog{}
-}
+func OpenWorkspaceInfoDialog(w *core.Workspace, exit func()) *WorkspaceInfoDialog {
+	wd := &WorkspaceInfoDialog{}
+	wd.workspace = w
+	content := wd.getWorkspaceInfoContent(wd.workspace)
+	wd.view = SetCenteredView(WorkspaceInfoDialogName, 100, len(content), 0)
 
-func (w *WorkspaceInfoDialog) Name() string {
-	return WorkspaceInfoDialogStateName
-}
+	wd.view.Title = withSurroundingSpaces(wd.workspace.Name)
+	wd.view.TitleColor = gocui.ColorBlue
+	wd.view.Editable = true
 
-func (w *WorkspaceInfoDialog) Init(height int) *gocui.View {
-	view := SetCenteredView(w.Name(), 100, height, 0)
-	view.Title = withSurroundingSpaces(w.title)
-	view.TitleColor = gocui.ColorBlue
-	view.Editor = w.editor
-	view.Editable = true
-	FocusView(w.Name())
-	return view
-}
-
-func (wd *WorkspaceInfoDialog) Open(w *core.Workspace, exit func()) {
 	prevView := GetFocusedView()
-	wd.editor = NewConfirmationEditor(func() {
+	wd.view.Editor = NewConfirmationEditor(func() {
 		wd.Close()
 		if prevView != nil {
-			FocusView(prevView.Name())
+			FocusViewInternal(prevView.Name())
 		}
 		exit()
 	}, func() {
 		wd.Close()
 		if prevView != nil {
-			FocusView(prevView.Name())
+			FocusViewInternal(prevView.Name())
 		}
 		exit()
 	})
 
-	wd.workspace = w
-	wd.title = w.Name
+	wd.view.Clear()
+	for _, line := range content {
+		fmt.Fprintln(wd.view, line)
+	}
 
-	content := wd.formatWorkspaceInfo(wd.workspace)
-	wd.Init(len(content))
+	FocusViewInternal(wd.view.Name())
+
+	return wd
 }
 
 func (wd *WorkspaceInfoDialog) Close() {
-	DeleteView(wd.Name())
+	DeleteView(wd.view.Name())
 }
 
-func (wd *WorkspaceInfoDialog) formatWorkspaceInfo(w *core.Workspace) []string {
+func (wd *WorkspaceInfoDialog) getWorkspaceInfoContent(w *core.Workspace) []string {
 	sizeX := 100
 
 	formatItem := func(title string, content string) []string {
@@ -125,21 +116,6 @@ func (wd *WorkspaceInfoDialog) formatWorkspaceInfo(w *core.Workspace) []string {
 	out = append(out, blankLine(sizeX))
 
 	return out
-}
-
-func (w *WorkspaceInfoDialog) Render(ui *UI) error {
-	view := GetInternalView(WorkspaceInfoDialogStateName)
-	if view == nil {
-		return nil
-	}
-
-	content := w.formatWorkspaceInfo(w.workspace)
-	view.Clear()
-	for _, line := range content {
-		fmt.Fprintln(view, line)
-	}
-
-	return nil
 }
 
 func splitStringByLength(input string, chunkSize int) []string {

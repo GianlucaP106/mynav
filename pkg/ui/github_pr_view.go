@@ -10,16 +10,107 @@ import (
 )
 
 type GithubPrView struct {
+	view          *View
 	tableRenderer *TableRenderer
 	prs           github.GithubPullRequests
 }
 
 const GithubPrViewName = "GithubPrView"
 
-var _ View = &GithubPrView{}
-
 func NewGithubPrView() *GithubPrView {
 	return &GithubPrView{}
+}
+
+func (g *GithubPrView) Init() {
+	g.view = SetViewLayout(g.Name())
+
+	g.view.Title = "Pull Requests"
+	g.view.TitleColor = gocui.ColorBlue
+	g.view.FrameColor = gocui.ColorGreen
+
+	sizeX, sizeY := g.view.Size()
+	g.tableRenderer = NewTableRenderer()
+	g.tableRenderer.InitTable(
+		sizeX,
+		sizeY,
+		[]string{
+			"Repo name",
+			"Pr title",
+			"Relation",
+		},
+		[]float64{
+			0.30,
+			0.30,
+			0.40,
+		})
+
+	go func() {
+		g.refreshPrs()
+		UpdateGui(func(_ *gocui.Gui) error {
+			g.Render()
+			return nil
+		})
+	}()
+
+	moveUp := func() {
+		FocusWorkspacesView()
+	}
+
+	moveLeft := func() {
+		FocusTmuxView()
+	}
+
+	KeyBinding(g.Name()).
+		set('j', func() {
+			g.tableRenderer.Down()
+		}).
+		set('k', func() {
+			g.tableRenderer.Up()
+		}).
+		set('L', func() {
+			if Api().Github.IsAuthenticated() {
+				return
+			}
+
+			deviceAuth := Api().Github.AuthenticateWithDeviceAuth(func() {
+				g.refreshPrs()
+				UpdateGui(func(_ *gocui.Gui) error {
+					g.Render()
+					return nil
+				})
+			})
+
+			if deviceAuth != nil {
+				OpenToastDialog(deviceAuth.UserCode, false, "User device code - automatically copied to clipboard", func() {})
+				system.CopyToClip(deviceAuth.UserCode)
+				deviceAuth.OpenBrowser()
+			}
+		}).
+		set('P', func() {
+			if Api().Github.IsAuthenticated() {
+				return
+			}
+
+			OpenEditorDialog(func(s string) {
+				if err := Api().Github.AuthenticateWithPersonalAccessToken(s); err != nil {
+					OpenToastDialogError(err.Error())
+					return
+				}
+
+				g.refreshPrs()
+			}, func() {}, "Personal Access Token", Small)
+		}).
+		set('O', func() {
+			Api().Github.LogoutUser()
+		}).
+		set(gocui.KeyEsc, moveUp).
+		set(gocui.KeyArrowUp, moveUp).
+		set(gocui.KeyCtrlK, moveUp).
+		set(gocui.KeyArrowLeft, moveLeft).
+		set(gocui.KeyCtrlH, moveLeft).
+		set('?', func() {
+			OpenHelpView(githubPrViewKeyBindings, func() {})
+		})
 }
 
 func (g *GithubPrView) refreshPrs() {
@@ -48,137 +139,35 @@ func (g *GithubPrView) syncPrsToTable() {
 	g.tableRenderer.FillTable(rows)
 }
 
-func (g *GithubPrView) Init(ui *UI) {
-	view := SetViewLayout(g.Name())
-
-	view.Title = "Pull Requests"
-	view.TitleColor = gocui.ColorBlue
-	view.FrameColor = gocui.ColorGreen
-
-	sizeX, sizeY := view.Size()
-	g.tableRenderer = NewTableRenderer()
-	g.tableRenderer.InitTable(
-		sizeX,
-		sizeY,
-		[]string{
-			"Repo name",
-			"Pr title",
-			"Relation",
-		},
-		[]float64{
-			0.30,
-			0.30,
-			0.40,
-		})
-
-	go func() {
-		g.refreshPrs()
-		UpdateGui(func(_ *gocui.Gui) error {
-			g.Render(ui)
-			return nil
-		})
-	}()
-
-	moveUp := func() {
-		ui.FocusWorkspacesView()
-	}
-
-	moveLeft := func() {
-		ui.FocusTmuxView()
-	}
-
-	KeyBinding(g.Name()).
-		set('j', func() {
-			g.tableRenderer.Down()
-		}).
-		set('k', func() {
-			g.tableRenderer.Up()
-		}).
-		set('L', func() {
-			if Api().Github.IsAuthenticated() {
-				return
-			}
-
-			deviceAuth := Api().Github.AuthenticateWithDeviceAuth(func() {
-				g.refreshPrs()
-				UpdateGui(func(_ *gocui.Gui) error {
-					g.Render(ui)
-					return nil
-				})
-			})
-
-			if deviceAuth != nil {
-				GetDialog[*ToastDialog](ui).Open(deviceAuth.UserCode, false, "User device code - automatically copied to clipboard", func() {})
-				system.CopyToClip(deviceAuth.UserCode)
-				deviceAuth.OpenBrowser()
-			}
-		}).
-		set('P', func() {
-			if Api().Github.IsAuthenticated() {
-				return
-			}
-
-			GetDialog[*EditorDialog](ui).Open(func(s string) {
-				if err := Api().Github.AuthenticateWithPersonalAccessToken(s); err != nil {
-					GetDialog[*ToastDialog](ui).OpenError(err.Error())
-					return
-				}
-
-				g.refreshPrs()
-			}, func() {}, "Personal Access Token", Small)
-		}).
-		set('O', func() {
-			Api().Github.LogoutUser()
-		}).
-		set(gocui.KeyEsc, moveUp).
-		set(gocui.KeyArrowUp, moveUp).
-		set(gocui.KeyCtrlK, moveUp).
-		set(gocui.KeyArrowLeft, moveLeft).
-		set(gocui.KeyCtrlH, moveLeft).
-		set('?', func() {
-			GetDialog[*HelpView](ui).Open(githubPrViewKeyBindings, func() {})
-		})
-}
-
 func (g *GithubPrView) Name() string {
 	return GithubPrViewName
 }
 
-func (g *GithubPrView) Render(ui *UI) error {
-	view := GetInternalView(g.Name())
-	if view == nil {
-		g.Init(ui)
-		view = GetInternalView(g.Name())
-	}
-
+func (g *GithubPrView) Render() error {
 	if !Api().Github.IsAuthenticated() {
-		view.Clear()
-		fmt.Fprintln(view, "Not authenticated")
-		fmt.Fprintln(view, "Press:")
-		fmt.Fprintln(view, "'L' - to login with device code using a browser")
-		fmt.Fprintln(view, "'P' - to login in with Personal access token")
+		g.view.Clear()
+		fmt.Fprintln(g.view, "Not authenticated")
+		fmt.Fprintln(g.view, "Press:")
+		fmt.Fprintln(g.view, "'L' - to login with device code using a browser")
+		fmt.Fprintln(g.view, "'P' - to login in with Personal access token")
 		return nil
 	}
 
-	view.Clear()
-	view.Subtitle = "Login: " + Api().Github.GetPrincipalLogin()
+	g.view.Clear()
+	g.view.Subtitle = "Login: " + Api().Github.GetPrincipalLogin()
 
 	isFocused := false
 	if v := GetFocusedView(); v != nil && v.Name() == g.Name() {
 		isFocused = true
 	}
 
-	g.tableRenderer.RenderWithSelectCallBack(view, func(_ int, _ *TableRow) bool {
+	g.tableRenderer.RenderWithSelectCallBack(g.view, func(_ int, _ *TableRow) bool {
 		return isFocused
 	})
 
 	if g.prs == nil {
-		fmt.Fprintln(view, "Loading...")
+		fmt.Fprintln(g.view, "Loading...")
 	}
 
 	return nil
-}
-
-func (g *GithubPrView) RequiresManager() bool {
-	return false
 }

@@ -62,3 +62,9 @@ func KillProcess(pid int) error {
 
 	return nil
 }
+
+func IsCurrentProcessHomeDir() bool {
+	homeDir, _ := os.UserHomeDir()
+	cwd, _ := os.Getwd()
+	return homeDir == cwd
+}
