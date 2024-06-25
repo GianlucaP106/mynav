@@ -1,5 +1,7 @@
 package ui
 
+import "fmt"
+
 type EditorDialog struct {
 	view *View
 }
@@ -14,6 +16,10 @@ const (
 )
 
 func OpenEditorDialog(onEnter func(string), onEsc func(), title string, size EditorSize) *EditorDialog {
+	return OpenEditorDialogWithDefaultValue(onEnter, onEsc, title, size, "")
+}
+
+func OpenEditorDialogWithDefaultValue(onEnter func(string), onEsc func(), title string, size EditorSize, defaultValue string) *EditorDialog {
 	ed := &EditorDialog{}
 
 	var height int
@@ -29,6 +35,11 @@ func OpenEditorDialog(onEnter func(string), onEsc func(), title string, size Edi
 	ed.view.Title = withSurroundingSpaces(title)
 	ed.view.Wrap = true
 	ToggleCursor(true)
+
+	if defaultValue != "" {
+		fmt.Fprint(ed.view, defaultValue)
+		ed.view.MoveCursor(len(defaultValue), 0)
+	}
 
 	prevView := GetFocusedView()
 	ed.view.Editor = NewSimpleEditor(func(s string) {

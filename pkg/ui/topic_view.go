@@ -106,14 +106,14 @@ func (tv *TopicsView) Init() {
 				return
 			}
 
-			OpenEditorDialog(func(s string) {
+			OpenEditorDialogWithDefaultValue(func(s string) {
 				if err := Api().Core.RenameTopic(t, s); err != nil {
 					OpenToastDialogError(err.Error())
 					return
 				}
 
 				tv.ui.RefreshAllViews()
-			}, func() {}, "New topic name", Small)
+			}, func() {}, "New topic name", Small, t.Name)
 		}).
 		set('D', func() {
 			if Api().Core.GetTopicCount() <= 0 {

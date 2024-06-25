@@ -188,13 +188,13 @@ func (wv *WorkspacesView) Init() {
 				return
 			}
 
-			OpenEditorDialog(func(s string) {
+			OpenEditorDialogWithDefaultValue(func(s string) {
 				if err := Api().Core.RenameWorkspace(curWorkspace, s); err != nil {
 					OpenToastDialogError(err.Error())
 					return
 				}
 				wv.syncWorkspacesToTable()
-			}, func() {}, "New workspace name", Small)
+			}, func() {}, "New workspace name", Small, curWorkspace.Name)
 		}).
 		set('e', func() {
 			curWorkspace := wv.getSelectedWorkspace()
