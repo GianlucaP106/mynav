@@ -158,7 +158,7 @@ func (pv *PortView) syncPortsToTable() {
 
 		rows = append(rows, []string{
 			p.GetPortStr(),
-			p.Exe,
+			p.GetExeName(),
 			linkedTo,
 		})
 	}
@@ -175,10 +175,6 @@ func (p *PortView) getSelectedPort() *Port {
 }
 
 func (p *PortView) Render() error {
-	// if p.view == nil {
-	// 	p.Init()
-	// }
-
 	p.view.Clear()
 
 	currentViewSelected := false
@@ -194,8 +190,5 @@ func (p *PortView) Render() error {
 		fmt.Fprintln(p.view, "Loading...")
 	}
 
-	// if ui.action.Command != nil {
-	// 	return
-	// }
 	return nil
 }
