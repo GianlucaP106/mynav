@@ -42,7 +42,7 @@ func (tr *TableRenderer) InitTable(width int, height int, titles []string, colPr
 	if len(titles) != len(colProportions) {
 		log.Panicln("the number of titles and col proportions should be the same")
 	}
-	tr.ListRenderer = newListRenderer(0, height, 0)
+	tr.ListRenderer = newListRenderer(0, height-1, 0)
 	tr.Table = &Table{
 		Title: &TableTitle{
 			Titles: titles,
