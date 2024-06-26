@@ -10,20 +10,28 @@ type View struct {
 	*gocui.View
 }
 
-var _gui *gocui.Gui
+type Gui struct {
+	*gocui.Gui
+}
 
-func NewView(v *gocui.View) *View {
+var _gui *Gui
+
+// TODO: change params
+
+func newView(v *gocui.View) *View {
 	return &View{
 		View: v,
 	}
 }
 
-func NewGui() *gocui.Gui {
+func NewGui() *Gui {
 	g, err := gocui.NewGui(gocui.OutputNormal, true)
 	if err != nil {
 		log.Panicln(err)
 	}
-	_gui = g
+	_gui = &Gui{
+		Gui: g,
+	}
 	return _gui
 }
 
@@ -32,15 +40,15 @@ func GetView(name string) *View {
 	if err != nil {
 		return nil
 	}
-	return NewView(view)
+	return newView(view)
 }
 
-func FocusViewInternal(name string) *View {
+func SetCurrentView(name string) *View {
 	v, err := _gui.SetCurrentView(name)
 	if err != nil {
 		return nil
 	}
-	return NewView(v)
+	return newView(v)
 }
 
 func SetCenteredView(name string, sizeX int, sizeY int, verticalOffset int) *View {
@@ -59,24 +67,36 @@ func ToggleCursor(c bool) {
 
 func SetView(name string, x0 int, y0 int, x1 int, y1 int, overlaps byte) (*View, error) {
 	v, err := _gui.SetView(name, x0, y0, x1, y1, overlaps)
-	return NewView(v), err
+	return newView(v), err
 }
 
 func GetFocusedView() *View {
 	v := _gui.CurrentView()
 	if v != nil {
-		return NewView(v)
+		return newView(v)
 	}
 
 	return nil
 }
 
-func UpdateGui(f func(g *gocui.Gui) error) {
-	_gui.Update(f)
+func UpdateGui(f func(g *Gui) error) {
+	_gui.Update(func(g *gocui.Gui) error {
+		return f(&Gui{
+			Gui: g,
+		})
+	})
 }
 
 func SetScreenManagers(managers ...gocui.Manager) {
 	_gui.SetManager(managers...)
+}
+
+func SendViewToBack(v *View) {
+	_gui.SetViewOnBottom(v.Name())
+}
+
+func SendViewToFront(v *View) {
+	_gui.SetViewOnTop(v.Name())
 }
 
 type KeyBindingBuilder struct {

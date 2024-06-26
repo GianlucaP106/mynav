@@ -45,18 +45,18 @@ func OpenEditorDialogWithDefaultValue(onEnter func(string), onEsc func(), title 
 	ed.view.Editor = NewSimpleEditor(func(s string) {
 		ed.Close()
 		if prevView != nil {
-			FocusViewInternal(prevView.Name())
+			SetCurrentView(prevView.Name())
 		}
 		onEnter(s)
 	}, func() {
 		ed.Close()
 		if prevView != nil {
-			FocusViewInternal(prevView.Name())
+			SetCurrentView(prevView.Name())
 		}
 		onEsc()
 	})
 
-	FocusViewInternal(ed.view.Name())
+	SetCurrentView(ed.view.Name())
 
 	return ed
 }

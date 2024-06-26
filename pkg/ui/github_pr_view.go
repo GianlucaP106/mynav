@@ -17,8 +17,22 @@ type GithubPrView struct {
 
 const GithubPrViewName = "GithubPrView"
 
+var _ Viewable = new(GithubPrView)
+
 func NewGithubPrView() *GithubPrView {
 	return &GithubPrView{}
+}
+
+func GetGithubPrView() *GithubPrView {
+	return GetViewable[*GithubPrView]()
+}
+
+func FocusGithubPrView() {
+	FocusView(GithubPrViewName)
+}
+
+func (g *GithubPrView) View() *View {
+	return g.view
 }
 
 func (g *GithubPrView) Init() {
@@ -44,21 +58,22 @@ func (g *GithubPrView) Init() {
 			0.40,
 		})
 
+	// TODO: make this more formal
 	go func() {
 		g.refreshPrs()
-		UpdateGui(func(_ *gocui.Gui) error {
+		UpdateGui(func(_ *Gui) error {
 			g.Render()
 			return nil
 		})
 	}()
 
-	moveUp := func() {
-		FocusWorkspacesView()
-	}
-
-	moveLeft := func() {
-		FocusTmuxView()
-	}
+	// moveUp := func() {
+	// 	FocusWorkspacesView()
+	// }
+	//
+	// moveLeft := func() {
+	// 	FocusTmuxView()
+	// }
 
 	KeyBinding(g.Name()).
 		set('j', func() {
@@ -82,7 +97,7 @@ func (g *GithubPrView) Init() {
 
 			deviceAuth := Api().Github.AuthenticateWithDeviceAuth(func() {
 				g.refreshPrs()
-				UpdateGui(func(_ *gocui.Gui) error {
+				UpdateGui(func(_ *Gui) error {
 					g.Render()
 					return nil
 				})
@@ -111,11 +126,11 @@ func (g *GithubPrView) Init() {
 		set('O', func() {
 			Api().Github.LogoutUser()
 		}).
-		set(gocui.KeyEsc, moveUp).
-		set(gocui.KeyArrowUp, moveUp).
-		set(gocui.KeyCtrlK, moveUp).
-		set(gocui.KeyArrowLeft, moveLeft).
-		set(gocui.KeyCtrlH, moveLeft).
+		// set(gocui.KeyEsc, moveUp).
+		// set(gocui.KeyArrowUp, moveUp).
+		// set(gocui.KeyCtrlK, moveUp).
+		// set(gocui.KeyArrowLeft, moveLeft).
+		// set(gocui.KeyCtrlH, moveLeft).
 		set('?', func() {
 			OpenHelpView(githubPrViewKeyBindings, func() {})
 		})
