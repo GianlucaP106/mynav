@@ -143,5 +143,6 @@ func (tr *TableRenderer) FillTable(rows [][]string) {
 	for _, row := range rows {
 		tr.Table.AddTableRow(row)
 	}
+
 	tr.ListRenderer.resetSize(len(rows))
 }

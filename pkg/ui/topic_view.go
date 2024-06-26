@@ -2,7 +2,6 @@ package ui
 
 import (
 	"mynav/pkg/core"
-	"strings"
 
 	"github.com/awesome-gocui/gocui"
 )
@@ -55,8 +54,7 @@ func (tv *TopicsView) Init() {
 	tv.refreshTopics()
 
 	if selectedWorkspace := Api().Core.GetSelectedWorkspace(); selectedWorkspace != nil {
-		topicName := strings.Split(selectedWorkspace.ShortPath(), "/")[0]
-		tv.selectTopicByName(topicName)
+		tv.selectTopicByName(selectedWorkspace.Topic.Name)
 	}
 
 	moveRight := func() {

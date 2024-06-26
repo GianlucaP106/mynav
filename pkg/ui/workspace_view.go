@@ -261,7 +261,7 @@ func (wv *WorkspacesView) Init() {
 func (wv *WorkspacesView) selectWorkspaceByShortPath(shortPath string) {
 	for idx, w := range wv.workspaces {
 		if w.ShortPath() == shortPath {
-			GetTopicsView().tableRenderer.SetSelectedRow(idx)
+			wv.tableRenderer.SetSelectedRow(idx)
 		}
 	}
 }
