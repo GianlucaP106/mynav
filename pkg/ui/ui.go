@@ -61,9 +61,6 @@ func InitViews(ui *UI, standalone bool, askToInit bool) *UI {
 			setWithQuit(gocui.KeyCtrlC, quit).
 			setWithQuit('q', quit).
 			setWithQuit('q', quit).
-			set('t', func() {
-				FocusTmuxView()
-			}).
 			set(']', func() {
 				ui.MainTabGroup.IncrementSelectedTab()
 			}).
