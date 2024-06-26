@@ -9,7 +9,6 @@ import (
 
 type TopicsView struct {
 	view          *View
-	ui            *UI
 	tableRenderer *TableRenderer
 	search        string
 	topics        core.Topics
@@ -17,10 +16,22 @@ type TopicsView struct {
 
 const TopicViewName = "TopicsView"
 
-func NewTopicsView(ui *UI) *TopicsView {
-	return &TopicsView{
-		ui: ui,
-	}
+var _ Viewable = new(TopicsView)
+
+func NewTopicsView() *TopicsView {
+	return &TopicsView{}
+}
+
+func FocusTopicsView() {
+	FocusView(TopicViewName)
+}
+
+func GetTopicsView() *TopicsView {
+	return GetViewable[*TopicsView]()
+}
+
+func (tv *TopicsView) View() *View {
+	return tv.view
 }
 
 func (tv *TopicsView) Init() {
@@ -61,11 +72,11 @@ func (tv *TopicsView) Init() {
 	KeyBinding(tv.view.Name()).
 		set('j', func() {
 			tv.tableRenderer.Down()
-			tv.ui.WorkspacesView.refreshWorkspaces()
+			GetWorkspacesView().refreshWorkspaces()
 		}).
 		set('k', func() {
 			tv.tableRenderer.Up()
-			tv.ui.WorkspacesView.refreshWorkspaces()
+			GetWorkspacesView().refreshWorkspaces()
 		}).
 		set(gocui.KeyEnter, moveRight).
 		set(gocui.KeyArrowRight, moveRight).
@@ -76,14 +87,14 @@ func (tv *TopicsView) Init() {
 			OpenEditorDialog(func(s string) {
 				tv.search = s
 				tv.view.Subtitle = withSurroundingSpaces("Searching: " + tv.search)
-				tv.ui.RefreshAllViews()
+				RefreshAllData()
 			}, func() {}, "Search", Small)
 		}).
 		set(gocui.KeyEsc, func() {
 			if tv.search != "" {
 				tv.search = ""
 				tv.view.Subtitle = ""
-				tv.ui.RefreshAllViews()
+				RefreshAllData()
 			}
 		}).
 		set('a', func() {
@@ -97,7 +108,7 @@ func (tv *TopicsView) Init() {
 				// This will result in the corresponding topic going to the top
 				// because we are sorting by modifed time
 				tv.tableRenderer.SetSelectedRow(0)
-				tv.ui.RefreshAllViews()
+				RefreshAllData()
 			}, func() {}, "Topic name", Small)
 		}).
 		set('r', func() {
@@ -112,7 +123,7 @@ func (tv *TopicsView) Init() {
 					return
 				}
 
-				tv.ui.RefreshAllViews()
+				RefreshAllData()
 			}, func() {}, "New topic name", Small, t.Name)
 		}).
 		set('D', func() {
@@ -122,7 +133,7 @@ func (tv *TopicsView) Init() {
 			OpenConfirmationDialog(func(b bool) {
 				if b {
 					Api().Core.DeleteTopic(tv.getSelectedTopic())
-					tv.ui.RefreshAllViews()
+					RefreshAllData()
 				}
 			}, "Are you sure you want to delete this topic? All its content will be deleted.")
 		}).

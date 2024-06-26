@@ -10,21 +10,32 @@ import (
 
 type TmuxSessionView struct {
 	view          *View
-	ui            *UI
 	tableRenderer *TableRenderer
 	sessions      []*tmux.TmuxSession
 }
 
 const TmuxSessionViewName = "TmuxSessionView"
 
-func NewTmuxSessionView(ui *UI) *TmuxSessionView {
-	return &TmuxSessionView{
-		ui: ui,
-	}
+var _ Viewable = new(TmuxSessionView)
+
+func NewTmuxSessionView() *TmuxSessionView {
+	return &TmuxSessionView{}
+}
+
+func GetTmuxSessionView() *TmuxSessionView {
+	return GetViewable[*TmuxSessionView]()
+}
+
+func FocusTmuxView() {
+	FocusView(TmuxSessionViewName)
+}
+
+func (tv *TmuxSessionView) View() *View {
+	return tv.view
 }
 
 func (tv *TmuxSessionView) Init() {
-	if tv.ui.Standalone {
+	if IsStandlaone() {
 		screenX, screenY := ScreenSize()
 		tv.view = SetCenteredView(TmuxSessionViewName, screenX/2, screenY/3, 0)
 	} else {
@@ -51,20 +62,14 @@ func (tv *TmuxSessionView) Init() {
 	tv.refreshTmuxSessions()
 
 	moveUp := func() {
-		if !tv.ui.Standalone {
+		if !IsStandlaone() {
 			FocusWorkspacesView()
 		}
 	}
 
 	moveLeft := func() {
-		if !tv.ui.Standalone {
+		if !IsStandlaone() {
 			FocusPortView()
-		}
-	}
-
-	moveRight := func() {
-		if !tv.ui.Standalone {
-			FocusPrView()
 		}
 	}
 
@@ -91,7 +96,7 @@ func (tv *TmuxSessionView) Init() {
 						OpenToastDialogError(err.Error())
 						return
 					}
-					tv.ui.RefreshAllViews()
+					RefreshAllData()
 				}
 			}, "Are you sure you want to delete this session?")
 		}).
@@ -106,12 +111,12 @@ func (tv *TmuxSessionView) Init() {
 						OpenToastDialogError(err.Error())
 						return
 					}
-					tv.ui.RefreshAllViews()
+					RefreshAllData()
 				}
 			}, "Are you sure you want to delete ALL tmux sessions?")
 		}).
 		set('W', func() {
-			if tv.ui.Standalone || Api().Core.GetWorkspaceTmuxSessionCount() == 0 {
+			if IsStandlaone() || Api().Core.GetWorkspaceTmuxSessionCount() == 0 {
 				return
 			}
 
@@ -121,7 +126,7 @@ func (tv *TmuxSessionView) Init() {
 						OpenToastDialogError(err.Error())
 						return
 					}
-					tv.ui.RefreshAllViews()
+					RefreshAllData()
 				}
 			}, "Are you sure you want to delete ALL non-external tmux sessions?")
 		}).
@@ -140,15 +145,13 @@ func (tv *TmuxSessionView) Init() {
 			}, func() {}, "New session name", Small)
 		}).
 		set('?', func() {
-			OpenHelpView(getTmuxKeyBindings(tv.ui.Standalone), func() {})
+			OpenHelpView(getTmuxKeyBindings(IsStandlaone()), func() {})
 		}).
 		set(gocui.KeyEsc, moveUp).
 		set(gocui.KeyArrowUp, moveUp).
 		set(gocui.KeyCtrlK, moveUp).
 		set(gocui.KeyArrowLeft, moveLeft).
-		set(gocui.KeyCtrlH, moveLeft).
-		set(gocui.KeyArrowRight, moveRight).
-		set(gocui.KeyCtrlL, moveRight)
+		set(gocui.KeyCtrlH, moveLeft)
 }
 
 func (tv *TmuxSessionView) getSelectedSession() *tmux.TmuxSession {
@@ -169,7 +172,7 @@ func (tv *TmuxSessionView) syncSessionsToTable() {
 	rows := make([][]string, 0)
 	for _, session := range tv.sessions {
 		workspace := "external"
-		if !tv.ui.Standalone {
+		if !IsStandlaone() {
 			w := Api().Core.GetWorkspaceByTmuxSession(session)
 			if w != nil {
 				workspace = w.ShortPath()

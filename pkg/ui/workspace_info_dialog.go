@@ -30,13 +30,13 @@ func OpenWorkspaceInfoDialog(w *core.Workspace, exit func()) *WorkspaceInfoDialo
 	wd.view.Editor = NewConfirmationEditor(func() {
 		wd.Close()
 		if prevView != nil {
-			FocusViewInternal(prevView.Name())
+			SetCurrentView(prevView.Name())
 		}
 		exit()
 	}, func() {
 		wd.Close()
 		if prevView != nil {
-			FocusViewInternal(prevView.Name())
+			SetCurrentView(prevView.Name())
 		}
 		exit()
 	})
@@ -46,7 +46,7 @@ func OpenWorkspaceInfoDialog(w *core.Workspace, exit func()) *WorkspaceInfoDialo
 		fmt.Fprintln(wd.view, line)
 	}
 
-	FocusViewInternal(wd.view.Name())
+	SetCurrentView(wd.view.Name())
 
 	return wd
 }

@@ -21,8 +21,22 @@ type Port struct {
 
 const PortViewName = "PortView"
 
+var _ Viewable = new(PortView)
+
 func NewPortView() *PortView {
 	return &PortView{}
+}
+
+func GetPortView() *PortView {
+	return GetViewable[*PortView]()
+}
+
+func FocusPortView() {
+	FocusView(PortViewName)
+}
+
+func (p *PortView) View() *View {
+	return p.view
 }
 
 func (p *PortView) Init() {
@@ -50,7 +64,7 @@ func (p *PortView) Init() {
 
 	go func() {
 		p.refreshPorts()
-		UpdateGui(func(_ *gocui.Gui) error {
+		UpdateGui(func(_ *Gui) error {
 			p.Render()
 			return nil
 		})

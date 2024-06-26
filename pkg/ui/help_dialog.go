@@ -59,7 +59,7 @@ func OpenHelpView(mappings []*KeyBindingMapping, exit func()) *HelpDialog {
 	}, func() {
 		hv.Close()
 		if prevView != nil {
-			FocusViewInternal(prevView.Name())
+			SetCurrentView(prevView.Name())
 		}
 		exit()
 	})
@@ -78,7 +78,7 @@ func OpenHelpView(mappings []*KeyBindingMapping, exit func()) *HelpDialog {
 	hv.tableRenderer.InitTable(sizeX, 13, title, proportions)
 	hv.refreshTable()
 	hv.render()
-	FocusViewInternal(hv.view.Name())
+	SetCurrentView(hv.view.Name())
 	return hv
 }
 

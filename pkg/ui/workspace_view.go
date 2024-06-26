@@ -8,18 +8,31 @@ import (
 	"github.com/awesome-gocui/gocui"
 )
 
-const WorkspacesViewName = "WorkspacesView"
-
 type WorkspacesView struct {
-	ui            *UI
 	view          *View
 	tableRenderer *TableRenderer
 	search        string
 	workspaces    core.Workspaces
 }
 
-func NewWorkspcacesView(ui *UI) *WorkspacesView {
-	return &WorkspacesView{ui: ui}
+const WorkspacesViewName = "WorkspacesView"
+
+var _ Viewable = new(WorkspacesView)
+
+func NewWorkspcacesView() *WorkspacesView {
+	return &WorkspacesView{}
+}
+
+func GetWorkspacesView() *WorkspacesView {
+	return GetViewable[*WorkspacesView]()
+}
+
+func FocusWorkspacesView() {
+	FocusView(WorkspacesViewName)
+}
+
+func (wv *WorkspacesView) View() *View {
+	return wv.view
 }
 
 func (wv *WorkspacesView) Init() {
@@ -167,7 +180,7 @@ func (wv *WorkspacesView) Init() {
 			return true
 		}).
 		set('D', func() {
-			if Api().Core.GetWorkspacesByTopicCount(wv.ui.TopicsView.getSelectedTopic()) <= 0 {
+			if Api().Core.GetWorkspacesByTopicCount(GetTopicsView().getSelectedTopic()) <= 0 {
 				return
 			}
 
@@ -177,8 +190,8 @@ func (wv *WorkspacesView) Init() {
 					Api().Core.DeleteWorkspace(curWorkspace)
 
 					// HACK: same as below
-					wv.ui.TopicsView.tableRenderer.SetSelectedRow(0)
-					wv.ui.RefreshAllViews()
+					GetTopicsView().tableRenderer.SetSelectedRow(0)
+					RefreshAllData()
 				}
 			}, "Are you sure you want to delete this workspace?")
 		}).
@@ -210,7 +223,7 @@ func (wv *WorkspacesView) Init() {
 			}, func() {}, "Description", Large)
 		}).
 		set('a', func() {
-			curTopic := wv.ui.TopicsView.getSelectedTopic()
+			curTopic := GetTopicsView().getSelectedTopic()
 			OpenEditorDialog(func(name string) {
 				if _, err := Api().Core.CreateWorkspace(name, curTopic); err != nil {
 					OpenToastDialogError(err.Error())
@@ -220,9 +233,9 @@ func (wv *WorkspacesView) Init() {
 				// HACK: when there a is a new workspace
 				// This will result in the workspace and the corresponding topic going to the top
 				// because we are sorting by modifed time
-				wv.ui.TopicsView.tableRenderer.SetSelectedRow(0)
+				GetTmuxSessionView().tableRenderer.SetSelectedRow(0)
 				wv.tableRenderer.SetSelectedRow(0)
-				wv.ui.RefreshAllViews()
+				RefreshAllData()
 			}, func() {}, "Workspace name ", Small)
 		}).
 		set('X', func() {
@@ -235,7 +248,7 @@ func (wv *WorkspacesView) Init() {
 				OpenConfirmationDialog(func(b bool) {
 					if b {
 						Api().Core.DeleteWorkspaceTmuxSession(curWorkspace)
-						wv.ui.RefreshAllViews()
+						RefreshAllData()
 					}
 				}, "Are you sure you want to delete the tmux session?")
 			}
@@ -248,14 +261,14 @@ func (wv *WorkspacesView) Init() {
 func (wv *WorkspacesView) selectWorkspaceByShortPath(shortPath string) {
 	for idx, w := range wv.workspaces {
 		if w.ShortPath() == shortPath {
-			wv.ui.TopicsView.tableRenderer.SetSelectedRow(idx)
+			GetTopicsView().tableRenderer.SetSelectedRow(idx)
 		}
 	}
 }
 
 func (wv *WorkspacesView) refreshWorkspaces() {
 	var workspaces core.Workspaces
-	if selectedTopic := wv.ui.TopicsView.getSelectedTopic(); selectedTopic != nil {
+	if selectedTopic := GetTopicsView().getSelectedTopic(); selectedTopic != nil {
 		workspaces = Api().Core.GetWorkspaces().ByTopic(selectedTopic)
 	} else {
 		workspaces = make(core.Workspaces, 0)

@@ -9,14 +9,17 @@ import (
 	"github.com/awesome-gocui/gocui"
 )
 
-type UI struct {
-	WorkspacesView  *WorkspacesView
-	TopicsView      *TopicsView
-	PortsView       *PortView
-	TmuxSessionView *TmuxSessionView
-	GithubPrView    *GithubPrView
-	HeaderView      *HeaderView
+type Viewable interface {
+	Init()
+	View() *View
+	Render() error
+}
 
+type UI struct {
+	MainTabGroup *TabGroup
+	Views        []Viewable
+
+	// TODO: move to backend
 	Standalone bool
 }
 
@@ -31,7 +34,11 @@ func Start() *Action {
 	g := NewGui()
 	defer g.Close()
 
-	_ui = InitViews(false, true)
+	_ui = &UI{
+		Views: make([]Viewable, 0),
+	}
+
+	InitViews(_ui, false, true)
 
 	err := g.MainLoop()
 	if err != nil {
@@ -43,21 +50,46 @@ func Start() *Action {
 	return action
 }
 
-func InitViews(standalone bool, askToInit bool) *UI {
-	ui := &UI{
-		Standalone: standalone,
+func InitViews(ui *UI, standalone bool, askToInit bool) *UI {
+	ui.Standalone = standalone
+
+	setGlobalKeybindings := func() {
+		quit := func() bool {
+			return true
+		}
+		KeyBinding("").
+			setWithQuit(gocui.KeyCtrlC, quit).
+			setWithQuit('q', quit).
+			setWithQuit('q', quit).
+			set('t', func() {
+				FocusTmuxView()
+			}).
+			set(']', func() {
+				ui.MainTabGroup.IncrementSelectedTab()
+			}).
+			set('[', func() {
+				ui.MainTabGroup.DecrementSelectedTab()
+			}).
+			set('?', func() {
+				OpenHelpView(nil, func() {})
+			})
 	}
 
+	// TODO:
 	if ui.Standalone || system.IsCurrentProcessHomeDir() || (!Api().Core.IsConfigInitialized && !askToInit) {
 		ui.Standalone = true
-		ui.TmuxSessionView = NewTmuxSessionView(ui)
-		SetScreenManagers([]gocui.Manager{
-			gocui.ManagerFunc(func(g *gocui.Gui) error {
-				return ui.TmuxSessionView.Render()
-			}),
-		}...)
-		ui.TmuxSessionView.Init()
-		FocusViewInternal(TmuxSessionViewName)
+		tmv := NewTmuxSessionView()
+		ui.Views = make([]Viewable, 0)
+		ui.Views = append(ui.Views, tmv)
+
+		SetViewableManagers(ui.Views)
+		InitViewables(ui.Views)
+
+		tab := NewTab("tab1", TmuxSessionViewName)
+		tab.AddView(tmv.view)
+		ui.MainTabGroup = NewTabGroup([]*Tab{tab})
+		ui.MainTabGroup.FocusTabByIndex(0)
+
 		SystemUpdate()
 		setGlobalKeybindings()
 		return ui
@@ -66,55 +98,45 @@ func InitViews(standalone bool, askToInit bool) *UI {
 	if !Api().Core.IsConfigInitialized {
 		OpenConfirmationDialog(func(b bool) {
 			if !b {
-				InitViews(true, false)
+				InitViews(ui, true, false)
 				return
 			}
 
 			Api().InitConfiguration()
-			InitViews(false, false)
+			InitViews(ui, false, false)
 		}, "No configuration found. Would you like to initialize this directory?")
 		return nil
 	}
 
-	ui.TopicsView = NewTopicsView(ui)
-	ui.WorkspacesView = NewWorkspcacesView(ui)
-	ui.PortsView = NewPortView()
-	ui.TmuxSessionView = NewTmuxSessionView(ui)
-	ui.GithubPrView = NewGithubPrView()
-	ui.HeaderView = NewHeaderView()
+	ui.Views = []Viewable{
+		NewHeaderView(),
+		NewTopicsView(),
+		NewWorkspcacesView(),
+		NewPortView(),
+		NewTmuxSessionView(),
+		NewGithubPrView(),
+	}
 
-	SetScreenManagers([]gocui.Manager{
-		gocui.ManagerFunc(func(g *gocui.Gui) error {
-			return ui.TopicsView.Render()
-		}),
+	SetViewableManagers(ui.Views)
+	InitViewables(ui.Views)
 
-		gocui.ManagerFunc(func(g *gocui.Gui) error {
-			return ui.WorkspacesView.Render()
-		}),
+	tab1 := NewTab("tab1", GetTopicsView().View().Name())
+	tab1.AddView(GetHeaderView().view)
+	tab1.AddView(GetTopicsView().view)
+	tab1.AddView(GetWorkspacesView().view)
+	tab1.AddView(GetPortView().view)
+	tab1.AddView(GetTmuxSessionView().view)
 
-		gocui.ManagerFunc(func(g *gocui.Gui) error {
-			return ui.PortsView.Render()
-		}),
+	tab2 := NewTab("tab2", GetGithubPrView().view.Name())
+	tab2.AddView(GetGithubPrView().view)
+	tab2.AddView(GetHeaderView().view)
 
-		gocui.ManagerFunc(func(g *gocui.Gui) error {
-			return ui.TmuxSessionView.Render()
-		}),
+	ui.MainTabGroup = NewTabGroup([]*Tab{
+		tab1,
+		tab2,
+	})
 
-		gocui.ManagerFunc(func(g *gocui.Gui) error {
-			return ui.GithubPrView.Render()
-		}),
-
-		gocui.ManagerFunc(func(g *gocui.Gui) error {
-			return ui.HeaderView.Render()
-		}),
-	}...)
-
-	ui.TopicsView.Init()
-	ui.WorkspacesView.Init()
-	ui.PortsView.Init()
-	ui.TmuxSessionView.Init()
-	ui.GithubPrView.Init()
-	ui.HeaderView.Init()
+	ui.MainTabGroup.FocusTabByIndex(0)
 
 	SystemUpdate()
 
@@ -129,51 +151,39 @@ func InitViews(standalone bool, askToInit bool) *UI {
 	return ui
 }
 
-func setGlobalKeybindings() {
-	quit := func() bool {
-		return true
+func SetViewableManagers(vs []Viewable) {
+	managers := make([]gocui.Manager, 0)
+	for _, view := range vs {
+		managers = append(managers, gocui.ManagerFunc(func(_ *gocui.Gui) error {
+			return view.Render()
+		}))
 	}
-	KeyBinding("").
-		setWithQuit(gocui.KeyCtrlC, quit).
-		setWithQuit('q', quit).
-		setWithQuit('q', quit).
-		set('t', func() {
-			FocusTmuxView()
-		}).
-		set('?', func() {
-			OpenHelpView(nil, func() {})
-		})
+
+	SetScreenManagers(managers...)
 }
 
-func FocusTopicsView() {
-	FocusView(TopicViewName)
+func InitViewables(vs []Viewable) {
+	for _, v := range vs {
+		v.Init()
+	}
 }
 
-func FocusWorkspacesView() {
-	FocusView(WorkspacesViewName)
-}
+func GetViewable[T Viewable]() T {
+	for _, v := range _ui.Views {
+		if v, ok := v.(T); ok {
+			return v
+		}
+	}
 
-func FocusPortView() {
-	FocusView(PortViewName)
-}
-
-func FocusTmuxView() {
-	FocusView(TmuxSessionViewName)
-}
-
-func FocusPrView() {
-	FocusView(GithubPrViewName)
+	panic("invalid view")
 }
 
 func FocusView(viewName string) {
-	FocusViewInternal(viewName)
-
-	wv := GetView(WorkspacesViewName)
-	tv := GetView(TopicViewName)
-	pv := GetView(PortViewName)
-	tmv := GetView(TmuxSessionViewName)
-	gprv := GetView(GithubPrViewName)
-	views := []*View{wv, tv, pv, tmv, gprv}
+	SetCurrentView(viewName)
+	views := make([]*View, 0)
+	for _, v := range _ui.Views {
+		views = append(views, v.View())
+	}
 
 	off := gocui.ColorBlue
 	on := gocui.ColorGreen
@@ -187,68 +197,19 @@ func FocusView(viewName string) {
 	}
 }
 
-func (ui *UI) RefreshAllViews() {
-	if !ui.Standalone {
-		ui.TopicsView.refreshTopics()
-		ui.PortsView.refreshPorts()
-		ui.WorkspacesView.refreshWorkspaces()
-	}
-	ui.TmuxSessionView.refreshTmuxSessions()
+func GetMainTabGroup() *TabGroup {
+	return _ui.MainTabGroup
 }
 
-func SystemUpdate() bool {
-	if Api().Core.IsConfigInitialized && !Api().Core.IsUpdateAsked() {
-		Api().Core.SetUpdateAsked()
-		update, newTag := Api().Core.DetectUpdate()
-		if update {
-			OpenConfirmationDialog(func(b bool) {
-				if b {
-					SetActionEnd(system.GetUpdateSystemCmd())
-				}
-			}, "A new update of mynav is available! Would you like to update to version "+newTag+"?")
-			return true
-		}
-	}
-	return false
+func IsStandlaone() bool {
+	return _ui.Standalone
 }
 
-func SetViewLayout(viewName string) *View {
-	maxX, maxY := ScreenSize()
-	views := map[string]func() *View{}
-	views[WorkspacesViewName] = func() *View {
-		view, _ := SetView(WorkspacesViewName, (maxX/3)+1, 8, maxX-2, (maxY / 2), 0)
-		return view
+func RefreshAllData() {
+	if !_ui.Standalone {
+		GetTopicsView().refreshTopics()
+		GetPortView().refreshPorts()
+		GetWorkspacesView().refreshWorkspaces()
 	}
-
-	views[TmuxSessionViewName] = func() *View {
-		view, _ := SetView(TmuxSessionViewName, (maxX/3)+1, (maxY/2)+1, ((2*maxX)/3)-1, maxY-4, 0)
-		return view
-	}
-
-	views[TopicViewName] = func() *View {
-		view, _ := SetView(TopicViewName, 2, 8, maxX/3-1, (maxY / 2), 0)
-		return view
-	}
-
-	views[PortViewName] = func() *View {
-		view, _ := SetView(PortViewName, 2, (maxY/2)+1, maxX/3-1, maxY-4, 0)
-		return view
-	}
-
-	views[GithubPrViewName] = func() *View {
-		view, _ := SetView(GithubPrViewName, ((2*maxX)/3)+1, (maxY/2)+1, maxX-2, maxY-4, 0)
-		return view
-	}
-
-	views[HeaderViewName] = func() *View {
-		view, _ := SetView(HeaderViewName, 2, 1, maxX-2, 5, 0)
-		return view
-	}
-
-	f := views[viewName]
-	if f == nil {
-		log.Panicln("invalid view")
-	}
-
-	return f()
+	GetTmuxSessionView().refreshTmuxSessions()
 }

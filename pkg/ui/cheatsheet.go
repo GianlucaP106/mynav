@@ -153,14 +153,14 @@ var githubPrViewKeyBindings []*KeyBindingMapping = append([]*KeyBindingMapping{
 		key:    "k",
 		action: "Move up",
 	},
-	{
-		key:    "esc | up arrow | ctrl-k",
-		action: "Focus Workspace View",
-	},
-	{
-		key:    "left arrow | ctrl-h",
-		action: "Focus Tmux View",
-	},
+	// {
+	// 	key:    "esc | up arrow | ctrl-k",
+	// 	action: "Focus Workspace View",
+	// },
+	// {
+	// 	key:    "left arrow | ctrl-h",
+	// 	action: "Focus Tmux View",
+	// },
 	{
 		key:    "o",
 		action: "Open Browser to PR",
@@ -212,10 +212,6 @@ func getTmuxKeyBindings(standalone bool) []*KeyBindingMapping {
 			{
 				key:    "left arrow | ctrl-h",
 				action: "Focus Port View",
-			},
-			{
-				key:    "right arrow | ctrl-l",
-				action: "Focus Github View",
 			},
 		}, tmuxKeyBindings...)
 	}
