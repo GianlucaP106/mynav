@@ -13,16 +13,12 @@ type TopicsView struct {
 	topics        core.Topics
 }
 
-const TopicViewName = "TopicsView"
-
 var _ Viewable = new(TopicsView)
+
+const TopicViewName = "TopicsView"
 
 func NewTopicsView() *TopicsView {
 	return &TopicsView{}
-}
-
-func FocusTopicsView() {
-	FocusView(TopicViewName)
 }
 
 func GetTopicsView() *TopicsView {
@@ -33,8 +29,12 @@ func (tv *TopicsView) View() *View {
 	return tv.view
 }
 
+func (tv *TopicsView) Focus() {
+	FocusView(tv.View().Name())
+}
+
 func (tv *TopicsView) Init() {
-	tv.view = SetViewLayout(TopicViewName)
+	tv.view = GetViewPosition(TopicViewName).Set()
 
 	tv.view.FrameColor = gocui.ColorBlue
 	tv.view.Title = withSurroundingSpaces("Topics")
@@ -59,12 +59,12 @@ func (tv *TopicsView) Init() {
 
 	moveRight := func() {
 		if Api().Core.GetTopicCount() > 0 {
-			FocusWorkspacesView()
+			GetWorkspacesView().Focus()
 		}
 	}
 
 	moveDown := func() {
-		FocusPortView()
+		GetPortView().Focus()
 	}
 
 	KeyBinding(tv.view.Name()).
@@ -181,10 +181,7 @@ func (tv *TopicsView) selectTopicByName(name string) {
 
 func (tv *TopicsView) Render() error {
 	tv.view.Clear()
-	currentViewSelected := false
-	if v := GetFocusedView(); v != nil && v.Name() == tv.view.Name() {
-		currentViewSelected = true
-	}
+	currentViewSelected := IsViewFocused(tv.view)
 
 	tv.tableRenderer.RenderWithSelectCallBack(tv.view, func(_ int, _ *TableRow) bool {
 		return currentViewSelected

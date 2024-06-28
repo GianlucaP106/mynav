@@ -53,7 +53,7 @@ func SetCurrentView(name string) *View {
 
 func SetCenteredView(name string, sizeX int, sizeY int, verticalOffset int) *View {
 	maxX, maxY := ScreenSize()
-	view, _ := SetView(name, maxX/2-sizeX/2, maxY/2-sizeY/2+verticalOffset, maxX/2+sizeX/2, maxY/2+sizeY/2+verticalOffset, 0)
+	view := SetView(name, maxX/2-sizeX/2, maxY/2-sizeY/2+verticalOffset, maxX/2+sizeX/2, maxY/2+sizeY/2+verticalOffset, 0)
 	return view
 }
 
@@ -65,9 +65,9 @@ func ToggleCursor(c bool) {
 	_gui.Cursor = c
 }
 
-func SetView(name string, x0 int, y0 int, x1 int, y1 int, overlaps byte) (*View, error) {
-	v, err := _gui.SetView(name, x0, y0, x1, y1, overlaps)
-	return newView(v), err
+func SetView(name string, x0 int, y0 int, x1 int, y1 int, overlaps byte) *View {
+	v, _ := _gui.SetView(name, x0, y0, x1, y1, overlaps)
+	return newView(v)
 }
 
 func GetFocusedView() *View {
@@ -77,6 +77,11 @@ func GetFocusedView() *View {
 	}
 
 	return nil
+}
+
+func IsViewFocused(view *View) bool {
+	v := GetFocusedView()
+	return v != nil && v.Name() == view.Name()
 }
 
 func UpdateGui(f func(g *Gui) error) {

@@ -11,9 +11,9 @@ type HeaderView struct {
 	view *View
 }
 
-const HeaderViewName = "HeaderView"
-
 var _ Viewable = new(HeaderView)
+
+const HeaderViewName = "HeaderView"
 
 func NewHeaderView() *HeaderView {
 	return &HeaderView{}
@@ -28,7 +28,7 @@ func (hv *HeaderView) View() *View {
 }
 
 func (hv *HeaderView) Init() {
-	hv.view = SetViewLayout(HeaderViewName)
+	hv.view = GetViewPosition(HeaderViewName).Set()
 	hv.view.Frame = false
 }
 

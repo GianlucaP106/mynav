@@ -16,9 +16,9 @@ type WorkspacesView struct {
 	workspaces    core.Workspaces
 }
 
-const WorkspacesViewName = "WorkspacesView"
-
 var _ Viewable = new(WorkspacesView)
+
+const WorkspacesViewName = "WorkspacesView"
 
 func NewWorkspcacesView() *WorkspacesView {
 	return &WorkspacesView{}
@@ -28,16 +28,16 @@ func GetWorkspacesView() *WorkspacesView {
 	return GetViewable[*WorkspacesView]()
 }
 
-func FocusWorkspacesView() {
-	FocusView(WorkspacesViewName)
-}
-
 func (wv *WorkspacesView) View() *View {
 	return wv.view
 }
 
+func (wv *WorkspacesView) Focus() {
+	FocusView(wv.View().Name())
+}
+
 func (wv *WorkspacesView) Init() {
-	wv.view = SetViewLayout(WorkspacesViewName)
+	wv.view = GetViewPosition(WorkspacesViewName).Set()
 
 	wv.view.Title = withSurroundingSpaces("Workspaces")
 	wv.view.TitleColor = gocui.ColorBlue
@@ -68,11 +68,11 @@ func (wv *WorkspacesView) Init() {
 	}
 
 	moveDown := func() {
-		FocusTmuxView()
+		GetTmuxSessionView().Focus()
 	}
 
 	moveLeft := func() {
-		FocusTopicsView()
+		GetTopicsView().Focus()
 	}
 
 	KeyBinding(wv.view.Name()).
@@ -94,7 +94,7 @@ func (wv *WorkspacesView) Init() {
 				return
 			}
 
-			FocusTopicsView()
+			GetTopicsView().Focus()
 		}).
 		set('s', func() {
 			curWorkspace := wv.getSelectedWorkspace()
@@ -322,11 +322,7 @@ func (wv *WorkspacesView) getSelectedWorkspace() *core.Workspace {
 func (wv *WorkspacesView) Render() error {
 	wv.view.Clear()
 
-	// TODO: refact
-	isFocused := false
-	if v := GetFocusedView(); v != nil && v.Name() == wv.view.Name() {
-		isFocused = true
-	}
+	isFocused := IsViewFocused(wv.view)
 
 	wv.tableRenderer.RenderWithSelectCallBack(wv.view, func(_ int, _ *TableRow) bool {
 		return isFocused

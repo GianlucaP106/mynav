@@ -13,9 +13,9 @@ type TmuxSessionView struct {
 	sessions      []*tmux.TmuxSession
 }
 
-const TmuxSessionViewName = "TmuxSessionView"
-
 var _ Viewable = new(TmuxSessionView)
+
+const TmuxSessionViewName = "TmuxSessionView"
 
 func NewTmuxSessionView() *TmuxSessionView {
 	return &TmuxSessionView{}
@@ -25,12 +25,12 @@ func GetTmuxSessionView() *TmuxSessionView {
 	return GetViewable[*TmuxSessionView]()
 }
 
-func FocusTmuxView() {
-	FocusView(TmuxSessionViewName)
-}
-
 func (tv *TmuxSessionView) View() *View {
 	return tv.view
+}
+
+func (tv *TmuxSessionView) Focus() {
+	FocusView(tv.View().Name())
 }
 
 func (tv *TmuxSessionView) Init() {
@@ -38,7 +38,7 @@ func (tv *TmuxSessionView) Init() {
 		screenX, screenY := ScreenSize()
 		tv.view = SetCenteredView(TmuxSessionViewName, screenX/2, screenY/3, 0)
 	} else {
-		tv.view = SetViewLayout(TmuxSessionViewName)
+		tv.view = GetViewPosition(TmuxSessionViewName).Set()
 	}
 
 	tv.view.Title = withSurroundingSpaces("TMUX Sessions")
@@ -62,13 +62,13 @@ func (tv *TmuxSessionView) Init() {
 
 	moveUp := func() {
 		if !IsStandlaone() {
-			FocusWorkspacesView()
+			GetWorkspacesView().Focus()
 		}
 	}
 
 	moveLeft := func() {
 		if !IsStandlaone() {
-			FocusPortView()
+			GetPortView().Focus()
 		}
 	}
 
@@ -193,10 +193,7 @@ func (tv *TmuxSessionView) Render() error {
 		return gocui.ErrQuit
 	}
 
-	isViewFocused := false
-	if fv := GetFocusedView(); fv != nil {
-		isViewFocused = tv.view.Name() == GetFocusedView().Name()
-	}
+	isViewFocused := IsViewFocused(tv.view)
 
 	tv.view.Clear()
 	tv.tableRenderer.RenderWithSelectCallBack(tv.view, func(_ int, _ *TableRow) bool {

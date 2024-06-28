@@ -5,7 +5,7 @@ import "github.com/google/go-github/v62/github"
 type GithubPullRequests []*GithubPullRequest
 
 type GithubPullRequest struct {
-	Repo *github.Repository
+	Repo *GithubRepository
 	*github.PullRequest
 	Relation string
 }
@@ -14,7 +14,7 @@ func NewGithubPrContainer() GithubPullRequests {
 	return make(GithubPullRequests, 0)
 }
 
-func (g *GithubPullRequests) AddPr(repo *github.Repository, pr *github.PullRequest) {
+func (g *GithubPullRequests) AddPr(repo *GithubRepository, pr *github.PullRequest) {
 	*g = append(*g, &GithubPullRequest{
 		Repo:        repo,
 		PullRequest: pr,
@@ -29,7 +29,7 @@ func (g *GithubPullRequests) AddFromPr(pr *GithubPullRequest) {
 	})
 }
 
-func (g *GithubPullRequests) AddPrs(repo *github.Repository, prs ...*github.PullRequest) {
+func (g *GithubPullRequests) AddPrs(repo *GithubRepository, prs ...*github.PullRequest) {
 	for _, pr := range prs {
 		*g = append(*g, &GithubPullRequest{
 			Repo:        repo,
