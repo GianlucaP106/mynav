@@ -1,15 +1,15 @@
 package ui
 
-import "mynav/pkg/api"
+import "mynav/pkg/core"
 
-var _api *api.Api
+var _api *core.Api
 
-func Api() *api.Api {
+func Api() *core.Api {
 	return _api
 }
 
 func InitApi() error {
-	a, err := api.NewApi()
+	a, err := core.NewApi()
 	if err != nil {
 		return err
 	}
