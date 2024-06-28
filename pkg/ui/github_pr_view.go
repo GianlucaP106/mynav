@@ -95,7 +95,7 @@ func (g *GithubPrView) Init() {
 				return
 			}
 
-			deviceAuth := Api().Github.AuthenticateWithDeviceAuth(func() {
+			deviceAuth := Api().Github.AuthenticateWithDevice(func() {
 				g.refreshPrs()
 				UpdateGui(func(_ *Gui) error {
 					g.Render()
