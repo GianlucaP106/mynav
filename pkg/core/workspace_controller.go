@@ -99,11 +99,11 @@ func (wc *WorkspaceController) GetWorkspaceNvimCmd(w *Workspace) []string {
 func (wc *WorkspaceController) GetCreateOrAttachTmuxSessionCmd(w *Workspace) []string {
 	if ts := wc.TmuxController.GetTmuxSessionByName(w.Path); ts != nil {
 		wc.WorkspaceRepository.SetSelectedWorkspace(w)
-		return system.GetAttachTmuxSessionCmd(ts.Name)
+		return tmux.GetAttachTmuxSessionCmd(ts.Name)
 	}
 
 	wc.WorkspaceRepository.SetSelectedWorkspace(w)
-	return system.GetNewTmuxSessionCmd(w.Path, w.Path)
+	return tmux.GetNewTmuxSessionCmd(w.Path, w.Path)
 }
 
 func (wc *WorkspaceController) DeleteWorkspaceTmuxSession(w *Workspace) {

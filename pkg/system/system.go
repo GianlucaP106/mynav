@@ -26,7 +26,7 @@ func DetectOS() OS {
 	}
 }
 
-func IsWarpInstalled() bool {
+func IsWarpInstalledMac() bool {
 	if DetectOS() != Darwin {
 		return false
 	}
@@ -34,7 +34,7 @@ func IsWarpInstalled() bool {
 	return Exists("/Applications/Warp.app")
 }
 
-func IsItermInstalled() bool {
+func IsItermInstalledMac() bool {
 	if DetectOS() != Darwin {
 		return false
 	}

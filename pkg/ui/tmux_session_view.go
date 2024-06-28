@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"mynav/pkg/system"
 	"mynav/pkg/tmux"
 	"strconv"
 
@@ -75,13 +74,13 @@ func (tv *TmuxSessionView) Init() {
 
 	KeyBinding(TmuxSessionViewName).
 		setWithQuit(gocui.KeyEnter, func() bool {
-			if system.IsTmuxSession() {
+			if tmux.IsTmuxSession() {
 				OpenToastDialogError("You are already in a tmux session. Nested tmux sessions are not supported yet.")
 				return false
 			}
 
 			session := tv.getSelectedSession()
-			SetAction(system.GetAttachTmuxSessionCmd(session.Name))
+			SetAction(tmux.GetAttachTmuxSessionCmd(session.Name))
 			return true
 		}).
 		set('D', func() {
@@ -137,11 +136,11 @@ func (tv *TmuxSessionView) Init() {
 			tv.tableRenderer.Up()
 		}).
 		set('a', func() {
-			if system.IsTmuxSession() {
+			if tmux.IsTmuxSession() {
 				return
 			}
 			OpenEditorDialog(func(s string) {
-				SetAction(system.GetNewTmuxSessionCmd(s, "~"))
+				SetAction(tmux.GetNewTmuxSessionCmd(s, "~"))
 			}, func() {}, "New session name", Small)
 		}).
 		set('?', func() {

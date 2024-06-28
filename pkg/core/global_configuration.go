@@ -79,3 +79,7 @@ func (gc *GlobalConfiguration) SetGithubToken(token *github.GithubAuthentication
 	gc.Datasource.Data.GithubToken = token
 	gc.Datasource.SaveData()
 }
+
+func GetUpdateSystemCmd() []string {
+	return []string{"sh", "-c", "curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.sh | bash"}
+}
