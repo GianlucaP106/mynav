@@ -13,6 +13,14 @@ func NewTmuxRepository(tc *TmuxCommunicator) *TmuxRepository {
 	return tr
 }
 
+func (tr *TmuxRepository) GetSessions() TmuxSessions {
+	return tr.TmuxSessionContainer.ToList()
+}
+
+func (tr *TmuxRepository) GetSessionContainer() TmuxSessionContainer {
+	return tr.TmuxSessionContainer
+}
+
 func (tr *TmuxRepository) LoadSessions() {
 	tr.TmuxSessionContainer = tr.TmuxCommunicator.GetSessions()
 }
@@ -40,4 +48,8 @@ func (tr *TmuxRepository) RenameSession(ts *TmuxSession, newName string) error {
 	tr.TmuxSessionContainer.Set(ts)
 
 	return nil
+}
+
+func (tr *TmuxRepository) SessionCount() int {
+	return len(tr.TmuxSessionContainer)
 }

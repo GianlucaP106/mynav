@@ -34,11 +34,11 @@ func (tc *TmuxController) RenameTmuxSession(s *TmuxSession, newName string) erro
 }
 
 func (tc *TmuxController) GetTmuxSessionCount() int {
-	return len(tc.TmuxRepository.TmuxSessionContainer)
+	return tc.TmuxRepository.SessionCount()
 }
 
 func (tc *TmuxController) GetTmuxSessions() TmuxSessions {
-	return tc.TmuxRepository.TmuxSessionContainer.ToList()
+	return tc.TmuxRepository.GetSessions()
 }
 
 func (tc *TmuxController) GetTmuxSessionByName(name string) *TmuxSession {
@@ -76,7 +76,7 @@ func (tc *TmuxController) GetTmuxPanesBySession(ts *TmuxSession) []*TmuxPane {
 }
 
 func (tc *TmuxController) DeleteAllTmuxSessions() error {
-	for _, s := range tc.TmuxRepository.TmuxSessionContainer {
+	for _, s := range tc.TmuxRepository.GetSessionContainer() {
 		if err := tc.DeleteTmuxSession(s); err != nil {
 			return err
 		}
@@ -88,7 +88,7 @@ func (tc *TmuxController) GetTmuxStats() (sessionCount int, windowCount int) {
 	sessionCount = 0
 	windowCount = 0
 
-	for _, s := range tc.TmuxRepository.TmuxSessionContainer {
+	for _, s := range tc.TmuxRepository.GetSessionContainer() {
 		sessionCount++
 		windowCount += s.NumWindows
 	}
