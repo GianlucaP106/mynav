@@ -198,6 +198,8 @@ func (g *GithubPrView) Render() error {
 
 	if g.prs == nil {
 		fmt.Fprintln(g.view, "Loading...")
+	} else if len(g.prs) == 0 {
+		fmt.Fprintln(g.view, "No PRs to display")
 	}
 
 	return nil
