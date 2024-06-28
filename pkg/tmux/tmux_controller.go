@@ -133,12 +133,4 @@ func (tc *TmuxController) SyncPorts() {
 	}
 
 	wg.Wait()
-
-	for tmuxPid, ts := range tmap {
-		for _, port := range tc.PortController.GetPorts() {
-			if system.IsProcessChildOf(port.Pid, tmuxPid) {
-				ts.Ports.AddPort(port)
-			}
-		}
-	}
 }
