@@ -23,7 +23,10 @@ func (pc *PortController) InitPorts() {
 	out := make(Ports)
 	for _, port := range allActivePorts {
 		pi := GetProcessInfo(port.Pid)
-		port.Exe = pi.Exe
+		port.Exe = ""
+		if pi != nil {
+			port.Exe = pi.Exe
+		}
 		out.AddPort(port)
 	}
 
