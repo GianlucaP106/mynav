@@ -1,6 +1,6 @@
 package ui
 
-import "mynav/pkg/system"
+import "mynav/pkg/core"
 
 func SystemUpdate() bool {
 	if Api().Core.IsConfigInitialized && !Api().Core.IsUpdateAsked() {
@@ -9,7 +9,7 @@ func SystemUpdate() bool {
 		if update {
 			OpenConfirmationDialog(func(b bool) {
 				if b {
-					SetActionEnd(system.GetUpdateSystemCmd())
+					SetActionEnd(core.GetUpdateSystemCmd())
 				}
 			}, "A new update of mynav is available! Would you like to update to version "+newTag+"?")
 			return true

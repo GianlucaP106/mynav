@@ -100,7 +100,7 @@ func (p *PortView) Init() {
 				return false
 			}
 
-			SetAction(system.GetAttachTmuxSessionCmd(port.tmux.Name))
+			SetAction(tmux.GetAttachTmuxSessionCmd(port.tmux.Name))
 			return true
 		}).
 		set('D', func() {

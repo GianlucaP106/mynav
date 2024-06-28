@@ -9,27 +9,15 @@ func GetNvimCmd(path string) []string {
 	return []string{"nvim", path}
 }
 
-func GetNewTmuxSessionCmd(session string, path string) []string {
-	return []string{"tmux", "new", "-s", session, "-c", path}
-}
-
-func GetAttachTmuxSessionCmd(session string) []string {
-	return []string{"tmux", "a", "-t", session}
-}
-
-func GetKillTmuxSessionCmd(sessionName string) []string {
-	return []string{"tmux", "kill-session", "-t", sessionName}
-}
-
 func GetOpenTerminalCmd(path string) ([]string, error) {
 	cmds := map[uint]func() string{
 		Linux: func() string {
 			return "xdg-open terminal"
 		},
 		Darwin: func() string {
-			if IsItermInstalled() {
+			if IsItermInstalledMac() {
 				return "open -a Iterm"
-			} else if IsWarpInstalled() {
+			} else if IsWarpInstalledMac() {
 				return "open -a warp"
 			} else {
 				return "open -a Terminal"
@@ -47,8 +35,4 @@ func GetOpenTerminalCmd(path string) ([]string, error) {
 	command = append(command, path)
 
 	return command, nil
-}
-
-func GetUpdateSystemCmd() []string {
-	return []string{"sh", "-c", "curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.sh | bash"}
 }

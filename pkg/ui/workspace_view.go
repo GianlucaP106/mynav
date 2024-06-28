@@ -3,6 +3,7 @@ package ui
 import (
 	"mynav/pkg/core"
 	"mynav/pkg/system"
+	"mynav/pkg/tmux"
 	"strconv"
 
 	"github.com/awesome-gocui/gocui"
@@ -144,7 +145,7 @@ func (wv *WorkspacesView) Init() {
 				return false
 			}
 
-			if system.IsTmuxSession() {
+			if tmux.IsTmuxSession() {
 				SetAction(Api().Core.GetWorkspaceNvimCmd(curWorkspace))
 				return true
 			}

@@ -2,6 +2,7 @@ package tmux
 
 import (
 	"mynav/pkg/system"
+	"os"
 	"sync"
 )
 
@@ -133,4 +134,20 @@ func (tc *TmuxController) SyncPorts() {
 	}
 
 	wg.Wait()
+}
+
+func GetNewTmuxSessionCmd(session string, path string) []string {
+	return []string{"tmux", "new", "-s", session, "-c", path}
+}
+
+func GetAttachTmuxSessionCmd(session string) []string {
+	return []string{"tmux", "a", "-t", session}
+}
+
+func GetKillTmuxSessionCmd(sessionName string) []string {
+	return []string{"tmux", "kill-session", "-t", sessionName}
+}
+
+func IsTmuxSession() bool {
+	return os.Getenv("TMUX") != ""
 }
