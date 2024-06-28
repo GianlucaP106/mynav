@@ -15,9 +15,9 @@ type GithubPrView struct {
 	prs           github.GithubPullRequests
 }
 
-const GithubPrViewName = "GithubPrView"
-
 var _ Viewable = new(GithubPrView)
+
+const GithubPrViewName = "GithubPrView"
 
 func NewGithubPrView() *GithubPrView {
 	return &GithubPrView{}
@@ -27,16 +27,16 @@ func GetGithubPrView() *GithubPrView {
 	return GetViewable[*GithubPrView]()
 }
 
-func FocusGithubPrView() {
-	FocusView(GithubPrViewName)
-}
-
 func (g *GithubPrView) View() *View {
 	return g.view
 }
 
+func (g *GithubPrView) Focus() {
+	FocusView(g.View().Name())
+}
+
 func (g *GithubPrView) Init() {
-	g.view = SetViewLayout(g.Name())
+	g.view = GetViewPosition(GithubPrViewName).Set()
 
 	g.view.Title = "Pull Requests"
 	g.view.TitleColor = gocui.ColorBlue
@@ -67,15 +67,11 @@ func (g *GithubPrView) Init() {
 		})
 	}()
 
-	// moveUp := func() {
-	// 	FocusWorkspacesView()
-	// }
-	//
-	// moveLeft := func() {
-	// 	FocusTmuxView()
-	// }
+	moveLeft := func() {
+		GetGithubRepoView().Focus()
+	}
 
-	KeyBinding(g.Name()).
+	KeyBinding(g.view.Name()).
 		set('j', func() {
 			g.tableRenderer.Down()
 		}).
@@ -126,14 +122,12 @@ func (g *GithubPrView) Init() {
 		set('O', func() {
 			Api().Github.LogoutUser()
 		}).
-		// set(gocui.KeyEsc, moveUp).
-		// set(gocui.KeyArrowUp, moveUp).
-		// set(gocui.KeyCtrlK, moveUp).
-		// set(gocui.KeyArrowLeft, moveLeft).
-		// set(gocui.KeyCtrlH, moveLeft).
 		set('?', func() {
 			OpenHelpView(githubPrViewKeyBindings, func() {})
-		})
+		}).
+		set(gocui.KeyEsc, moveLeft).
+		set(gocui.KeyArrowLeft, moveLeft).
+		set(gocui.KeyCtrlH, moveLeft)
 }
 
 func (g *GithubPrView) refreshPrs() {
@@ -141,7 +135,7 @@ func (g *GithubPrView) refreshPrs() {
 		return
 	}
 
-	gpr, err := Api().Github.GetUserPullRequests()
+	gpr, err := Api().Github.GetUserPullRequestsLocked()
 	if err != nil {
 		log.Panicln(err)
 	}
@@ -170,10 +164,6 @@ func (g *GithubPrView) syncPrsToTable() {
 	g.tableRenderer.FillTable(rows)
 }
 
-func (g *GithubPrView) Name() string {
-	return GithubPrViewName
-}
-
 func (g *GithubPrView) Render() error {
 	if !Api().Github.IsAuthenticated() {
 		g.view.Clear()
@@ -187,10 +177,7 @@ func (g *GithubPrView) Render() error {
 	g.view.Clear()
 	g.view.Subtitle = "Login: " + Api().Github.GetPrincipalLogin()
 
-	isFocused := false
-	if v := GetFocusedView(); v != nil && v.Name() == g.Name() {
-		isFocused = true
-	}
+	isFocused := IsViewFocused(g.view)
 
 	g.tableRenderer.RenderWithSelectCallBack(g.view, func(_ int, _ *TableRow) bool {
 		return isFocused

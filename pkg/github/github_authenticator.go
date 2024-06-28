@@ -28,9 +28,11 @@ type GithubAuthenticationToken struct {
 	DeviceToken         *oauth2.Token
 }
 
-func NewGithubAuthenticator(clientId string, onLogin func(*GithubAuthenticationToken), onLogout func(), scopes ...string) *GithubAuthenticator {
+const CLIENT_ID = "Ov23lirJDAVBmN4oRLY0"
+
+func NewGithubAuthenticator(onLogin func(*GithubAuthenticationToken), onLogout func(), scopes ...string) *GithubAuthenticator {
 	c := &oauth2.Config{
-		ClientID: clientId,
+		ClientID: CLIENT_ID,
 		Scopes:   scopes,
 		Endpoint: githuboauth.Endpoint,
 	}

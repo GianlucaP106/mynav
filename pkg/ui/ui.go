@@ -112,6 +112,7 @@ func InitViews(ui *UI, standalone bool, askToInit bool) *UI {
 		NewPortView(),
 		NewTmuxSessionView(),
 		NewGithubPrView(),
+		NewGithubRepoView(),
 	}
 
 	SetViewableManagers(ui.Views)
@@ -127,6 +128,7 @@ func InitViews(ui *UI, standalone bool, askToInit bool) *UI {
 	tab2 := NewTab("tab2", GetGithubPrView().view.Name())
 	tab2.AddView(GetGithubPrView().view)
 	tab2.AddView(GetHeaderView().view)
+	tab2.AddView(GetGithubRepoView().view)
 
 	ui.MainTabGroup = NewTabGroup([]*Tab{
 		tab1,
@@ -138,9 +140,9 @@ func InitViews(ui *UI, standalone bool, askToInit bool) *UI {
 	SystemUpdate()
 
 	if Api().Core.GetSelectedWorkspace() != nil {
-		FocusWorkspacesView()
+		GetWorkspacesView().Focus()
 	} else {
-		FocusTopicsView()
+		GetTopicsView().Focus()
 	}
 
 	setGlobalKeybindings()

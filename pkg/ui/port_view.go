@@ -19,9 +19,9 @@ type Port struct {
 	*system.Port
 }
 
-const PortViewName = "PortView"
-
 var _ Viewable = new(PortView)
+
+const PortViewName = "PortView"
 
 func NewPortView() *PortView {
 	return &PortView{}
@@ -31,8 +31,8 @@ func GetPortView() *PortView {
 	return GetViewable[*PortView]()
 }
 
-func FocusPortView() {
-	FocusView(PortViewName)
+func (pv *PortView) Focus() {
+	FocusView(pv.View().Name())
 }
 
 func (p *PortView) View() *View {
@@ -40,7 +40,7 @@ func (p *PortView) View() *View {
 }
 
 func (p *PortView) Init() {
-	p.view = SetViewLayout(PortViewName)
+	p.view = GetViewPosition(PortViewName).Set()
 
 	p.view.FrameColor = gocui.ColorBlue
 	p.view.Title = withSurroundingSpaces("Open Ports")
@@ -71,11 +71,11 @@ func (p *PortView) Init() {
 	}()
 
 	moveUp := func() {
-		FocusTopicsView()
+		GetTopicsView().Focus()
 	}
 
 	moveRight := func() {
-		FocusTmuxView()
+		GetTmuxSessionView().Focus()
 	}
 
 	KeyBinding(p.view.Name()).
@@ -191,10 +191,7 @@ func (p *PortView) getSelectedPort() *Port {
 func (p *PortView) Render() error {
 	p.view.Clear()
 
-	currentViewSelected := false
-	if v := GetFocusedView(); v != nil && v.Name() == p.view.Name() {
-		currentViewSelected = true
-	}
+	currentViewSelected := IsViewFocused(p.view)
 
 	p.tableRenderer.RenderWithSelectCallBack(p.view, func(_ int, _ *TableRow) bool {
 		return currentViewSelected
