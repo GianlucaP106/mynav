@@ -234,7 +234,7 @@ func (wv *WorkspacesView) Init() {
 				// HACK: when there a is a new workspace
 				// This will result in the workspace and the corresponding topic going to the top
 				// because we are sorting by modifed time
-				GetTmuxSessionView().tableRenderer.SetSelectedRow(0)
+				GetTopicsView().tableRenderer.SetSelectedRow(0)
 				wv.tableRenderer.SetSelectedRow(0)
 				RefreshAllData()
 			}, func() {}, "Workspace name ", Small)
