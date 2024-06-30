@@ -2,6 +2,7 @@ package ui
 
 import (
 	"mynav/pkg/core"
+	"mynav/pkg/git"
 	"mynav/pkg/system"
 	"mynav/pkg/tmux"
 	"strconv"
@@ -296,8 +297,15 @@ func (wv *WorkspacesView) syncWorkspacesToTable() {
 			return ""
 		}()
 
-		// TODO: handle
-		remote, _ := w.GetGitRemote()
+		remote, err := w.GetGitRemote()
+		if err != nil {
+			OpenToastDialogError(err.Error())
+			return
+		}
+
+		if remote != "" {
+			remote = git.TrimGithubUrl(remote)
+		}
 
 		rows = append(rows, []string{
 			w.Name,
