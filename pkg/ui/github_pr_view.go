@@ -91,7 +91,11 @@ func (g *GithubPrView) Init() {
 				return
 			}
 
+			td := new(*ToastDialog)
 			deviceAuth := Api().Github.AuthenticateWithDevice(func() {
+				if *td != nil {
+					(*td).Close()
+				}
 				g.refreshPrs()
 				UpdateGui(func(_ *Gui) error {
 					g.Render()
@@ -100,7 +104,7 @@ func (g *GithubPrView) Init() {
 			})
 
 			if deviceAuth != nil {
-				OpenToastDialog(deviceAuth.UserCode, false, "User device code - automatically copied to clipboard", func() {})
+				(*td) = OpenToastDialog(deviceAuth.UserCode, false, "User device code - automatically copied to clipboard", func() {})
 				system.CopyToClip(deviceAuth.UserCode)
 				deviceAuth.OpenBrowser()
 			}
