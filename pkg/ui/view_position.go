@@ -16,9 +16,16 @@ func GetViewPosition(viewName string) *ViewPosition {
 	positionMap := map[string]*ViewPosition{}
 	positionMap[WorkspacesViewName] = &ViewPosition{
 		x0: (maxX / 3) + 1,
-		y0: 4,
+		y0: maxY/2 - 15,
 		x1: maxX - 2,
-		y1: (maxY / 2) - 2,
+		y1: maxY/2 + 15,
+	}
+
+	positionMap[TopicViewName] = &ViewPosition{
+		x0: 2,
+		y0: maxY/2 - 15,
+		x1: maxX/3 - 1,
+		y1: maxY/2 + 15,
 	}
 
 	positionMap[TmuxSessionViewName] = &ViewPosition{
@@ -26,13 +33,6 @@ func GetViewPosition(viewName string) *ViewPosition {
 		y0: (maxY / 2) - 1,
 		x1: maxX - 2,
 		y1: maxY - 4,
-	}
-
-	positionMap[TopicViewName] = &ViewPosition{
-		x0: 2,
-		y0: 4,
-		x1: maxX/3 - 1,
-		y1: (maxY / 2) - 2,
 	}
 
 	positionMap[PortViewName] = &ViewPosition{

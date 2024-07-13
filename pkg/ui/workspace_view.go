@@ -68,10 +68,6 @@ func (wv *WorkspacesView) Init() {
 		wv.selectWorkspaceByShortPath(selectedWorkspace.ShortPath())
 	}
 
-	moveDown := func() {
-		GetTmuxSessionView().Focus()
-	}
-
 	moveLeft := func() {
 		GetTopicsView().Focus()
 	}
@@ -83,8 +79,6 @@ func (wv *WorkspacesView) Init() {
 		set('k', func() {
 			wv.tableRenderer.Up()
 		}).
-		set(gocui.KeyArrowDown, moveDown).
-		set(gocui.KeyCtrlJ, moveDown).
 		set(gocui.KeyArrowLeft, moveLeft).
 		set(gocui.KeyCtrlH, moveLeft).
 		set(gocui.KeyEsc, func() {

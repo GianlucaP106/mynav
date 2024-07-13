@@ -34,12 +34,14 @@ func (tv *TmuxSessionView) Focus() {
 }
 
 func (tv *TmuxSessionView) Init() {
-	if IsStandlaone() {
-		screenX, screenY := ScreenSize()
-		tv.view = SetCenteredView(TmuxSessionViewName, screenX/2, screenY/3, 0)
-	} else {
-		tv.view = GetViewPosition(TmuxSessionViewName).Set()
-	}
+	screenX, screenY := ScreenSize()
+	tv.view = SetCenteredView(TmuxSessionViewName, screenX/2, screenY/3, 0)
+	// if IsStandlaone() {
+	// 	screenX, screenY := ScreenSize()
+	// 	tv.view = SetCenteredView(TmuxSessionViewName, screenX/2, screenY/3, 0)
+	// } else {
+	// 	tv.view = GetViewPosition(TmuxSessionViewName).Set()
+	// }
 
 	tv.view.Title = withSurroundingSpaces("TMUX Sessions")
 	tv.view.TitleColor = gocui.ColorBlue
@@ -61,15 +63,15 @@ func (tv *TmuxSessionView) Init() {
 	tv.refreshTmuxSessions()
 
 	moveUp := func() {
-		if !IsStandlaone() {
-			GetWorkspacesView().Focus()
-		}
+		// if !IsStandlaone() {
+		// 	GetWorkspacesView().Focus()
+		// }
 	}
 
 	moveLeft := func() {
-		if !IsStandlaone() {
-			GetPortView().Focus()
-		}
+		// if !IsStandlaone() {
+		// 	GetPortView().Focus()
+		// }
 	}
 
 	KeyBinding(TmuxSessionViewName).
@@ -144,7 +146,7 @@ func (tv *TmuxSessionView) Init() {
 			}, func() {}, "New session name", Small)
 		}).
 		set('?', func() {
-			OpenHelpView(getTmuxKeyBindings(IsStandlaone()), func() {})
+			OpenHelpView(tmuxKeyBindings, func() {})
 		}).
 		set(gocui.KeyEsc, moveUp).
 		set(gocui.KeyArrowUp, moveUp).

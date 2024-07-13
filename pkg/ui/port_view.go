@@ -40,7 +40,8 @@ func (p *PortView) View() *View {
 }
 
 func (p *PortView) Init() {
-	p.view = GetViewPosition(PortViewName).Set()
+	screenX, screenY := ScreenSize()
+	p.view = SetCenteredView(PortViewName, screenX/2, screenY/3, 0)
 
 	p.view.FrameColor = gocui.ColorBlue
 	p.view.Title = withSurroundingSpaces("Open Ports")
@@ -70,14 +71,6 @@ func (p *PortView) Init() {
 		})
 	}()
 
-	moveUp := func() {
-		GetTopicsView().Focus()
-	}
-
-	moveRight := func() {
-		GetTmuxSessionView().Focus()
-	}
-
 	KeyBinding(p.view.Name()).
 		set('j', func() {
 			p.tableRenderer.Down()
@@ -85,11 +78,6 @@ func (p *PortView) Init() {
 		set('k', func() {
 			p.tableRenderer.Up()
 		}).
-		set(gocui.KeyArrowUp, moveUp).
-		set(gocui.KeyCtrlK, moveUp).
-		set(gocui.KeyEsc, moveUp).
-		set(gocui.KeyArrowRight, moveRight).
-		set(gocui.KeyCtrlL, moveRight).
 		setWithQuit(gocui.KeyEnter, func() bool {
 			port := p.getSelectedPort()
 			if port == nil {

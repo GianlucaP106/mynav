@@ -29,10 +29,6 @@ var workspaceKeyBindings []*KeyBindingMapping = append([]*KeyBindingMapping{
 		action: "Move up",
 	},
 	{
-		key:    "down arrow | ctrl-j",
-		action: "Focus Tmux view",
-	},
-	{
 		key:    "left arrow | ctrl-h",
 		action: "Focus topic view",
 	},
@@ -100,10 +96,6 @@ var topicKeyBindings []*KeyBindingMapping = append([]*KeyBindingMapping{
 		action: "Move up",
 	},
 	{
-		key:    "down arrow | ctrl-j",
-		action: "Focus Port View",
-	},
-	{
 		key:    "enter | right arrow | ctrl-l",
 		action: "Open topic",
 	},
@@ -131,14 +123,6 @@ var topicKeyBindings []*KeyBindingMapping = append([]*KeyBindingMapping{
 
 var portKeyBindings []*KeyBindingMapping = append([]*KeyBindingMapping{
 	{
-		key:    "esc | up arrow | ctrl-k",
-		action: "Focus Topic View",
-	},
-	{
-		key:    "right arrow | ctrl-l",
-		action: "Focus Tmux View",
-	},
-	{
 		key:    "enter",
 		action: "Open associated tmux session (if it exists)",
 	},
@@ -157,14 +141,10 @@ var githubPrViewKeyBindings []*KeyBindingMapping = append([]*KeyBindingMapping{
 		key:    "k",
 		action: "Move up",
 	},
-	// {
-	// 	key:    "esc | up arrow | ctrl-k",
-	// 	action: "Focus Workspace View",
-	// },
-	// {
-	// 	key:    "left arrow | ctrl-h",
-	// 	action: "Focus Tmux View",
-	// },
+	{
+		key:    "left arrow | ctrl-h",
+		action: "Focus Repo View",
+	},
 	{
 		key:    "o",
 		action: "Open Browser to PR",
@@ -183,42 +163,25 @@ var githubPrViewKeyBindings []*KeyBindingMapping = append([]*KeyBindingMapping{
 	},
 }, globalKeyBindings...)
 
-func getTmuxKeyBindings(standalone bool) []*KeyBindingMapping {
-	tmuxKeyBindings := []*KeyBindingMapping{
-		{
-			key:    "D",
-			action: "Delete session",
-		},
-		{
-			key:    "X",
-			action: "Kill ALL tmux sessions",
-		},
-		{
-			key:    "W",
-			action: "Kill ALL non-external (has a workspace) tmux sessions",
-		},
-		{
-			key:    "a",
-			action: "New external session (not associated to a workspace)",
-		},
-		{
-			key:    "enter",
-			action: "Attach to session",
-		},
-	}
-
-	if !standalone {
-		tmuxKeyBindings = append([]*KeyBindingMapping{
-			{
-				key:    "esc | up arrow | ctrl-k",
-				action: "Focus Workspace View",
-			},
-			{
-				key:    "left arrow | ctrl-h",
-				action: "Focus Port View",
-			},
-		}, tmuxKeyBindings...)
-	}
-
-	return append(tmuxKeyBindings, globalKeyBindings...)
-}
+var tmuxKeyBindings []*KeyBindingMapping = append([]*KeyBindingMapping{
+	{
+		key:    "D",
+		action: "Delete session",
+	},
+	{
+		key:    "X",
+		action: "Kill ALL tmux sessions",
+	},
+	{
+		key:    "W",
+		action: "Kill ALL non-external (has a workspace) tmux sessions",
+	},
+	{
+		key:    "a",
+		action: "New external session (not associated to a workspace)",
+	},
+	{
+		key:    "enter",
+		action: "Attach to session",
+	},
+}, globalKeyBindings...)
