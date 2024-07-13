@@ -68,7 +68,7 @@ func (g *GithubRepoView) Init() {
 		GetGithubPrView().Focus()
 	}
 
-	KeyBinding(g.view.Name()).
+	g.view.KeyBinding().
 		set('j', func() {
 			g.tableRenderer.Down()
 		}).
@@ -111,7 +111,7 @@ func (g *GithubRepoView) Render() error {
 	g.view.Clear()
 	g.view.Subtitle = "Login: " + Api().Github.GetPrincipalLogin()
 
-	isFocused := IsViewFocused(g.view)
+	isFocused := g.view.IsFocused()
 	g.tableRenderer.render(g.view, func(_ int, _ *TableRow) bool {
 		return isFocused
 	})

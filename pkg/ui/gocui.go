@@ -16,8 +16,6 @@ type Gui struct {
 
 var _gui *Gui
 
-// TODO: change params
-
 func newView(v *gocui.View) *View {
 	return &View{
 		View: v,
@@ -35,6 +33,26 @@ func NewGui() *Gui {
 	return _gui
 }
 
+func ScreenSize() (x int, y int) {
+	return _gui.Size()
+}
+
+func UpdateGui(f func(g *Gui) error) {
+	_gui.Update(func(g *gocui.Gui) error {
+		return f(&Gui{
+			Gui: g,
+		})
+	})
+}
+
+func SetManagerFunctions(managers ...gocui.Manager) {
+	_gui.SetManager(managers...)
+}
+
+func ToggleCursor(c bool) {
+	_gui.Cursor = c
+}
+
 func GetView(name string) *View {
 	view, err := _gui.View(name)
 	if err != nil {
@@ -43,7 +61,7 @@ func GetView(name string) *View {
 	return newView(view)
 }
 
-func SetCurrentView(name string) *View {
+func SetFocusView(name string) *View {
 	v, err := _gui.SetCurrentView(name)
 	if err != nil {
 		return nil
@@ -55,14 +73,6 @@ func SetCenteredView(name string, sizeX int, sizeY int, verticalOffset int) *Vie
 	maxX, maxY := ScreenSize()
 	view := SetView(name, maxX/2-sizeX/2, maxY/2-sizeY/2+verticalOffset, maxX/2+sizeX/2, maxY/2+sizeY/2+verticalOffset, 0)
 	return view
-}
-
-func DeleteView(name string) {
-	_gui.DeleteView(name)
-}
-
-func ToggleCursor(c bool) {
-	_gui.Cursor = c
 }
 
 func SetView(name string, x0 int, y0 int, x1 int, y1 int, overlaps byte) *View {
@@ -79,43 +89,43 @@ func GetFocusedView() *View {
 	return nil
 }
 
-func IsViewFocused(view *View) bool {
+func (v *View) Delete() {
+	_gui.DeleteView(v.Name())
+}
+
+func (vw *View) Focus() *View {
+	v, err := _gui.SetCurrentView(vw.Name())
+	if err != nil {
+		return nil
+	}
+	return newView(v)
+}
+
+func (vw *View) IsFocused() bool {
 	v := GetFocusedView()
-	return v != nil && v.Name() == view.Name()
+	return v != nil && v.Name() == vw.Name()
 }
 
-func UpdateGui(f func(g *Gui) error) {
-	_gui.Update(func(g *gocui.Gui) error {
-		return f(&Gui{
-			Gui: g,
-		})
-	})
-}
-
-func SetManagerFunctions(managers ...gocui.Manager) {
-	_gui.SetManager(managers...)
-}
-
-func SendViewToBack(v *View) {
+func (v *View) SendToBack() {
 	_gui.SetViewOnBottom(v.Name())
 }
 
-func SendViewToFront(v *View) {
+func (v *View) SendToFront() {
 	_gui.SetViewOnTop(v.Name())
 }
 
 type KeyBindingBuilder struct {
-	viewName string
+	name string
 }
 
-func KeyBinding(viewName string) *KeyBindingBuilder {
+func NewKeybindingBuilder(name string) *KeyBindingBuilder {
 	return &KeyBindingBuilder{
-		viewName: viewName,
+		name: name,
 	}
 }
 
-func ScreenSize() (x int, y int) {
-	return _gui.Size()
+func (v *View) KeyBinding() *KeyBindingBuilder {
+	return NewKeybindingBuilder(v.Name())
 }
 
 func (kb *KeyBindingBuilder) set(key interface{}, action func()) *KeyBindingBuilder {
@@ -127,7 +137,7 @@ func (kb *KeyBindingBuilder) set(key interface{}, action func()) *KeyBindingBuil
 }
 
 func (kb *KeyBindingBuilder) setWithQuit(key interface{}, action func() bool) *KeyBindingBuilder {
-	if err := _gui.SetKeybinding(kb.viewName, key, gocui.ModNone, func(_ *gocui.Gui, _ *gocui.View) error {
+	if err := _gui.SetKeybinding(kb.name, key, gocui.ModNone, func(_ *gocui.Gui, _ *gocui.View) error {
 		if action() {
 			return gocui.ErrQuit
 		}

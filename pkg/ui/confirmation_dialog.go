@@ -22,24 +22,24 @@ func OpenConfirmationDialog(onConfirm func(bool), title string) *ConfirmationDia
 	cd.view.Editor = NewConfirmationEditor(func() {
 		cd.Close()
 		if prevView != nil {
-			SetCurrentView(prevView.Name())
+			prevView.Focus()
 		}
 		onConfirm(true)
 	}, func() {
 		cd.Close()
 		if prevView != nil {
-			SetCurrentView(prevView.Name())
+			prevView.Focus()
 		}
 		onConfirm(false)
 	})
 
 	sizeX, _ := cd.view.Size()
-	SetCurrentView(cd.view.Name())
+	prevView.Focus()
 	cd.view.Clear()
 	fmt.Fprintln(cd.view, displayWhiteText(cd.title, Left, sizeX))
 	return cd
 }
 
 func (cd *ConfirmationDialog) Close() {
-	DeleteView(cd.view.Name())
+	cd.view.Delete()
 }
