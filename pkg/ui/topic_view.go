@@ -63,10 +63,6 @@ func (tv *TopicsView) Init() {
 		}
 	}
 
-	moveDown := func() {
-		GetPortView().Focus()
-	}
-
 	KeyBinding(tv.view.Name()).
 		set('j', func() {
 			tv.tableRenderer.Down()
@@ -79,8 +75,6 @@ func (tv *TopicsView) Init() {
 		set(gocui.KeyEnter, moveRight).
 		set(gocui.KeyArrowRight, moveRight).
 		set(gocui.KeyCtrlL, moveRight).
-		set(gocui.KeyArrowDown, moveDown).
-		set(gocui.KeyCtrlJ, moveDown).
 		set('/', func() {
 			OpenEditorDialog(func(s string) {
 				tv.search = s

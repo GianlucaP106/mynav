@@ -92,7 +92,7 @@ func UpdateGui(f func(g *Gui) error) {
 	})
 }
 
-func SetScreenManagers(managers ...gocui.Manager) {
+func SetManagerFunctions(managers ...gocui.Manager) {
 	_gui.SetManager(managers...)
 }
 

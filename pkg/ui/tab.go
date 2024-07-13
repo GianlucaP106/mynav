@@ -101,8 +101,8 @@ func (t *Tab) GetTabView(view string) *View {
 	return nil
 }
 
-func (t *Tab) AddView(v *View) {
-	t.Views = append(t.Views, v)
+func (t *Tab) AddView(v Viewable) {
+	t.Views = append(t.Views, v.View())
 }
 
 func (t *Tab) SendToFront() {

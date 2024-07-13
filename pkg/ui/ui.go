@@ -72,18 +72,18 @@ func InitViews(ui *UI, standalone bool, askToInit bool) *UI {
 			})
 	}
 
-	// TODO:
+	// TODO: refactor standlone configuration
 	if ui.Standalone || system.IsCurrentProcessHomeDir() || (!Api().Core.IsConfigInitialized && !askToInit) {
 		ui.Standalone = true
 		tmv := NewTmuxSessionView()
 		ui.Views = make([]Viewable, 0)
 		ui.Views = append(ui.Views, tmv)
 
-		SetViewableManagers(ui.Views)
+		SetViewManagers(ui.Views)
 		InitViewables(ui.Views)
 
 		tab := NewTab("tab1", TmuxSessionViewName)
-		tab.AddView(tmv.view)
+		tab.AddView(tmv)
 		ui.MainTabGroup = NewTabGroup([]*Tab{tab})
 		ui.MainTabGroup.FocusTabByIndex(0)
 
@@ -115,24 +115,32 @@ func InitViews(ui *UI, standalone bool, askToInit bool) *UI {
 		NewGithubRepoView(),
 	}
 
-	SetViewableManagers(ui.Views)
+	SetViewManagers(ui.Views)
 	InitViewables(ui.Views)
 
-	tab1 := NewTab("tab1", GetTopicsView().View().Name())
-	tab1.AddView(GetHeaderView().view)
-	tab1.AddView(GetTopicsView().view)
-	tab1.AddView(GetWorkspacesView().view)
-	tab1.AddView(GetPortView().view)
-	tab1.AddView(GetTmuxSessionView().view)
+	tab1 := NewTab("main", GetTopicsView().View().Name())
+	tab1.AddView(GetHeaderView())
+	tab1.AddView(GetTopicsView())
+	tab1.AddView(GetWorkspacesView())
 
-	tab2 := NewTab("tab2", GetGithubPrView().view.Name())
-	tab2.AddView(GetGithubPrView().view)
-	tab2.AddView(GetHeaderView().view)
-	tab2.AddView(GetGithubRepoView().view)
+	tab2 := NewTab("tmux", GetTmuxSessionView().View().Name())
+	tab2.AddView(GetTmuxSessionView())
+	tab2.AddView(GetHeaderView())
+
+	tab3 := NewTab("system", GetPortView().View().Name())
+	tab3.AddView(GetPortView())
+	tab3.AddView(GetHeaderView())
+
+	tab4 := NewTab("github", GetGithubPrView().View().Name())
+	tab4.AddView(GetGithubPrView())
+	tab4.AddView(GetGithubRepoView())
+	tab4.AddView(GetHeaderView())
 
 	ui.MainTabGroup = NewTabGroup([]*Tab{
 		tab1,
 		tab2,
+		tab3,
+		tab4,
 	})
 
 	ui.MainTabGroup.FocusTabByIndex(0)
@@ -150,7 +158,7 @@ func InitViews(ui *UI, standalone bool, askToInit bool) *UI {
 	return ui
 }
 
-func SetViewableManagers(vs []Viewable) {
+func SetViewManagers(vs []Viewable) {
 	managers := make([]gocui.Manager, 0)
 	for _, view := range vs {
 		managers = append(managers, gocui.ManagerFunc(func(_ *gocui.Gui) error {
@@ -158,7 +166,7 @@ func SetViewableManagers(vs []Viewable) {
 		}))
 	}
 
-	SetScreenManagers(managers...)
+	SetManagerFunctions(managers...)
 }
 
 func InitViewables(vs []Viewable) {
