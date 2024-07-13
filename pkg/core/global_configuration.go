@@ -5,6 +5,7 @@ import (
 	"mynav/pkg"
 	"mynav/pkg/git"
 	"mynav/pkg/github"
+	"mynav/pkg/system"
 	"os"
 	"path/filepath"
 	"time"
@@ -20,10 +21,12 @@ type GlobalConfigurationDataSchema struct {
 
 type GlobalConfiguration struct {
 	Datasource *Datasource[GlobalConfigurationDataSchema]
+	Standalone bool
 }
 
 func NewGlobalConfiguration() *GlobalConfiguration {
 	gc := &GlobalConfiguration{}
+	gc.Standalone = system.IsCurrentProcessHomeDir()
 	gc.Datasource = NewDatasource[GlobalConfigurationDataSchema](gc.GetConfigFile())
 	gc.Datasource.LoadData()
 	if gc.Datasource.Data == nil {
@@ -92,4 +95,8 @@ func (c *GlobalConfiguration) SetLastTab(lastTab string) {
 
 func (c *GlobalConfiguration) GetLastTab() string {
 	return c.Datasource.Data.LastTab
+}
+
+func (c *GlobalConfiguration) SetStandalone(s bool) {
+	c.Standalone = s
 }

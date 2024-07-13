@@ -117,7 +117,7 @@ func (tv *TmuxSessionView) Init() {
 			}, "Are you sure you want to delete ALL tmux sessions?")
 		}).
 		set('W', func() {
-			if IsStandlaone() || Api().Core.GetWorkspaceTmuxSessionCount() == 0 {
+			if Api().Core.Standalone || Api().Core.GetWorkspaceTmuxSessionCount() == 0 {
 				return
 			}
 
@@ -173,7 +173,7 @@ func (tv *TmuxSessionView) syncSessionsToTable() {
 	rows := make([][]string, 0)
 	for _, session := range tv.sessions {
 		workspace := "external"
-		if !IsStandlaone() {
+		if !Api().Core.Standalone {
 			w := Api().Core.GetWorkspaceByTmuxSession(session)
 			if w != nil {
 				workspace = w.ShortPath()
