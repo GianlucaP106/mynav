@@ -72,7 +72,7 @@ func (wv *WorkspacesView) Init() {
 		GetTopicsView().Focus()
 	}
 
-	KeyBinding(wv.view.Name()).
+	wv.view.KeyBinding().
 		set('j', func() {
 			wv.tableRenderer.Down()
 		}).
@@ -324,7 +324,7 @@ func (wv *WorkspacesView) getSelectedWorkspace() *core.Workspace {
 func (wv *WorkspacesView) Render() error {
 	wv.view.Clear()
 
-	isFocused := IsViewFocused(wv.view)
+	isFocused := wv.view.IsFocused()
 
 	wv.tableRenderer.RenderWithSelectCallBack(wv.view, func(_ int, _ *TableRow) bool {
 		return isFocused

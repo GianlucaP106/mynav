@@ -15,6 +15,7 @@ import (
 type GlobalConfigurationDataSchema struct {
 	UpdateAsked *time.Time                        `json:"update-asked"`
 	GithubToken *github.GithubAuthenticationToken `json:"github-token"`
+	LastTab     string                            `json:"last-tab"`
 }
 
 type GlobalConfiguration struct {
@@ -82,4 +83,13 @@ func (gc *GlobalConfiguration) SetGithubToken(token *github.GithubAuthentication
 
 func GetUpdateSystemCmd() []string {
 	return []string{"sh", "-c", "curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.sh | bash"}
+}
+
+func (c *GlobalConfiguration) SetLastTab(lastTab string) {
+	c.Datasource.Data.LastTab = lastTab
+	c.Datasource.SaveData()
+}
+
+func (c *GlobalConfiguration) GetLastTab() string {
+	return c.Datasource.Data.LastTab
 }

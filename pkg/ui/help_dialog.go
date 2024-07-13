@@ -59,7 +59,7 @@ func OpenHelpView(mappings []*KeyBindingMapping, exit func()) *HelpDialog {
 	}, func() {
 		hv.Close()
 		if prevView != nil {
-			SetCurrentView(prevView.Name())
+			prevView.Focus()
 		}
 		exit()
 	})
@@ -78,13 +78,13 @@ func OpenHelpView(mappings []*KeyBindingMapping, exit func()) *HelpDialog {
 	hv.tableRenderer.InitTable(sizeX, 13, title, proportions)
 	hv.refreshTable()
 	hv.render()
-	SetCurrentView(hv.view.Name())
+	hv.view.Focus()
 	return hv
 }
 
 func (hv *HelpDialog) Close() {
 	hv.mappings = nil
-	DeleteView(hv.view.Name())
+	hv.view.Delete()
 }
 
 func (hv *HelpDialog) refreshTable() {

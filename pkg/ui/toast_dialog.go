@@ -35,7 +35,7 @@ func OpenToastDialog(message string, error bool, title string, exit func()) *Toa
 	td.view.Editor = NewSingleActionEditor(keys, func() {
 		td.Close()
 		if prevView != nil {
-			SetCurrentView(prevView.Name())
+			prevView.Focus()
 		}
 		exit()
 	})
@@ -43,7 +43,7 @@ func OpenToastDialog(message string, error bool, title string, exit func()) *Toa
 	sizeX, _ := td.view.Size()
 	fmt.Fprintln(td.view, displayWhiteText(message, Left, sizeX))
 
-	SetCurrentView(td.view.Name())
+	td.view.Focus()
 
 	return td
 }
@@ -53,5 +53,5 @@ func OpenToastDialogError(message string) *ToastDialog {
 }
 
 func (td *ToastDialog) Close() {
-	DeleteView(td.view.Name())
+	td.view.Delete()
 }

@@ -74,7 +74,7 @@ func (tv *TmuxSessionView) Init() {
 		// }
 	}
 
-	KeyBinding(TmuxSessionViewName).
+	tv.view.KeyBinding().
 		setWithQuit(gocui.KeyEnter, func() bool {
 			if tmux.IsTmuxSession() {
 				OpenToastDialogError("You are already in a tmux session. Nested tmux sessions are not supported yet.")
@@ -195,7 +195,7 @@ func (tv *TmuxSessionView) Render() error {
 		return gocui.ErrQuit
 	}
 
-	isViewFocused := IsViewFocused(tv.view)
+	isViewFocused := tv.view.IsFocused()
 
 	tv.view.Clear()
 	tv.tableRenderer.RenderWithSelectCallBack(tv.view, func(_ int, _ *TableRow) bool {

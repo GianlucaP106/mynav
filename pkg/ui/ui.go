@@ -57,15 +57,19 @@ func InitViews(ui *UI, standalone bool, askToInit bool) *UI {
 		quit := func() bool {
 			return true
 		}
-		KeyBinding("").
+		NewKeybindingBuilder("").
 			setWithQuit(gocui.KeyCtrlC, quit).
 			setWithQuit('q', quit).
 			setWithQuit('q', quit).
 			set(']', func() {
-				ui.MainTabGroup.IncrementSelectedTab()
+				ui.MainTabGroup.IncrementSelectedTab(func(tab *Tab) {
+					Api().Core.SetLastTab(tab.Frame.Name())
+				})
 			}).
 			set('[', func() {
-				ui.MainTabGroup.DecrementSelectedTab()
+				ui.MainTabGroup.DecrementSelectedTab(func(tab *Tab) {
+					Api().Core.SetLastTab(tab.Frame.Name())
+				})
 			}).
 			set('?', func() {
 				OpenHelpView(nil, func() {})
@@ -147,7 +151,9 @@ func InitViews(ui *UI, standalone bool, askToInit bool) *UI {
 
 	SystemUpdate()
 
-	if Api().Core.GetSelectedWorkspace() != nil {
+	if Api().Core.GetLastTab() != "" {
+		ui.MainTabGroup.FocusTab(Api().Core.GetLastTab())
+	} else if Api().Core.GetSelectedWorkspace() != nil {
 		GetWorkspacesView().Focus()
 	} else {
 		GetTopicsView().Focus()
@@ -186,7 +192,7 @@ func GetViewable[T Viewable]() T {
 }
 
 func FocusView(viewName string) {
-	SetCurrentView(viewName)
+	SetFocusView(viewName)
 	views := make([]*View, 0)
 	for _, v := range _ui.Views {
 		views = append(views, v.View())

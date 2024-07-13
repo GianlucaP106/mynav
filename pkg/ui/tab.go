@@ -29,22 +29,22 @@ func (tg *TabGroup) GetTab(name string) *Tab {
 	return nil
 }
 
-func (tg *TabGroup) IncrementSelectedTab() {
+func (tg *TabGroup) IncrementSelectedTab(callback func(*Tab)) {
 	if tg.Selected >= len(tg.Tabs)-1 {
 		return
 	}
 
-	tg.Selected++
-	tg.FocusTabByIndex(tg.Selected)
+	tg.FocusTabByIndex(tg.Selected + 1)
+	callback(tg.GetSelectedTab())
 }
 
-func (tg *TabGroup) DecrementSelectedTab() {
+func (tg *TabGroup) DecrementSelectedTab(callback func(*Tab)) {
 	if tg.Selected <= 0 {
 		return
 	}
 
-	tg.Selected--
-	tg.FocusTabByIndex(tg.Selected)
+	tg.FocusTabByIndex(tg.Selected - 1)
+	callback(tg.GetSelectedTab())
 }
 
 func (tg *TabGroup) GetSelectedTab() *Tab {
@@ -56,6 +56,7 @@ func (tg *TabGroup) GetSelectedTab() *Tab {
 }
 
 func (tg *TabGroup) FocusTabByIndex(idx int) {
+	tg.Selected = idx
 	for i, t := range tg.Tabs {
 		if i == idx {
 			// to allow for views that are in multiple tabs
@@ -106,9 +107,9 @@ func (t *Tab) AddView(v Viewable) {
 }
 
 func (t *Tab) SendToFront() {
-	SendViewToFront(t.Frame)
+	t.Frame.SendToFront()
 	for _, v := range t.Views {
-		SendViewToFront(v)
+		v.SendToFront()
 	}
 
 	FocusView(t.LastView)
@@ -122,8 +123,8 @@ func (t *Tab) SendToBack() {
 		t.LastView = t.DefaultView
 	}
 
-	SendViewToBack(t.Frame)
+	t.Frame.SendToBack()
 	for _, v := range t.Views {
-		SendViewToBack(v)
+		v.SendToBack()
 	}
 }

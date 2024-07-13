@@ -71,7 +71,7 @@ func (p *PortView) Init() {
 		})
 	}()
 
-	KeyBinding(p.view.Name()).
+	p.view.KeyBinding().
 		set('j', func() {
 			p.tableRenderer.Down()
 		}).
@@ -179,7 +179,7 @@ func (p *PortView) getSelectedPort() *Port {
 func (p *PortView) Render() error {
 	p.view.Clear()
 
-	currentViewSelected := IsViewFocused(p.view)
+	currentViewSelected := p.view.IsFocused()
 
 	p.tableRenderer.RenderWithSelectCallBack(p.view, func(_ int, _ *TableRow) bool {
 		return currentViewSelected

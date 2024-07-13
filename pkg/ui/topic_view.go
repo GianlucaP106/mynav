@@ -63,7 +63,7 @@ func (tv *TopicsView) Init() {
 		}
 	}
 
-	KeyBinding(tv.view.Name()).
+	tv.view.KeyBinding().
 		set('j', func() {
 			tv.tableRenderer.Down()
 			GetWorkspacesView().refreshWorkspaces()
@@ -175,7 +175,7 @@ func (tv *TopicsView) selectTopicByName(name string) {
 
 func (tv *TopicsView) Render() error {
 	tv.view.Clear()
-	currentViewSelected := IsViewFocused(tv.view)
+	currentViewSelected := tv.view.IsFocused()
 
 	tv.tableRenderer.RenderWithSelectCallBack(tv.view, func(_ int, _ *TableRow) bool {
 		return currentViewSelected
