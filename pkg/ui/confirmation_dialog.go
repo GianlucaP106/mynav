@@ -34,7 +34,7 @@ func OpenConfirmationDialog(onConfirm func(bool), title string) *ConfirmationDia
 	})
 
 	sizeX, _ := cd.view.Size()
-	prevView.Focus()
+	cd.view.Focus()
 	cd.view.Clear()
 	fmt.Fprintln(cd.view, displayWhiteText(cd.title, Left, sizeX))
 	return cd

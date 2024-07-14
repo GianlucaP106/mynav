@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"mynav/pkg/system"
 
 	"github.com/awesome-gocui/gocui"
 )
@@ -18,9 +17,6 @@ type Viewable interface {
 type UI struct {
 	MainTabGroup *TabGroup
 	Views        []Viewable
-
-	// TODO: move to backend
-	Standalone bool
 }
 
 var _ui *UI
@@ -38,7 +34,13 @@ func Start() *Action {
 		Views: make([]Viewable, 0),
 	}
 
-	InitViews(_ui, false, true)
+	if Api().Core.IsConfigInitialized {
+		_ui.InitUI()
+	} else if Api().Core.Standalone {
+		_ui.InitStandaloneUI()
+	} else {
+		_ui.AskConfig()
+	}
 
 	err := g.MainLoop()
 	if err != nil {
@@ -50,65 +52,20 @@ func Start() *Action {
 	return action
 }
 
-func InitViews(ui *UI, standalone bool, askToInit bool) *UI {
-	ui.Standalone = standalone
-
-	setGlobalKeybindings := func() {
-		quit := func() bool {
-			return true
+func (ui *UI) AskConfig() {
+	OpenConfirmationDialog(func(b bool) {
+		if !b {
+			Api().Core.SetStandalone(true)
+			ui.InitStandaloneUI()
+			return
 		}
-		NewKeybindingBuilder("").
-			setWithQuit(gocui.KeyCtrlC, quit).
-			setWithQuit('q', quit).
-			setWithQuit('q', quit).
-			set(']', func() {
-				ui.MainTabGroup.IncrementSelectedTab(func(tab *Tab) {
-					Api().Core.SetLastTab(tab.Frame.Name())
-				})
-			}).
-			set('[', func() {
-				ui.MainTabGroup.DecrementSelectedTab(func(tab *Tab) {
-					Api().Core.SetLastTab(tab.Frame.Name())
-				})
-			}).
-			set('?', func() {
-				OpenHelpView(nil, func() {})
-			})
-	}
 
-	// TODO: refactor standlone configuration
-	if ui.Standalone || system.IsCurrentProcessHomeDir() || (!Api().Core.IsConfigInitialized && !askToInit) {
-		ui.Standalone = true
-		tmv := NewTmuxSessionView()
-		ui.Views = make([]Viewable, 0)
-		ui.Views = append(ui.Views, tmv)
+		Api().InitConfiguration()
+		ui.InitUI()
+	}, "No configuration found. Would you like to initialize this directory?")
+}
 
-		SetViewManagers(ui.Views)
-		InitViewables(ui.Views)
-
-		tab := NewTab("tab1", TmuxSessionViewName)
-		tab.AddView(tmv)
-		ui.MainTabGroup = NewTabGroup([]*Tab{tab})
-		ui.MainTabGroup.FocusTabByIndex(0)
-
-		SystemUpdate()
-		setGlobalKeybindings()
-		return ui
-	}
-
-	if !Api().Core.IsConfigInitialized {
-		OpenConfirmationDialog(func(b bool) {
-			if !b {
-				InitViews(ui, true, false)
-				return
-			}
-
-			Api().InitConfiguration()
-			InitViews(ui, false, false)
-		}, "No configuration found. Would you like to initialize this directory?")
-		return nil
-	}
-
+func (ui *UI) InitUI() *UI {
 	ui.Views = []Viewable{
 		NewHeaderView(),
 		NewTopicsView(),
@@ -159,9 +116,49 @@ func InitViews(ui *UI, standalone bool, askToInit bool) *UI {
 		GetTopicsView().Focus()
 	}
 
-	setGlobalKeybindings()
+	ui.InitGlobalKeybindings()
 
 	return ui
+}
+
+func (ui *UI) InitStandaloneUI() {
+	tmv := NewTmuxSessionView()
+	ui.Views = make([]Viewable, 0)
+	ui.Views = append(ui.Views, tmv)
+
+	SetViewManagers(ui.Views)
+	InitViewables(ui.Views)
+
+	tab := NewTab("tab1", TmuxSessionViewName)
+	tab.AddView(tmv)
+	ui.MainTabGroup = NewTabGroup([]*Tab{tab})
+	ui.MainTabGroup.FocusTabByIndex(0)
+
+	SystemUpdate()
+	ui.InitGlobalKeybindings()
+}
+
+func (ui *UI) InitGlobalKeybindings() {
+	quit := func() bool {
+		return true
+	}
+	NewKeybindingBuilder("").
+		setWithQuit(gocui.KeyCtrlC, quit).
+		setWithQuit('q', quit).
+		setWithQuit('q', quit).
+		set(']', func() {
+			ui.MainTabGroup.IncrementSelectedTab(func(tab *Tab) {
+				Api().Core.SetLastTab(tab.Frame.Name())
+			})
+		}).
+		set('[', func() {
+			ui.MainTabGroup.DecrementSelectedTab(func(tab *Tab) {
+				Api().Core.SetLastTab(tab.Frame.Name())
+			})
+		}).
+		set('?', func() {
+			OpenHelpView(nil, func() {})
+		})
 }
 
 func SetViewManagers(vs []Viewable) {
@@ -214,12 +211,8 @@ func GetMainTabGroup() *TabGroup {
 	return _ui.MainTabGroup
 }
 
-func IsStandlaone() bool {
-	return _ui.Standalone
-}
-
 func RefreshAllData() {
-	if !_ui.Standalone {
+	if !Api().Core.Standalone {
 		GetTopicsView().refreshTopics()
 		GetPortView().refreshPorts()
 		GetWorkspacesView().refreshWorkspaces()
