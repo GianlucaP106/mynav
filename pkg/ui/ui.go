@@ -110,10 +110,14 @@ func (ui *UI) InitUI() *UI {
 
 	if Api().Core.GetLastTab() != "" {
 		ui.MainTabGroup.FocusTab(Api().Core.GetLastTab())
-	} else if Api().Core.GetSelectedWorkspace() != nil {
-		GetWorkspacesView().Focus()
-	} else {
-		GetTopicsView().Focus()
+	}
+
+	if Api().Core.GetLastTab() == "main" {
+		if Api().Core.GetSelectedWorkspace() != nil {
+			GetWorkspacesView().Focus()
+		} else {
+			GetTopicsView().Focus()
+		}
 	}
 
 	ui.InitGlobalKeybindings()
