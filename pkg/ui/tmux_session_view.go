@@ -36,12 +36,6 @@ func (tv *TmuxSessionView) Focus() {
 func (tv *TmuxSessionView) Init() {
 	screenX, screenY := ScreenSize()
 	tv.view = SetCenteredView(TmuxSessionViewName, screenX/2, screenY/3, 0)
-	// if IsStandlaone() {
-	// 	screenX, screenY := ScreenSize()
-	// 	tv.view = SetCenteredView(TmuxSessionViewName, screenX/2, screenY/3, 0)
-	// } else {
-	// 	tv.view = GetViewPosition(TmuxSessionViewName).Set()
-	// }
 
 	tv.view.Title = withSurroundingSpaces("TMUX Sessions")
 	tv.view.TitleColor = gocui.ColorBlue
@@ -62,18 +56,6 @@ func (tv *TmuxSessionView) Init() {
 	tv.tableRenderer.InitTable(sizeX, sizeY, titles, proportions)
 	tv.refreshTmuxSessions()
 
-	moveUp := func() {
-		// if !IsStandlaone() {
-		// 	GetWorkspacesView().Focus()
-		// }
-	}
-
-	moveLeft := func() {
-		// if !IsStandlaone() {
-		// 	GetPortView().Focus()
-		// }
-	}
-
 	tv.view.KeyBinding().
 		setWithQuit(gocui.KeyEnter, func() bool {
 			if tmux.IsTmuxSession() {
@@ -84,7 +66,7 @@ func (tv *TmuxSessionView) Init() {
 			session := tv.getSelectedSession()
 			SetAction(tmux.GetAttachTmuxSessionCmd(session.Name))
 			return true
-		}).
+		}, "Attach to session").
 		set('D', func() {
 			if Api().Tmux.GetTmuxSessionCount() == 0 {
 				return
@@ -100,7 +82,7 @@ func (tv *TmuxSessionView) Init() {
 					RefreshAllData()
 				}
 			}, "Are you sure you want to delete this session?")
-		}).
+		}, "Delete session").
 		set('X', func() {
 			if Api().Tmux.GetTmuxSessionCount() == 0 {
 				return
@@ -115,7 +97,7 @@ func (tv *TmuxSessionView) Init() {
 					RefreshAllData()
 				}
 			}, "Are you sure you want to delete ALL tmux sessions?")
-		}).
+		}, "Kill ALL tmux sessions").
 		set('W', func() {
 			if Api().Core.Standalone || Api().Core.GetWorkspaceTmuxSessionCount() == 0 {
 				return
@@ -130,13 +112,13 @@ func (tv *TmuxSessionView) Init() {
 					RefreshAllData()
 				}
 			}, "Are you sure you want to delete ALL non-external tmux sessions?")
-		}).
+		}, "Kill ALL non-external (has a workspace) tmux sessions").
 		set('j', func() {
 			tv.tableRenderer.Down()
-		}).
+		}, "Move down").
 		set('k', func() {
 			tv.tableRenderer.Up()
-		}).
+		}, "Move up").
 		set('a', func() {
 			if tmux.IsTmuxSession() {
 				return
@@ -144,15 +126,10 @@ func (tv *TmuxSessionView) Init() {
 			OpenEditorDialog(func(s string) {
 				SetAction(tmux.GetNewTmuxSessionCmd(s, "~"))
 			}, func() {}, "New session name", Small)
-		}).
+		}, "New external session (not associated to a workspace)").
 		set('?', func() {
-			OpenHelpView(tmuxKeyBindings, func() {})
-		}).
-		set(gocui.KeyEsc, moveUp).
-		set(gocui.KeyArrowUp, moveUp).
-		set(gocui.KeyCtrlK, moveUp).
-		set(gocui.KeyArrowLeft, moveLeft).
-		set(gocui.KeyCtrlH, moveLeft)
+			OpenHelpView(tv.view.keybindingInfo.toList(), func() {})
+		}, "Toggle cheatsheet")
 }
 
 func (tv *TmuxSessionView) getSelectedSession() *tmux.TmuxSession {

@@ -71,12 +71,15 @@ func (g *GithubRepoView) Init() {
 	g.view.KeyBinding().
 		set('j', func() {
 			g.tableRenderer.Down()
-		}).
+		}, "Move down").
 		set('k', func() {
 			g.tableRenderer.Up()
-		}).
-		set(gocui.KeyArrowRight, moveRight).
-		set(gocui.KeyCtrlL, moveRight)
+		}, "Move up").
+		set(gocui.KeyArrowRight, moveRight, "Focus PR View").
+		set(gocui.KeyCtrlL, moveRight, "Focus PR View").
+		set('?', func() {
+			OpenHelpView(g.view.keybindingInfo.toList(), func() {})
+		}, "Toggle cheatsheet")
 }
 
 func (g *GithubRepoView) refreshRepos() {

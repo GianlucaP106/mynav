@@ -2,12 +2,46 @@ package ui
 
 import (
 	"log"
+	"sort"
+	"strings"
 
 	"github.com/awesome-gocui/gocui"
 )
 
+type (
+	KeybindingMap  map[string]*KeyBindingInfo
+	KeybindingList []*KeyBindingInfo
+	KeyBindingInfo struct {
+		key    string
+		action string
+	}
+)
+
+func (kb KeybindingMap) toList() KeybindingList {
+	out := make(KeybindingList, 0)
+	for _, kbm := range kb {
+		out = append(out, kbm)
+	}
+
+	return out.Sorted()
+}
+
+func (t KeybindingList) Len() int { return len(t) }
+
+func (t KeybindingList) Swap(i, j int) { t[i], t[j] = t[j], t[i] }
+
+func (t KeybindingList) Less(i, j int) bool {
+	return strings.Compare(t[i].key, t[j].key) < 0
+}
+
+func (t KeybindingList) Sorted() KeybindingList {
+	sort.Sort(t)
+	return t
+}
+
 type View struct {
 	*gocui.View
+	keybindingInfo KeybindingMap
 }
 
 type Gui struct {
@@ -18,7 +52,8 @@ var _gui *Gui
 
 func newView(v *gocui.View) *View {
 	return &View{
-		View: v,
+		View:           v,
+		keybindingInfo: map[string]*KeyBindingInfo{},
 	}
 }
 
@@ -114,30 +149,51 @@ func (v *View) SendToFront() {
 	_gui.SetViewOnTop(v.Name())
 }
 
-type KeyBindingBuilder struct {
-	name string
+func (v *View) SetKeybindingInfo(key interface{}, description string) {
+	keyStr := ""
+	if s, ok := key.(rune); ok {
+		keyStr = string(s)
+	} else if s, ok := key.(gocui.Key); ok {
+		keyStr = GetKeyStr(s)
+	}
+
+	v.keybindingInfo[keyStr] = &KeyBindingInfo{
+		key:    keyStr,
+		action: description,
+	}
 }
 
-func NewKeybindingBuilder(name string) *KeyBindingBuilder {
+type KeyBindingBuilder struct {
+	view *View
+}
+
+func NewKeybindingBuilder(view *View) *KeyBindingBuilder {
 	return &KeyBindingBuilder{
-		name: name,
+		view: view,
 	}
 }
 
 func (v *View) KeyBinding() *KeyBindingBuilder {
-	return NewKeybindingBuilder(v.Name())
+	return NewKeybindingBuilder(v)
 }
 
-func (kb *KeyBindingBuilder) set(key interface{}, action func()) *KeyBindingBuilder {
+func (kb *KeyBindingBuilder) set(key interface{}, action func(), description string) *KeyBindingBuilder {
 	kb.setWithQuit(key, func() bool {
 		action()
 		return false
-	})
+	}, description)
 	return kb
 }
 
-func (kb *KeyBindingBuilder) setWithQuit(key interface{}, action func() bool) *KeyBindingBuilder {
-	if err := _gui.SetKeybinding(kb.name, key, gocui.ModNone, func(_ *gocui.Gui, _ *gocui.View) error {
+func (kb *KeyBindingBuilder) setWithQuit(key interface{}, action func() bool, description string) *KeyBindingBuilder {
+	name := ""
+
+	if kb.view != nil {
+		name = kb.view.Name()
+		kb.view.SetKeybindingInfo(key, description)
+	}
+
+	if err := _gui.SetKeybinding(name, key, gocui.ModNone, func(_ *gocui.Gui, _ *gocui.View) error {
 		if action() {
 			return gocui.ErrQuit
 		}
@@ -145,5 +201,95 @@ func (kb *KeyBindingBuilder) setWithQuit(key interface{}, action func() bool) *K
 	}); err != nil {
 		log.Panicln(err)
 	}
+
 	return kb
+}
+
+func GetKeyStr(key gocui.Key) string {
+	for keyStr, k := range translate {
+		if key == k {
+			return keyStr
+		}
+	}
+	return ""
+}
+
+// commenting some temporarily to avoid colliding keys
+var translate = map[string]gocui.Key{
+	"CtrlI":      gocui.KeyCtrlI,
+	"CtrlJ":      gocui.KeyCtrlJ,
+	"CtrlK":      gocui.KeyCtrlK,
+	"CtrlL":      gocui.KeyCtrlL,
+	"Enter":      gocui.KeyEnter,
+	"ArrowUp":    gocui.KeyArrowUp,
+	"ArrowDown":  gocui.KeyArrowDown,
+	"ArrowLeft":  gocui.KeyArrowLeft,
+	"ArrowRight": gocui.KeyArrowRight,
+	"CtrlH":      gocui.KeyCtrlH,
+	"Esc":        gocui.KeyEsc,
+
+	// "F1":             gocui.KeyF1,
+	// "F2":             gocui.KeyF2,
+	// "F3":             gocui.KeyF3,
+	// "F4":             gocui.KeyF4,
+	// "F5":             gocui.KeyF5,
+	// "F6":             gocui.KeyF6,
+	// "F7":             gocui.KeyF7,
+	// "F8":             gocui.KeyF8,
+	// "F9":             gocui.KeyF9,
+	// "F10":            gocui.KeyF10,
+	// "F11":            gocui.KeyF11,
+	// "F12":            gocui.KeyF12,
+	// "Insert":         gocui.KeyInsert,
+	// "Delete":         gocui.KeyDelete,
+	// "Home":           gocui.KeyHome,
+	// "End":            gocui.KeyEnd,
+	// "Pgup":           gocui.KeyPgup,
+	// "Pgdn":           gocui.KeyPgdn,
+	// "CtrlTilde":      gocui.KeyCtrlTilde,
+	// "Ctrl2":          gocui.KeyCtrl2,
+	// "CtrlSpace":      gocui.KeyCtrlSpace,
+	// "CtrlA":          gocui.KeyCtrlA,
+	// "CtrlB":          gocui.KeyCtrlB,
+	// "CtrlC":          gocui.KeyCtrlC,
+	// "CtrlD":          gocui.KeyCtrlD,
+	// "CtrlE":          gocui.KeyCtrlE,
+	// "CtrlF":          gocui.KeyCtrlF,
+	// "CtrlG":          gocui.KeyCtrlG,
+	// "Backspace":      gocui.KeyBackspace,
+	// "Tab":            gocui.KeyTab,
+	// "Backtab":        gocui.KeyBacktab,
+	// "CtrlM":          gocui.KeyCtrlM,
+	// "CtrlN":          gocui.KeyCtrlN,
+	// "CtrlO":          gocui.KeyCtrlO,
+	// "CtrlP":          gocui.KeyCtrlP,
+	// "CtrlQ":          gocui.KeyCtrlQ,
+	// "CtrlR":          gocui.KeyCtrlR,
+	// "CtrlS":          gocui.KeyCtrlS,
+	// "CtrlT":          gocui.KeyCtrlT,
+	// "CtrlU":          gocui.KeyCtrlU,
+	// "CtrlV":          gocui.KeyCtrlV,
+	// "CtrlW":          gocui.KeyCtrlW,
+	// "CtrlX":          gocui.KeyCtrlX,
+	// "CtrlY":          gocui.KeyCtrlY,
+	// "CtrlZ":          gocui.KeyCtrlZ,
+	// "CtrlLsqBracket": gocui.KeyCtrlLsqBracket,
+	// "Ctrl3":          gocui.KeyCtrl3,
+	// "Ctrl4":          gocui.KeyCtrl4,
+	// "CtrlBackslash":  gocui.KeyCtrlBackslash,
+	// "Ctrl5":          gocui.KeyCtrl5,
+	// "CtrlRsqBracket": gocui.KeyCtrlRsqBracket,
+	// "Ctrl6":          gocui.KeyCtrl6,
+	// "Ctrl7":          gocui.KeyCtrl7,
+	// "CtrlSlash":      gocui.KeyCtrlSlash,
+	// "CtrlUnderscore": gocui.KeyCtrlUnderscore,
+	// "Space":          gocui.KeySpace,
+	// "Backspace2":     gocui.KeyBackspace2,
+	// "Ctrl8":          gocui.KeyCtrl8,
+	// "Mouseleft":      gocui.MouseLeft,
+	// "Mousemiddle":    gocui.MouseMiddle,
+	// "Mouseright":     gocui.MouseRight,
+	// "Mouserelease":   gocui.MouseRelease,
+	// "MousewheelUp":   gocui.MouseWheelUp,
+	// "MousewheelDown": gocui.MouseWheelDown,
 }

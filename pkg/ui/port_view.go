@@ -74,10 +74,10 @@ func (p *PortView) Init() {
 	p.view.KeyBinding().
 		set('j', func() {
 			p.tableRenderer.Down()
-		}).
+		}, "Move down").
 		set('k', func() {
 			p.tableRenderer.Up()
-		}).
+		}, "Move up").
 		setWithQuit(gocui.KeyEnter, func() bool {
 			port := p.getSelectedPort()
 			if port == nil {
@@ -90,7 +90,7 @@ func (p *PortView) Init() {
 
 			SetAction(tmux.GetAttachTmuxSessionCmd(port.tmux.Name))
 			return true
-		}).
+		}, "Open associated tmux session (if it exists)").
 		set('D', func() {
 			port := p.getSelectedPort()
 			if port == nil {
@@ -111,10 +111,10 @@ func (p *PortView) Init() {
 					p.refreshPorts()
 				}
 			}, "Are you sure you want to kill this port?")
-		}).
+		}, "Kill port").
 		set('?', func() {
-			OpenHelpView(portKeyBindings, func() {})
-		})
+			OpenHelpView(p.view.keybindingInfo.toList(), func() {})
+		}, "Toggle cheatsheet")
 }
 
 func (pv *PortView) refreshPorts() {

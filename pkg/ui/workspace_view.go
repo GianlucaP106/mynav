@@ -75,12 +75,12 @@ func (wv *WorkspacesView) Init() {
 	wv.view.KeyBinding().
 		set('j', func() {
 			wv.tableRenderer.Down()
-		}).
+		}, "Move down").
 		set('k', func() {
 			wv.tableRenderer.Up()
-		}).
-		set(gocui.KeyArrowLeft, moveLeft).
-		set(gocui.KeyCtrlH, moveLeft).
+		}, "Move up").
+		set(gocui.KeyArrowLeft, moveLeft, "Focus topic view").
+		set(gocui.KeyCtrlH, moveLeft, "Focus topic view").
 		set(gocui.KeyEsc, func() {
 			if wv.search != "" {
 				wv.search = ""
@@ -90,14 +90,14 @@ func (wv *WorkspacesView) Init() {
 			}
 
 			GetTopicsView().Focus()
-		}).
+		}, "Escape search / Go back").
 		set('s', func() {
 			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
 				return
 			}
 			OpenWorkspaceInfoDialog(curWorkspace, func() {})
-		}).
+		}, "See workspace information").
 		set('g', func() {
 			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
@@ -110,7 +110,7 @@ func (wv *WorkspacesView) Init() {
 				}
 				wv.syncWorkspacesToTable()
 			}, func() {}, "Git repo URL", Small)
-		}).
+		}, "Clone git repo").
 		set('G', func() {
 			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
@@ -124,7 +124,7 @@ func (wv *WorkspacesView) Init() {
 			if err := system.OpenBrowser(*curWorkspace.GitRemote); err != nil {
 				OpenToastDialogError(err.Error())
 			}
-		}).
+		}, "Open browser to git repo").
 		set('/', func() {
 			OpenEditorDialog(func(s string) {
 				if s != "" {
@@ -133,7 +133,7 @@ func (wv *WorkspacesView) Init() {
 					wv.refreshWorkspaces()
 				}
 			}, func() {}, "Search", Small)
-		}).
+		}, "Search by name").
 		setWithQuit(gocui.KeyEnter, func() bool {
 			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
@@ -149,7 +149,7 @@ func (wv *WorkspacesView) Init() {
 			SetAction(command)
 
 			return true
-		}).
+		}, "Open in tmux/open in neovim").
 		setWithQuit('v', func() bool {
 			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
@@ -159,7 +159,7 @@ func (wv *WorkspacesView) Init() {
 			Api().Core.SetSelectedWorkspace(curWorkspace)
 			SetAction(system.GetNvimCmd(curWorkspace.Path))
 			return true
-		}).
+		}, "Open in neovim").
 		setWithQuit('m', func() bool {
 			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
@@ -174,7 +174,7 @@ func (wv *WorkspacesView) Init() {
 
 			SetAction(openTermCmd)
 			return true
-		}).
+		}, "Open in terminal").
 		set('D', func() {
 			if Api().Core.GetWorkspacesByTopicCount(GetTopicsView().getSelectedTopic()) <= 0 {
 				return
@@ -190,7 +190,7 @@ func (wv *WorkspacesView) Init() {
 					RefreshAllData()
 				}
 			}, "Are you sure you want to delete this workspace?")
-		}).
+		}, "Delete a workspace").
 		set('r', func() {
 			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
@@ -204,7 +204,7 @@ func (wv *WorkspacesView) Init() {
 				}
 				wv.syncWorkspacesToTable()
 			}, func() {}, "New workspace name", Small, curWorkspace.Name)
-		}).
+		}, "Rename workspace").
 		set('e', func() {
 			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
@@ -217,7 +217,7 @@ func (wv *WorkspacesView) Init() {
 					wv.syncWorkspacesToTable()
 				}
 			}, func() {}, "Description", Large)
-		}).
+		}, "Add/change description").
 		set('a', func() {
 			curTopic := GetTopicsView().getSelectedTopic()
 			OpenEditorDialog(func(name string) {
@@ -233,7 +233,7 @@ func (wv *WorkspacesView) Init() {
 				wv.tableRenderer.SetSelectedRow(0)
 				RefreshAllData()
 			}, func() {}, "Workspace name ", Small)
-		}).
+		}, "Create a workspace").
 		set('X', func() {
 			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
@@ -248,10 +248,10 @@ func (wv *WorkspacesView) Init() {
 					}
 				}, "Are you sure you want to delete the tmux session?")
 			}
-		}).
+		}, "Kill tmux session").
 		set('?', func() {
-			OpenHelpView(workspaceKeyBindings, func() {})
-		})
+			OpenHelpView(wv.view.keybindingInfo.toList(), func() {})
+		}, "Toggle cheatsheet")
 }
 
 func (wv *WorkspacesView) selectWorkspaceByShortPath(shortPath string) {

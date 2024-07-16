@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"mynav/pkg/logger"
 
 	"github.com/awesome-gocui/gocui"
 )
@@ -22,6 +23,7 @@ type UI struct {
 var _ui *UI
 
 func Start() *Action {
+	logger.Init("debug.log")
 	if err := InitApi(); err != nil {
 		fmt.Println(err.Error())
 		return nil
@@ -146,23 +148,23 @@ func (ui *UI) InitGlobalKeybindings() {
 	quit := func() bool {
 		return true
 	}
-	NewKeybindingBuilder("").
-		setWithQuit(gocui.KeyCtrlC, quit).
-		setWithQuit('q', quit).
-		setWithQuit('q', quit).
+	NewKeybindingBuilder(nil).
+		setWithQuit(gocui.KeyCtrlC, quit, "Quit").
+		setWithQuit('q', quit, "Quit").
+		setWithQuit('q', quit, "Quit").
 		set(']', func() {
 			ui.MainTabGroup.IncrementSelectedTab(func(tab *Tab) {
 				Api().Core.SetLastTab(tab.Frame.Name())
 			})
-		}).
+		}, "Cycle tab right").
 		set('[', func() {
 			ui.MainTabGroup.DecrementSelectedTab(func(tab *Tab) {
 				Api().Core.SetLastTab(tab.Frame.Name())
 			})
-		}).
+		}, "Cycle tab left").
 		set('?', func() {
 			OpenHelpView(nil, func() {})
-		})
+		}, "Toggle cheatsheet")
 }
 
 func SetViewManagers(vs []Viewable) {
