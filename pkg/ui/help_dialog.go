@@ -7,16 +7,11 @@ import (
 	"github.com/gookit/color"
 )
 
-type KeyBindingMapping struct {
-	key    string
-	action string
-}
-
 type HelpDialog struct {
 	view           *View
 	tableRenderer  *TableRenderer
-	globalMappings []*KeyBindingMapping
-	mappings       []*KeyBindingMapping
+	globalMappings []*KeyBindingInfo
+	mappings       []*KeyBindingInfo
 }
 
 const HelpDialogName = "HelpDialog"
@@ -39,7 +34,7 @@ func NewHelpViewEditor(up func(), down func(), enter func(), exit func()) gocui.
 		})
 }
 
-func OpenHelpView(mappings []*KeyBindingMapping, exit func()) *HelpDialog {
+func OpenHelpView(mappings []*KeyBindingInfo, exit func()) *HelpDialog {
 	hv := &HelpDialog{}
 	hv.mappings = mappings
 

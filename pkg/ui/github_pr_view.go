@@ -74,10 +74,10 @@ func (g *GithubPrView) Init() {
 	g.view.KeyBinding().
 		set('j', func() {
 			g.tableRenderer.Down()
-		}).
+		}, "Move down").
 		set('k', func() {
 			g.tableRenderer.Up()
-		}).
+		}, "Move up").
 		set('o', func() {
 			pr := g.getSelectedPr()
 			if pr == nil {
@@ -85,7 +85,7 @@ func (g *GithubPrView) Init() {
 			}
 
 			system.OpenBrowser(pr.GetHTMLURL())
-		}).
+		}, "Open browser to PR").
 		set('L', func() {
 			if Api().Github.IsAuthenticated() {
 				return
@@ -108,7 +108,7 @@ func (g *GithubPrView) Init() {
 				system.CopyToClip(deviceAuth.UserCode)
 				deviceAuth.OpenBrowser()
 			}
-		}).
+		}, "Login with device code and browser").
 		set('P', func() {
 			if Api().Github.IsAuthenticated() {
 				return
@@ -122,16 +122,16 @@ func (g *GithubPrView) Init() {
 
 				g.refreshPrs()
 			}, func() {}, "Personal Access Token", Small)
-		}).
+		}, "Login with personal access token").
 		set('O', func() {
 			Api().Github.LogoutUser()
-		}).
+		}, "Logout").
 		set('?', func() {
-			OpenHelpView(githubPrViewKeyBindings, func() {})
-		}).
-		set(gocui.KeyEsc, moveLeft).
-		set(gocui.KeyArrowLeft, moveLeft).
-		set(gocui.KeyCtrlH, moveLeft)
+			OpenHelpView(g.view.keybindingInfo.toList(), func() {})
+		}, "Toggle cheatsheet").
+		set(gocui.KeyEsc, moveLeft, "Focus repo view").
+		set(gocui.KeyArrowLeft, moveLeft, "Focus repo view").
+		set(gocui.KeyCtrlH, moveLeft, "Focus repo view")
 }
 
 func (g *GithubPrView) refreshPrs() {

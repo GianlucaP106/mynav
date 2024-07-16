@@ -67,28 +67,28 @@ func (tv *TopicsView) Init() {
 		set('j', func() {
 			tv.tableRenderer.Down()
 			GetWorkspacesView().refreshWorkspaces()
-		}).
+		}, "Move down").
 		set('k', func() {
 			tv.tableRenderer.Up()
 			GetWorkspacesView().refreshWorkspaces()
-		}).
-		set(gocui.KeyEnter, moveRight).
-		set(gocui.KeyArrowRight, moveRight).
-		set(gocui.KeyCtrlL, moveRight).
+		}, "Move up").
+		set(gocui.KeyEnter, moveRight, "Open topic").
+		set(gocui.KeyArrowRight, moveRight, "Open topic").
+		set(gocui.KeyCtrlL, moveRight, "Open topic").
 		set('/', func() {
 			OpenEditorDialog(func(s string) {
 				tv.search = s
 				tv.view.Subtitle = withSurroundingSpaces("Searching: " + tv.search)
 				RefreshAllData()
 			}, func() {}, "Search", Small)
-		}).
+		}, "Search by name").
 		set(gocui.KeyEsc, func() {
 			if tv.search != "" {
 				tv.search = ""
 				tv.view.Subtitle = ""
 				RefreshAllData()
 			}
-		}).
+		}, "Escape search").
 		set('a', func() {
 			OpenEditorDialog(func(s string) {
 				if err := Api().Core.CreateTopic(s); err != nil {
@@ -102,7 +102,7 @@ func (tv *TopicsView) Init() {
 				tv.tableRenderer.SetSelectedRow(0)
 				RefreshAllData()
 			}, func() {}, "Topic name", Small)
-		}).
+		}, "Create a topic").
 		set('r', func() {
 			t := tv.getSelectedTopic()
 			if t == nil {
@@ -117,7 +117,7 @@ func (tv *TopicsView) Init() {
 
 				RefreshAllData()
 			}, func() {}, "New topic name", Small, t.Name)
-		}).
+		}, "Rename topic").
 		set('D', func() {
 			if Api().Core.GetTopicCount() <= 0 {
 				return
@@ -128,10 +128,10 @@ func (tv *TopicsView) Init() {
 					RefreshAllData()
 				}
 			}, "Are you sure you want to delete this topic? All its content will be deleted.")
-		}).
+		}, "Delete topic").
 		set('?', func() {
-			OpenHelpView(topicKeyBindings, func() {})
-		})
+			OpenHelpView(tv.view.keybindingInfo.toList(), func() {})
+		}, "Toggle cheatsheet")
 }
 
 func (tv *TopicsView) refreshTopics() {
