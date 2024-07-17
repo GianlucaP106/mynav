@@ -1,36 +1,26 @@
 package app
 
 import (
-	"flag"
-	"fmt"
-	"mynav/pkg"
+	"log"
+	"mynav/pkg/core"
 	"mynav/pkg/ui"
-	"os"
 )
 
-func Main() {
-	version := flag.Bool("version", false, "Version of mynav")
-	path := flag.String("path", ".", "Path to open mynav in")
-	flag.Parse()
+type App struct {
+	api *core.Api
+}
 
-	if *version {
-		fmt.Println(pkg.VERSION)
-		return
+func NewApp() *App {
+	api, err := core.NewApi()
+	if err != nil {
+		log.Fatalln(err.Error())
 	}
 
-	if path != nil && *path != "" {
-		if err := os.Chdir(*path); err != nil {
-			fmt.Println(err.Error())
-			return
-		}
+	return &App{
+		api: api,
 	}
+}
 
-	for {
-		action := ui.Start()
-		if action == nil || action.Command == nil {
-			break
-		}
-
-		handleAction(action)
-	}
+func (app *App) Start() {
+	ui.Start(app.api)
 }

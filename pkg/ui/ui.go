@@ -2,9 +2,8 @@ package ui
 
 import (
 	"errors"
-	"fmt"
 	"log"
-	"mynav/pkg/logger"
+	"mynav/pkg/core"
 
 	"github.com/awesome-gocui/gocui"
 )
@@ -16,29 +15,25 @@ type Viewable interface {
 }
 
 type UI struct {
-	MainTabGroup *TabGroup
-	Views        []Viewable
+	mainTabGroup *TabGroup
+	api          *core.Api
+	views        []Viewable
 }
 
 var _ui *UI
 
-func Start() *Action {
-	logger.Init("debug.log")
-	if err := InitApi(); err != nil {
-		fmt.Println(err.Error())
-		return nil
-	}
-
+func Start(api *core.Api) {
 	g := NewGui()
 	defer g.Close()
 
 	_ui = &UI{
-		Views: make([]Viewable, 0),
+		views: make([]Viewable, 0),
+		api:   api,
 	}
 
-	if Api().Core.IsConfigInitialized {
+	if Api().Configuration.IsConfigInitialized {
 		_ui.InitUI()
-	} else if Api().Core.Standalone {
+	} else if Api().Configuration.Standalone {
 		_ui.InitStandaloneUI()
 	} else {
 		_ui.AskConfig()
@@ -50,14 +45,12 @@ func Start() *Action {
 			log.Panicln(err)
 		}
 	}
-
-	return action
 }
 
 func (ui *UI) AskConfig() {
 	OpenConfirmationDialog(func(b bool) {
 		if !b {
-			Api().Core.SetStandalone(true)
+			Api().Configuration.SetStandalone(true)
 			ui.InitStandaloneUI()
 			return
 		}
@@ -68,7 +61,7 @@ func (ui *UI) AskConfig() {
 }
 
 func (ui *UI) InitUI() *UI {
-	ui.Views = []Viewable{
+	ui.views = []Viewable{
 		NewHeaderView(),
 		NewTopicsView(),
 		NewWorkspcacesView(),
@@ -78,8 +71,8 @@ func (ui *UI) InitUI() *UI {
 		NewGithubRepoView(),
 	}
 
-	SetViewManagers(ui.Views)
-	InitViewables(ui.Views)
+	SetViewManagers(ui.views)
+	InitViewables(ui.views)
 
 	tab1 := NewTab("main", GetTopicsView().View().Name())
 	tab1.AddView(GetHeaderView())
@@ -99,22 +92,22 @@ func (ui *UI) InitUI() *UI {
 	tab4.AddView(GetGithubRepoView())
 	tab4.AddView(GetHeaderView())
 
-	ui.MainTabGroup = NewTabGroup([]*Tab{
+	ui.mainTabGroup = NewTabGroup([]*Tab{
 		tab1,
 		tab2,
 		tab3,
 		tab4,
 	})
 
-	ui.MainTabGroup.FocusTabByIndex(0)
+	ui.mainTabGroup.FocusTabByIndex(0)
 
 	SystemUpdate()
 
-	if Api().Core.GetLastTab() != "" {
-		ui.MainTabGroup.FocusTab(Api().Core.GetLastTab())
+	if Api().Configuration.GetLastTab() != "" {
+		ui.mainTabGroup.FocusTab(Api().Configuration.GetLastTab())
 	}
 
-	if Api().Core.GetLastTab() == "main" {
+	if Api().Configuration.GetLastTab() == "main" {
 		if Api().Core.GetSelectedWorkspace() != nil {
 			GetWorkspacesView().Focus()
 		} else {
@@ -129,16 +122,16 @@ func (ui *UI) InitUI() *UI {
 
 func (ui *UI) InitStandaloneUI() {
 	tmv := NewTmuxSessionView()
-	ui.Views = make([]Viewable, 0)
-	ui.Views = append(ui.Views, tmv)
+	ui.views = make([]Viewable, 0)
+	ui.views = append(ui.views, tmv)
 
-	SetViewManagers(ui.Views)
-	InitViewables(ui.Views)
+	SetViewManagers(ui.views)
+	InitViewables(ui.views)
 
 	tab := NewTab("tab1", TmuxSessionViewName)
 	tab.AddView(tmv)
-	ui.MainTabGroup = NewTabGroup([]*Tab{tab})
-	ui.MainTabGroup.FocusTabByIndex(0)
+	ui.mainTabGroup = NewTabGroup([]*Tab{tab})
+	ui.mainTabGroup.FocusTabByIndex(0)
 
 	SystemUpdate()
 	ui.InitGlobalKeybindings()
@@ -153,13 +146,13 @@ func (ui *UI) InitGlobalKeybindings() {
 		setWithQuit('q', quit, "Quit").
 		setWithQuit('q', quit, "Quit").
 		set(']', func() {
-			ui.MainTabGroup.IncrementSelectedTab(func(tab *Tab) {
-				Api().Core.SetLastTab(tab.Frame.Name())
+			ui.mainTabGroup.IncrementSelectedTab(func(tab *Tab) {
+				Api().Configuration.SetLastTab(tab.Frame.Name())
 			})
 		}, "Cycle tab right").
 		set('[', func() {
-			ui.MainTabGroup.DecrementSelectedTab(func(tab *Tab) {
-				Api().Core.SetLastTab(tab.Frame.Name())
+			ui.mainTabGroup.DecrementSelectedTab(func(tab *Tab) {
+				Api().Configuration.SetLastTab(tab.Frame.Name())
 			})
 		}, "Cycle tab left").
 		set('?', func() {
@@ -185,7 +178,7 @@ func InitViewables(vs []Viewable) {
 }
 
 func GetViewable[T Viewable]() T {
-	for _, v := range _ui.Views {
+	for _, v := range _ui.views {
 		if v, ok := v.(T); ok {
 			return v
 		}
@@ -197,7 +190,7 @@ func GetViewable[T Viewable]() T {
 func FocusView(viewName string) {
 	SetFocusView(viewName)
 	views := make([]*View, 0)
-	for _, v := range _ui.Views {
+	for _, v := range _ui.views {
 		views = append(views, v.View())
 	}
 
@@ -214,14 +207,24 @@ func FocusView(viewName string) {
 }
 
 func GetMainTabGroup() *TabGroup {
-	return _ui.MainTabGroup
+	return _ui.mainTabGroup
 }
 
 func RefreshAllData() {
-	if !Api().Core.Standalone {
+	if !Api().Configuration.Standalone {
 		GetTopicsView().refreshTopics()
 		GetPortView().refreshPorts()
 		GetWorkspacesView().refreshWorkspaces()
 	}
 	GetTmuxSessionView().refreshTmuxSessions()
+}
+
+func Api() *core.Api {
+	return _ui.api
+}
+
+func RunAction(action func()) {
+	gocui.Suspend()
+	action()
+	gocui.Resume()
 }

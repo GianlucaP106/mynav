@@ -134,46 +134,40 @@ func (wv *WorkspacesView) Init() {
 				}
 			}, func() {}, "Search", Small)
 		}, "Search by name").
-		setWithQuit(gocui.KeyEnter, func() bool {
+		set(gocui.KeyEnter, func() {
 			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
-				return false
+				return
 			}
 
-			if tmux.IsTmuxSession() {
-				SetAction(Api().Core.GetWorkspaceNvimCmd(curWorkspace))
-				return true
-			}
-
-			command := Api().Core.GetCreateOrAttachTmuxSessionCmd(curWorkspace)
-			SetAction(command)
-
-			return true
+			RunAction(func() {
+				if tmux.IsTmuxSession() {
+					Api().Core.OpenNeovimInWorkspace(curWorkspace)
+				} else {
+					Api().Core.CreateOrAttachTmuxSession(curWorkspace)
+					RefreshAllData()
+				}
+			})
 		}, "Open in tmux/open in neovim").
-		setWithQuit('v', func() bool {
+		set('v', func() {
 			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
-				return false
+				return
 			}
 
-			Api().Core.SetSelectedWorkspace(curWorkspace)
-			SetAction(system.GetNvimCmd(curWorkspace.Path))
-			return true
+			RunAction(func() {
+				Api().Core.OpenNeovimInWorkspace(curWorkspace)
+			})
 		}, "Open in neovim").
-		setWithQuit('m', func() bool {
+		set('m', func() {
 			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
-				return false
+				return
 			}
 
-			openTermCmd, err := system.GetOpenTerminalCmd(curWorkspace.Path)
-			if err != nil {
-				OpenToastDialogError(err.Error())
-				return false
-			}
-
-			SetAction(openTermCmd)
-			return true
+			RunAction(func() {
+				Api().Core.OpenTerminalInWorkspace(curWorkspace)
+			})
 		}, "Open in terminal").
 		set('D', func() {
 			if Api().Core.GetWorkspacesByTopicCount(GetTopicsView().getSelectedTopic()) <= 0 {

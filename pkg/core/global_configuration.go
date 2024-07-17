@@ -84,8 +84,8 @@ func (gc *GlobalConfiguration) SetGithubToken(token *github.GithubAuthentication
 	gc.Datasource.SaveData()
 }
 
-func GetUpdateSystemCmd() []string {
-	return []string{"sh", "-c", "curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.sh | bash"}
+func (gc *GlobalConfiguration) UpdateMynav() error {
+	return system.Command("sh", "-c", "curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.sh | bash").Run()
 }
 
 func (c *GlobalConfiguration) SetLastTab(lastTab string) {

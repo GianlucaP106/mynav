@@ -91,19 +91,29 @@ func (wc *WorkspaceController) SetDescription(description string, w *Workspace) 
 	wc.WorkspaceRepository.SetSelectedWorkspace(w)
 }
 
-func (wc *WorkspaceController) GetWorkspaceNvimCmd(w *Workspace) []string {
+func (wc *WorkspaceController) OpenNeovimInWorkspace(w *Workspace) error {
 	wc.WorkspaceRepository.SetSelectedWorkspace(w)
-	return system.GetNvimCmd(w.Path)
+	return system.CommandWithRedirect("nvim", w.Path).Run()
 }
 
-func (wc *WorkspaceController) GetCreateOrAttachTmuxSessionCmd(w *Workspace) []string {
-	if ts := wc.TmuxController.GetTmuxSessionByName(w.Path); ts != nil {
-		wc.WorkspaceRepository.SetSelectedWorkspace(w)
-		return tmux.GetAttachTmuxSessionCmd(ts.Name)
+func (wc *WorkspaceController) OpenTerminalInWorkspace(w *Workspace) error {
+	cmd, err := system.GetOpenTerminalCmd(w.Path)
+	if err != nil {
+		return err
 	}
 
 	wc.WorkspaceRepository.SetSelectedWorkspace(w)
-	return tmux.GetNewTmuxSessionCmd(w.Path, w.Path)
+	return system.CommandWithRedirect(cmd...).Run()
+}
+
+func (wc *WorkspaceController) CreateOrAttachTmuxSession(w *Workspace) error {
+	if ts := wc.TmuxController.GetTmuxSessionByName(w.Path); ts != nil {
+		wc.WorkspaceRepository.SetSelectedWorkspace(w)
+		return wc.TmuxController.AttachTmuxSession(ts)
+	}
+
+	wc.WorkspaceRepository.SetSelectedWorkspace(w)
+	return wc.TmuxController.CreateAndAttachTmuxSession(w.Path, w.Path)
 }
 
 func (wc *WorkspaceController) DeleteWorkspaceTmuxSession(w *Workspace) {
