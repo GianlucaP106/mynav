@@ -64,6 +64,7 @@ func (p *PortView) Init() {
 		})
 
 	go func() {
+		Api().Tmux.SyncPorts()
 		p.refreshPorts()
 		UpdateGui(func(_ *Gui) error {
 			p.Render()
@@ -78,18 +79,19 @@ func (p *PortView) Init() {
 		set('k', func() {
 			p.tableRenderer.Up()
 		}, "Move up").
-		setWithQuit(gocui.KeyEnter, func() bool {
+		set(gocui.KeyEnter, func() {
 			port := p.getSelectedPort()
 			if port == nil {
-				return false
+				return
 			}
 
 			if port.tmux == nil {
-				return false
+				return
 			}
 
-			SetAction(tmux.GetAttachTmuxSessionCmd(port.tmux.Name))
-			return true
+			RunAction(func() {
+				Api().Tmux.AttachTmuxSession(port.tmux)
+			})
 		}, "Open associated tmux session (if it exists)").
 		set('D', func() {
 			port := p.getSelectedPort()
@@ -119,10 +121,6 @@ func (p *PortView) Init() {
 
 func (pv *PortView) refreshPorts() {
 	ports := make([]*Port, 0)
-
-	if len(Api().Port.GetPorts()) == 0 {
-		Api().Tmux.SyncPorts()
-	}
 
 	for _, p := range Api().Port.GetPorts().ToList().Sorted() {
 		if t := Api().Tmux.GetTmuxSessionByPort(p); t != nil {

@@ -17,6 +17,17 @@ type (
 	}
 )
 
+type View struct {
+	*gocui.View
+	keybindingInfo KeybindingMap
+}
+
+type Gui struct {
+	*gocui.Gui
+}
+
+var _gui *Gui
+
 func (kb KeybindingMap) toList() KeybindingList {
 	out := make(KeybindingList, 0)
 	for _, kbm := range kb {
@@ -38,17 +49,6 @@ func (t KeybindingList) Sorted() KeybindingList {
 	sort.Sort(t)
 	return t
 }
-
-type View struct {
-	*gocui.View
-	keybindingInfo KeybindingMap
-}
-
-type Gui struct {
-	*gocui.Gui
-}
-
-var _gui *Gui
 
 func newView(v *gocui.View) *View {
 	return &View{

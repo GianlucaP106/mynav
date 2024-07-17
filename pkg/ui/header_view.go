@@ -35,7 +35,7 @@ func (hv *HeaderView) Init() {
 func (hv *HeaderView) Render() error {
 	sizeX, _ := hv.view.Size()
 	hv.view.Clear()
-	if !Api().Core.IsConfigInitialized {
+	if !Api().Configuration.IsConfigInitialized {
 		fmt.Fprintln(hv.view, displayWhiteText("Welcome to mynav, a workspace manager", Center, sizeX))
 		return nil
 	}

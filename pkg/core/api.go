@@ -9,26 +9,31 @@ import (
 )
 
 type Api struct {
-	Tmux   *tmux.TmuxController
-	Core   *Core
-	Github *github.GithubController
-	Port   *system.PortController
+	Tmux          *tmux.TmuxController
+	Core          *Core
+	Configuration *Configuration
+	Github        *github.GithubController
+	Port          *system.PortController
+}
+
+type Configuration struct {
+	*LocalConfiguration
+	*GlobalConfiguration
 }
 
 type Core struct {
 	*TopicController
 	*WorkspaceController
-	*LocalConfiguration
-	*GlobalConfiguration
 }
 
 func NewApi() (*Api, error) {
 	api := &Api{}
 	api.Core = &Core{}
-	api.Core.LocalConfiguration = NewLocalConfiguration()
-	api.Core.GlobalConfiguration = NewGlobalConfiguration()
+	api.Configuration = &Configuration{}
+	api.Configuration.LocalConfiguration = NewLocalConfiguration()
+	api.Configuration.GlobalConfiguration = NewGlobalConfiguration()
 
-	if api.Core.IsConfigInitialized {
+	if api.Configuration.IsConfigInitialized {
 		api.InitControllers()
 	} else {
 		api.InitTmuxController()
@@ -45,7 +50,7 @@ func (api *Api) GetSystemStats() (numTopics int, numWorkspaces int) {
 
 func (api *Api) InitConfiguration() error {
 	dir, _ := os.Getwd()
-	if _, err := api.Core.InitConfig(dir); err != nil {
+	if _, err := api.Configuration.InitConfig(dir); err != nil {
 		return errors.New("cannot initialize mynav in the home directory")
 	}
 
@@ -59,20 +64,20 @@ func (api *Api) InitTmuxController() {
 }
 
 func (api *Api) InitControllers() {
-	if api.Core.IsConfigInitialized {
+	if api.Configuration.IsConfigInitialized {
 		api.InitTmuxController()
-		api.Core.TopicController = NewTopicController(api.Core.GetLocalConfigDir(), api.Tmux)
+		api.Core.TopicController = NewTopicController(api.Configuration.GetLocalConfigDir(), api.Tmux)
 		api.Core.WorkspaceController = NewWorkspaceController(
 			api.Core.GetTopics(),
-			api.Core.GetWorkspaceStorePath(),
+			api.Configuration.GetWorkspaceStorePath(),
 			api.Tmux,
 			api.Port,
 		)
 
-		api.Github = github.NewGithubController(api.Core.GetGithubToken(), func(gat *github.GithubAuthenticationToken) {
-			api.Core.SetGithubToken(gat)
+		api.Github = github.NewGithubController(api.Configuration.GetGithubToken(), func(gat *github.GithubAuthenticationToken) {
+			api.Configuration.SetGithubToken(gat)
 		}, func() {
-			api.Core.SetGithubToken(nil)
+			api.Configuration.SetGithubToken(nil)
 		})
 		api.Core.TopicController.WorkspaceController = api.Core.WorkspaceController
 	}

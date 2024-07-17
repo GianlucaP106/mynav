@@ -57,15 +57,17 @@ func (tv *TmuxSessionView) Init() {
 	tv.refreshTmuxSessions()
 
 	tv.view.KeyBinding().
-		setWithQuit(gocui.KeyEnter, func() bool {
+		set(gocui.KeyEnter, func() {
 			if tmux.IsTmuxSession() {
 				OpenToastDialogError("You are already in a tmux session. Nested tmux sessions are not supported yet.")
-				return false
+				return
 			}
 
 			session := tv.getSelectedSession()
-			SetAction(tmux.GetAttachTmuxSessionCmd(session.Name))
-			return true
+			RunAction(func() {
+				Api().Tmux.AttachTmuxSession(session)
+				RefreshAllData()
+			})
 		}, "Attach to session").
 		set('D', func() {
 			if Api().Tmux.GetTmuxSessionCount() == 0 {
@@ -99,7 +101,7 @@ func (tv *TmuxSessionView) Init() {
 			}, "Are you sure you want to delete ALL tmux sessions?")
 		}, "Kill ALL tmux sessions").
 		set('W', func() {
-			if Api().Core.Standalone || Api().Core.GetWorkspaceTmuxSessionCount() == 0 {
+			if Api().Configuration.Standalone || Api().Core.GetWorkspaceTmuxSessionCount() == 0 {
 				return
 			}
 
@@ -124,7 +126,10 @@ func (tv *TmuxSessionView) Init() {
 				return
 			}
 			OpenEditorDialog(func(s string) {
-				SetAction(tmux.GetNewTmuxSessionCmd(s, "~"))
+				RunAction(func() {
+					Api().Tmux.CreateAndAttachTmuxSession(s, "~")
+					RefreshAllData()
+				})
 			}, func() {}, "New session name", Small)
 		}, "New external session (not associated to a workspace)").
 		set('?', func() {
@@ -150,7 +155,7 @@ func (tv *TmuxSessionView) syncSessionsToTable() {
 	rows := make([][]string, 0)
 	for _, session := range tv.sessions {
 		workspace := "external"
-		if !Api().Core.Standalone {
+		if !Api().Configuration.Standalone {
 			w := Api().Core.GetWorkspaceByTmuxSession(session)
 			if w != nil {
 				workspace = w.ShortPath()
@@ -168,10 +173,6 @@ func (tv *TmuxSessionView) syncSessionsToTable() {
 }
 
 func (tv *TmuxSessionView) Render() error {
-	if IssActionReady() {
-		return gocui.ErrQuit
-	}
-
 	isViewFocused := tv.view.IsFocused()
 
 	tv.view.Clear()

@@ -2,7 +2,8 @@ package tmux
 
 import (
 	"log"
-	"os/exec"
+	"mynav/pkg/system"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -16,7 +17,7 @@ func NewTmuxCommunicator() *TmuxCommunicator {
 func (tm *TmuxCommunicator) GetSessions() map[string]*TmuxSession {
 	out := map[string]*TmuxSession{}
 
-	stdout, err := exec.Command("tmux", "ls").Output()
+	stdout, err := system.Command("tmux", "ls").Output()
 	if err != nil {
 		return out
 	}
@@ -62,7 +63,7 @@ func (tm *TmuxCommunicator) GetSessions() map[string]*TmuxSession {
 }
 
 func (tm *TmuxCommunicator) GetSessionPanes(ts *TmuxSession) []*TmuxPane {
-	windowsRes, err := exec.Command("tmux", "list-windows", "-t", ts.Name).Output()
+	windowsRes, err := system.Command("tmux", "list-windows", "-t", ts.Name).Output()
 	if err != nil {
 		log.Panicln(err)
 	}
@@ -77,7 +78,7 @@ func (tm *TmuxCommunicator) GetSessionPanes(ts *TmuxSession) []*TmuxPane {
 
 	var panes []*TmuxPane
 	for _, windowNum := range windows {
-		paneRes, err := exec.Command("tmux", "list-panes", "-t", ts.Name+":"+windowNum, "-F", "#{pane_pid}:#{pane_id}").Output()
+		paneRes, err := system.Command("tmux", "list-panes", "-t", ts.Name+":"+windowNum, "-F", "#{pane_pid}:#{pane_id}").Output()
 		if err != nil {
 			log.Panicln(err)
 		}
@@ -110,7 +111,7 @@ func (tm *TmuxCommunicator) GetSessionPanes(ts *TmuxSession) []*TmuxPane {
 }
 
 func (tm *TmuxCommunicator) KillSession(name string) error {
-	err := exec.Command("tmux", "kill-session", "-t", name).Run()
+	err := system.Command("tmux", "kill-session", "-t", name).Run()
 	if err != nil {
 		return err
 	}
@@ -118,10 +119,30 @@ func (tm *TmuxCommunicator) KillSession(name string) error {
 	return nil
 }
 
-func (tm *TmuxCommunicator) RenameSession(oldName string, newName string) error {
-	if err := exec.Command("tmux", "rename-session", "-t", oldName, newName).Run(); err != nil {
+func (tc *TmuxCommunicator) CreateAndAttachTmuxSession(session string, path string) error {
+	if err := system.CommandWithRedirect("tmux", "new", "-s", session, "-c", path).Run(); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (tc *TmuxCommunicator) AttachTmuxSession(session string) error {
+	if err := system.CommandWithRedirect("tmux", "a", "-t", session).Run(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (tm *TmuxCommunicator) RenameSession(oldName string, newName string) error {
+	if err := system.Command("tmux", "rename-session", "-t", oldName, newName).Run(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func IsTmuxSession() bool {
+	return os.Getenv("TMUX") != ""
 }
