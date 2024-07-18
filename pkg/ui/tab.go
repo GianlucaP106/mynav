@@ -1,5 +1,7 @@
 package ui
 
+import "github.com/awesome-gocui/gocui"
+
 type TabGroup struct {
 	Tabs     []*Tab
 	Selected int
@@ -9,8 +11,23 @@ type Tab struct {
 	Frame       *View
 	DefaultView string
 	LastView    string
-	Views       []*View
+	Views       []*ViewSlot
 }
+
+type ViewSlot struct {
+	View             *View
+	ViewSlotPosition ViewSlotPosition
+}
+
+type ViewSlotPosition = uint
+
+const (
+	None ViewSlotPosition = iota
+	TopLeft
+	TopRight
+	BottomLeft
+	BottomRight
+)
 
 func NewTabGroup(tabs []*Tab) *TabGroup {
 	tg := &TabGroup{}
@@ -82,7 +99,7 @@ func (tg *TabGroup) FocusTab(tabName string) {
 
 func NewTab(name string, defaultView string) *Tab {
 	t := &Tab{
-		Views:       make([]*View, 0),
+		Views:       make([]*ViewSlot, 0),
 		DefaultView: defaultView,
 		LastView:    defaultView,
 	}
@@ -94,22 +111,22 @@ func NewTab(name string, defaultView string) *Tab {
 
 func (t *Tab) GetTabView(view string) *View {
 	for _, v := range t.Views {
-		if v.Name() == view {
-			return v
+		if v.View.Name() == view {
+			return v.View
 		}
 	}
 
 	return nil
 }
 
-func (t *Tab) AddView(v Viewable) {
-	t.Views = append(t.Views, v.View())
+func (t *Tab) AddView(v Viewable, position ViewSlotPosition) {
+	t.Views = append(t.Views, NewViewSlot(v.View(), position))
 }
 
 func (t *Tab) SendToFront() {
 	t.Frame.SendToFront()
 	for _, v := range t.Views {
-		v.SendToFront()
+		v.View.SendToFront()
 	}
 
 	FocusView(t.LastView)
@@ -125,6 +142,102 @@ func (t *Tab) SendToBack() {
 
 	t.Frame.SendToBack()
 	for _, v := range t.Views {
-		v.SendToBack()
+		v.View.SendToBack()
+	}
+}
+
+type SlotPositionRelation struct {
+	keys           []gocui.Key
+	targetPosition ViewSlotPosition
+}
+
+func (t *Tab) GenerateNavigationKeyBindings() {
+	views := map[ViewSlotPosition]*ViewSlot{}
+	findView := func(pos ViewSlotPosition) *ViewSlot {
+		for _, vs := range t.Views {
+			if vs.ViewSlotPosition == pos {
+				return vs
+			}
+		}
+
+		return nil
+	}
+	views[TopLeft] = findView(TopLeft)
+	views[BottomLeft] = findView(BottomLeft)
+	views[TopRight] = findView(TopRight)
+	views[BottomRight] = findView(BottomRight)
+
+	relationMap := make(map[ViewSlotPosition][]*SlotPositionRelation)
+	relationMap[TopLeft] = []*SlotPositionRelation{
+		{
+			keys:           []gocui.Key{gocui.KeyArrowDown, gocui.KeyCtrlJ},
+			targetPosition: BottomLeft,
+		},
+		{
+			keys:           []gocui.Key{gocui.KeyArrowRight, gocui.KeyCtrlL},
+			targetPosition: TopRight,
+		},
+	}
+
+	relationMap[BottomLeft] = []*SlotPositionRelation{
+		{
+			keys:           []gocui.Key{gocui.KeyArrowUp, gocui.KeyCtrlK},
+			targetPosition: TopLeft,
+		},
+		{
+			keys:           []gocui.Key{gocui.KeyArrowRight, gocui.KeyCtrlL},
+			targetPosition: BottomRight,
+		},
+	}
+
+	relationMap[BottomRight] = []*SlotPositionRelation{
+		{
+			keys:           []gocui.Key{gocui.KeyArrowUp, gocui.KeyCtrlK},
+			targetPosition: TopRight,
+		},
+		{
+			keys:           []gocui.Key{gocui.KeyArrowLeft, gocui.KeyCtrlH},
+			targetPosition: BottomLeft,
+		},
+	}
+
+	relationMap[TopRight] = []*SlotPositionRelation{
+		{
+			keys:           []gocui.Key{gocui.KeyArrowDown, gocui.KeyCtrlJ},
+			targetPosition: BottomRight,
+		},
+		{
+			keys:           []gocui.Key{gocui.KeyArrowLeft, gocui.KeyCtrlH},
+			targetPosition: TopLeft,
+		},
+	}
+
+	for pos, slotRelation := range relationMap {
+		viewSlot := views[pos]
+		if viewSlot == nil {
+			continue
+		}
+
+		kbb := NewKeybindingBuilder(viewSlot.View)
+		for _, relation := range slotRelation {
+			targetSlot := views[relation.targetPosition]
+			if targetSlot == nil {
+				continue
+			}
+
+			viewName := targetSlot.View.Name()
+			for _, key := range relation.keys {
+				kbb.set(key, func() {
+					FocusView(viewName)
+				}, "Focus "+viewName)
+			}
+		}
+	}
+}
+
+func NewViewSlot(v *View, position ViewSlotPosition) *ViewSlot {
+	return &ViewSlot{
+		View:             v,
+		ViewSlotPosition: position,
 	}
 }

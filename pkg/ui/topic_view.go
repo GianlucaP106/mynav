@@ -73,8 +73,6 @@ func (tv *TopicsView) Init() {
 			GetWorkspacesView().refreshWorkspaces()
 		}, "Move up").
 		set(gocui.KeyEnter, moveRight, "Open topic").
-		set(gocui.KeyArrowRight, moveRight, "Open topic").
-		set(gocui.KeyCtrlL, moveRight, "Open topic").
 		set('/', func() {
 			OpenEditorDialog(func(s string) {
 				tv.search = s
