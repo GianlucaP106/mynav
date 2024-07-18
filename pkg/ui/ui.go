@@ -75,22 +75,23 @@ func (ui *UI) InitUI() *UI {
 	InitViewables(ui.views)
 
 	tab1 := NewTab("main", GetTopicsView().View().Name())
-	tab1.AddView(GetHeaderView())
-	tab1.AddView(GetTopicsView())
-	tab1.AddView(GetWorkspacesView())
+	tab1.AddView(GetHeaderView(), None)
+	tab1.AddView(GetTopicsView(), TopLeft)
+	tab1.AddView(GetWorkspacesView(), TopRight)
+	tab1.GenerateNavigationKeyBindings()
 
 	tab2 := NewTab("tmux", GetTmuxSessionView().View().Name())
-	tab2.AddView(GetTmuxSessionView())
-	tab2.AddView(GetHeaderView())
+	tab2.AddView(GetTmuxSessionView(), None)
+	tab2.AddView(GetHeaderView(), None)
 
 	tab3 := NewTab("system", GetPortView().View().Name())
-	tab3.AddView(GetPortView())
-	tab3.AddView(GetHeaderView())
+	tab3.AddView(GetPortView(), None)
+	tab3.AddView(GetHeaderView(), None)
 
 	tab4 := NewTab("github", GetGithubPrView().View().Name())
-	tab4.AddView(GetGithubPrView())
-	tab4.AddView(GetGithubRepoView())
-	tab4.AddView(GetHeaderView())
+	tab4.AddView(GetGithubRepoView(), TopLeft)
+	tab4.AddView(GetGithubPrView(), TopRight)
+	tab4.AddView(GetHeaderView(), None)
 
 	ui.mainTabGroup = NewTabGroup([]*Tab{
 		tab1,
@@ -129,7 +130,7 @@ func (ui *UI) InitStandaloneUI() {
 	InitViewables(ui.views)
 
 	tab := NewTab("tab1", TmuxSessionViewName)
-	tab.AddView(tmv)
+	tab.AddView(tmv, None)
 	ui.mainTabGroup = NewTabGroup([]*Tab{tab})
 	ui.mainTabGroup.FocusTabByIndex(0)
 

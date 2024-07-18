@@ -68,10 +68,6 @@ func (wv *WorkspacesView) Init() {
 		wv.selectWorkspaceByShortPath(selectedWorkspace.ShortPath())
 	}
 
-	moveLeft := func() {
-		GetTopicsView().Focus()
-	}
-
 	wv.view.KeyBinding().
 		set('j', func() {
 			wv.tableRenderer.Down()
@@ -79,8 +75,6 @@ func (wv *WorkspacesView) Init() {
 		set('k', func() {
 			wv.tableRenderer.Up()
 		}, "Move up").
-		set(gocui.KeyArrowLeft, moveLeft, "Focus topic view").
-		set(gocui.KeyCtrlH, moveLeft, "Focus topic view").
 		set(gocui.KeyEsc, func() {
 			if wv.search != "" {
 				wv.search = ""
