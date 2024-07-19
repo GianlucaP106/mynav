@@ -48,20 +48,25 @@ func (tg *TabGroup) GetTab(name string) *Tab {
 
 func (tg *TabGroup) IncrementSelectedTab(callback func(*Tab)) {
 	if tg.Selected >= len(tg.Tabs)-1 {
-		return
+		tg.Selected = 0
+		tg.FocusTabByIndex(0)
+		callback(tg.GetSelectedTab())
+	} else {
+		tg.FocusTabByIndex(tg.Selected + 1)
+		callback(tg.GetSelectedTab())
 	}
-
-	tg.FocusTabByIndex(tg.Selected + 1)
-	callback(tg.GetSelectedTab())
 }
 
 func (tg *TabGroup) DecrementSelectedTab(callback func(*Tab)) {
 	if tg.Selected <= 0 {
-		return
+		newIdx := len(tg.Tabs) - 1
+		tg.Selected = newIdx
+		tg.FocusTabByIndex(newIdx)
+		callback(tg.GetSelectedTab())
+	} else {
+		tg.FocusTabByIndex(tg.Selected - 1)
+		callback(tg.GetSelectedTab())
 	}
-
-	tg.FocusTabByIndex(tg.Selected - 1)
-	callback(tg.GetSelectedTab())
 }
 
 func (tg *TabGroup) GetSelectedTab() *Tab {
