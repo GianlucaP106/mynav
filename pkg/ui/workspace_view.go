@@ -208,6 +208,11 @@ func (wv *WorkspacesView) Init() {
 		}, "Add/change description").
 		set('a', func() {
 			curTopic := GetTopicsView().getSelectedTopic()
+			if curTopic == nil {
+				OpenToastDialog("You must create a topic first", false, "Note", func() {})
+				return
+			}
+
 			OpenEditorDialog(func(name string) {
 				if _, err := Api().Core.CreateWorkspace(name, curTopic); err != nil {
 					OpenToastDialogError(err.Error())
