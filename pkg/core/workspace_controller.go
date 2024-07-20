@@ -60,8 +60,8 @@ func (wc *WorkspaceController) DeleteWorkspace(w *Workspace) error {
 		return err
 	}
 
-	events.EmitEvent(constants.WorkspaceChangeEventName)
 	events.EmitEvent(constants.TopicChangeEventName)
+	events.EmitEvent(constants.WorkspaceChangeEventName)
 	return nil
 }
 
@@ -138,6 +138,7 @@ func (wc *WorkspaceController) DeleteWorkspaceTmuxSession(w *Workspace) {
 	if ts := wc.TmuxController.GetTmuxSessionByName(w.Path); ts != nil {
 		wc.TmuxController.DeleteTmuxSession(ts)
 		events.EmitEvent(constants.TmuxSessionChangeEventName)
+		events.EmitEvent(constants.WorkspaceChangeEventName)
 	}
 }
 
