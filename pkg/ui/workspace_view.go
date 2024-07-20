@@ -1,7 +1,9 @@
 package ui
 
 import (
+	"mynav/pkg/constants"
 	"mynav/pkg/core"
+	"mynav/pkg/events"
 	"mynav/pkg/git"
 	"mynav/pkg/system"
 	"mynav/pkg/tmux"
@@ -18,8 +20,6 @@ type WorkspacesView struct {
 }
 
 var _ Viewable = new(WorkspacesView)
-
-const WorkspacesViewName = "WorkspacesView"
 
 func NewWorkspcacesView() *WorkspacesView {
 	return &WorkspacesView{}
@@ -38,7 +38,7 @@ func (wv *WorkspacesView) Focus() {
 }
 
 func (wv *WorkspacesView) Init() {
-	wv.view = GetViewPosition(WorkspacesViewName).Set()
+	wv.view = GetViewPosition(constants.WorkspacesViewName).Set()
 
 	wv.view.Title = withSurroundingSpaces("Workspaces")
 	wv.view.TitleColor = gocui.ColorBlue
@@ -63,6 +63,10 @@ func (wv *WorkspacesView) Init() {
 	wv.tableRenderer = NewTableRenderer()
 	wv.tableRenderer.InitTable(sizeX, sizeY, titles, proportions)
 	wv.refreshWorkspaces()
+
+	events.AddEventListener(constants.WorkspaceChangeEventName, func() {
+		wv.refreshWorkspaces()
+	})
 
 	if selectedWorkspace := Api().Core.GetSelectedWorkspace(); selectedWorkspace != nil {
 		wv.selectWorkspaceByShortPath(selectedWorkspace.ShortPath())
@@ -102,7 +106,6 @@ func (wv *WorkspacesView) Init() {
 				if err := Api().Core.CloneRepo(s, curWorkspace); err != nil {
 					OpenToastDialogError(err.Error())
 				}
-				wv.syncWorkspacesToTable()
 			}, func() {}, "Git repo URL", Small)
 		}, "Clone git repo").
 		set('G', func() {
@@ -139,7 +142,6 @@ func (wv *WorkspacesView) Init() {
 					Api().Core.OpenNeovimInWorkspace(curWorkspace)
 				} else {
 					Api().Core.CreateOrAttachTmuxSession(curWorkspace)
-					RefreshAllData()
 				}
 			})
 		}, "Open in tmux/open in neovim").
@@ -175,7 +177,6 @@ func (wv *WorkspacesView) Init() {
 
 					// HACK: same as below
 					GetTopicsView().tableRenderer.SetSelectedRow(0)
-					RefreshAllData()
 				}
 			}, "Are you sure you want to delete this workspace?")
 		}, "Delete a workspace").
@@ -190,7 +191,6 @@ func (wv *WorkspacesView) Init() {
 					OpenToastDialogError(err.Error())
 					return
 				}
-				wv.syncWorkspacesToTable()
 			}, func() {}, "New workspace name", Small, curWorkspace.Name)
 		}, "Rename workspace").
 		set('e', func() {
@@ -202,7 +202,6 @@ func (wv *WorkspacesView) Init() {
 			OpenEditorDialog(func(desc string) {
 				if desc != "" {
 					Api().Core.SetDescription(desc, curWorkspace)
-					wv.syncWorkspacesToTable()
 				}
 			}, func() {}, "Description", Large)
 		}, "Add/change description").
@@ -224,7 +223,6 @@ func (wv *WorkspacesView) Init() {
 				// because we are sorting by modifed time
 				GetTopicsView().tableRenderer.SetSelectedRow(0)
 				wv.tableRenderer.SetSelectedRow(0)
-				RefreshAllData()
 			}, func() {}, "Workspace name ", Small)
 		}, "Create a workspace").
 		set('X', func() {
@@ -237,7 +235,6 @@ func (wv *WorkspacesView) Init() {
 				OpenConfirmationDialog(func(b bool) {
 					if b {
 						Api().Core.DeleteWorkspaceTmuxSession(curWorkspace)
-						RefreshAllData()
 					}
 				}, "Are you sure you want to delete the tmux session?")
 			}
@@ -277,7 +274,6 @@ func (wv *WorkspacesView) syncWorkspacesToTable() {
 		tmux := func() string {
 			if tm := Api().Tmux.GetTmuxSessionByName(w.Path); tm != nil {
 				numWindows := strconv.Itoa(tm.NumWindows)
-				// TODO:add color to tmux
 				return numWindows + " - tmux"
 			}
 

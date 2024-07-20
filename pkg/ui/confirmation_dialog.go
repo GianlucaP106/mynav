@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"mynav/pkg/constants"
 )
 
 type ConfirmationDialog struct {
@@ -9,13 +10,11 @@ type ConfirmationDialog struct {
 	title string
 }
 
-const ConfirmationDialogName = "ConfirmationDialog"
-
 func OpenConfirmationDialog(onConfirm func(bool), title string) *ConfirmationDialog {
 	cd := &ConfirmationDialog{}
 	cd.title = title
 	prevView := GetFocusedView()
-	cd.view = SetCenteredView(ConfirmationDialogName, len(title)+5, 3, 0)
+	cd.view = SetCenteredView(constants.ConfirmationDialogName, len(title)+5, 3, 0)
 	cd.view.Title = withSurroundingSpaces("Confirm")
 	cd.view.Wrap = true
 	cd.view.Editable = true

@@ -1,6 +1,9 @@
 package ui
 
-import "log"
+import (
+	"log"
+	"mynav/pkg/constants"
+)
 
 type ViewPosition struct {
 	viewName string
@@ -14,48 +17,48 @@ type ViewPosition struct {
 func GetViewPosition(viewName string) *ViewPosition {
 	maxX, maxY := ScreenSize()
 	positionMap := map[string]*ViewPosition{}
-	positionMap[WorkspacesViewName] = &ViewPosition{
+	positionMap[constants.WorkspacesViewName] = &ViewPosition{
 		x0: (maxX / 3) + 1,
 		y0: maxY/2 - 15,
 		x1: maxX - 2,
 		y1: maxY/2 + 15,
 	}
 
-	positionMap[TopicViewName] = &ViewPosition{
+	positionMap[constants.TopicViewName] = &ViewPosition{
 		x0: 2,
 		y0: maxY/2 - 15,
 		x1: maxX/3 - 1,
 		y1: maxY/2 + 15,
 	}
 
-	positionMap[TmuxSessionViewName] = &ViewPosition{
+	positionMap[constants.TmuxSessionViewName] = &ViewPosition{
 		x0: (maxX / 3) + 1,
 		y0: (maxY / 2) - 1,
 		x1: maxX - 2,
 		y1: maxY - 4,
 	}
 
-	positionMap[PortViewName] = &ViewPosition{
+	positionMap[constants.PortViewName] = &ViewPosition{
 		x0: 2,
 		y0: (maxY / 2) - 1,
 		x1: maxX/3 - 1,
 		y1: maxY - 4,
 	}
 
-	positionMap[GithubPrViewName] = &ViewPosition{
+	positionMap[constants.GithubPrViewName] = &ViewPosition{
 		x0: maxX/2 + 1,
 		y0: maxY/2 - 10,
 		x1: maxX - 4,
 		y1: maxY/2 + 10,
 	}
 
-	positionMap[GithubRepoViewName] = &ViewPosition{
+	positionMap[constants.GithubRepoViewName] = &ViewPosition{
 		x0: 4,
 		y0: maxY/2 - 10,
 		x1: maxX/2 - 1,
 		y1: maxY/2 + 10,
 	}
-	positionMap[HeaderViewName] = &ViewPosition{
+	positionMap[constants.HeaderViewName] = &ViewPosition{
 		x0: 2,
 		y0: 1,
 		x1: maxX - 2,

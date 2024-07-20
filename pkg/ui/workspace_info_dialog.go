@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"mynav/pkg/constants"
 	"mynav/pkg/core"
 	"strconv"
 
@@ -14,13 +15,11 @@ type WorkspaceInfoDialog struct {
 	workspace *core.Workspace
 }
 
-const WorkspaceInfoDialogName = "WorkspaceInfoDialog"
-
 func OpenWorkspaceInfoDialog(w *core.Workspace, exit func()) *WorkspaceInfoDialog {
 	wd := &WorkspaceInfoDialog{}
 	wd.workspace = w
 	content := wd.getWorkspaceInfoContent(wd.workspace)
-	wd.view = SetCenteredView(WorkspaceInfoDialogName, 100, len(content), 0)
+	wd.view = SetCenteredView(constants.WorkspaceInfoDialogName, 100, len(content), 0)
 
 	wd.view.Title = withSurroundingSpaces(wd.workspace.Name)
 	wd.view.TitleColor = gocui.ColorBlue

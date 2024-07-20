@@ -3,7 +3,8 @@ package ui
 import (
 	"errors"
 	"log"
-	"mynav/pkg/core"
+	"mynav/pkg/api"
+	"mynav/pkg/constants"
 
 	"github.com/awesome-gocui/gocui"
 )
@@ -16,13 +17,13 @@ type Viewable interface {
 
 type UI struct {
 	mainTabGroup *TabGroup
-	api          *core.Api
+	api          *api.Api
 	views        []Viewable
 }
 
 var _ui *UI
 
-func Start(api *core.Api) {
+func Start(api *api.Api) {
 	g := NewGui()
 	defer g.Close()
 
@@ -129,7 +130,7 @@ func (ui *UI) InitStandaloneUI() {
 	SetViewManagers(ui.views)
 	InitViewables(ui.views)
 
-	tab := NewTab("tab1", TmuxSessionViewName)
+	tab := NewTab("tab1", constants.TmuxSessionViewName)
 	tab.AddView(tmv, None)
 	ui.mainTabGroup = NewTabGroup([]*Tab{tab})
 	ui.mainTabGroup.FocusTabByIndex(0)
@@ -211,16 +212,7 @@ func GetMainTabGroup() *TabGroup {
 	return _ui.mainTabGroup
 }
 
-func RefreshAllData() {
-	if !Api().Configuration.Standalone {
-		GetTopicsView().refreshTopics()
-		GetPortView().refreshPorts()
-		GetWorkspacesView().refreshWorkspaces()
-	}
-	GetTmuxSessionView().refreshTmuxSessions()
-}
-
-func Api() *core.Api {
+func Api() *api.Api {
 	return _ui.api
 }
 

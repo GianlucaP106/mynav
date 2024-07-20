@@ -1,7 +1,8 @@
-package core
+package api
 
 import (
 	"errors"
+	"mynav/pkg/core"
 	"mynav/pkg/github"
 	"mynav/pkg/system"
 	"mynav/pkg/tmux"
@@ -17,21 +18,21 @@ type Api struct {
 }
 
 type Configuration struct {
-	*LocalConfiguration
-	*GlobalConfiguration
+	*core.LocalConfiguration
+	*core.GlobalConfiguration
 }
 
 type Core struct {
-	*TopicController
-	*WorkspaceController
+	*core.TopicController
+	*core.WorkspaceController
 }
 
 func NewApi() (*Api, error) {
 	api := &Api{}
 	api.Core = &Core{}
 	api.Configuration = &Configuration{}
-	api.Configuration.LocalConfiguration = NewLocalConfiguration()
-	api.Configuration.GlobalConfiguration = NewGlobalConfiguration()
+	api.Configuration.LocalConfiguration = core.NewLocalConfiguration()
+	api.Configuration.GlobalConfiguration = core.NewGlobalConfiguration()
 
 	if api.Configuration.IsConfigInitialized {
 		api.InitControllers()
@@ -66,8 +67,8 @@ func (api *Api) InitTmuxController() {
 func (api *Api) InitControllers() {
 	if api.Configuration.IsConfigInitialized {
 		api.InitTmuxController()
-		api.Core.TopicController = NewTopicController(api.Configuration.GetLocalConfigDir(), api.Tmux)
-		api.Core.WorkspaceController = NewWorkspaceController(
+		api.Core.TopicController = core.NewTopicController(api.Configuration.GetLocalConfigDir(), api.Tmux)
+		api.Core.WorkspaceController = core.NewWorkspaceController(
 			api.Core.GetTopics(),
 			api.Configuration.GetWorkspaceStorePath(),
 			api.Tmux,

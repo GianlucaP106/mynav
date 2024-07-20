@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"mynav/pkg/constants"
+	"mynav/pkg/events"
 	"mynav/pkg/tmux"
 	"strconv"
 
@@ -14,8 +16,6 @@ type TmuxSessionView struct {
 }
 
 var _ Viewable = new(TmuxSessionView)
-
-const TmuxSessionViewName = "TmuxSessionView"
 
 func NewTmuxSessionView() *TmuxSessionView {
 	return &TmuxSessionView{}
@@ -35,7 +35,7 @@ func (tv *TmuxSessionView) Focus() {
 
 func (tv *TmuxSessionView) Init() {
 	screenX, screenY := ScreenSize()
-	tv.view = SetCenteredView(TmuxSessionViewName, screenX/2, screenY/3, 0)
+	tv.view = SetCenteredView(constants.TmuxSessionViewName, screenX/2, screenY/3, 0)
 
 	tv.view.Title = withSurroundingSpaces("TMUX Sessions")
 	tv.view.TitleColor = gocui.ColorBlue
@@ -56,6 +56,10 @@ func (tv *TmuxSessionView) Init() {
 	tv.tableRenderer.InitTable(sizeX, sizeY, titles, proportions)
 	tv.refreshTmuxSessions()
 
+	events.AddEventListener(constants.TmuxSessionChangeEventName, func() {
+		tv.refreshTmuxSessions()
+	})
+
 	tv.view.KeyBinding().
 		set(gocui.KeyEnter, func() {
 			if tmux.IsTmuxSession() {
@@ -66,7 +70,6 @@ func (tv *TmuxSessionView) Init() {
 			session := tv.getSelectedSession()
 			RunAction(func() {
 				Api().Tmux.AttachTmuxSession(session)
-				RefreshAllData()
 			})
 		}, "Attach to session").
 		set('D', func() {
@@ -81,7 +84,6 @@ func (tv *TmuxSessionView) Init() {
 						OpenToastDialogError(err.Error())
 						return
 					}
-					RefreshAllData()
 				}
 			}, "Are you sure you want to delete this session?")
 		}, "Delete session").
@@ -96,7 +98,6 @@ func (tv *TmuxSessionView) Init() {
 						OpenToastDialogError(err.Error())
 						return
 					}
-					RefreshAllData()
 				}
 			}, "Are you sure you want to delete ALL tmux sessions?")
 		}, "Kill ALL tmux sessions").
@@ -111,7 +112,6 @@ func (tv *TmuxSessionView) Init() {
 						OpenToastDialogError(err.Error())
 						return
 					}
-					RefreshAllData()
 				}
 			}, "Are you sure you want to delete ALL non-external tmux sessions?")
 		}, "Kill ALL non-external (has a workspace) tmux sessions").
@@ -128,7 +128,6 @@ func (tv *TmuxSessionView) Init() {
 			OpenEditorDialog(func(s string) {
 				RunAction(func() {
 					Api().Tmux.CreateAndAttachTmuxSession(s, "~")
-					RefreshAllData()
 				})
 			}, func() {}, "New session name", Small)
 		}, "New external session (not associated to a workspace)").
