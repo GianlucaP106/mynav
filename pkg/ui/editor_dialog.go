@@ -1,14 +1,15 @@
 package ui
 
-import "fmt"
+import (
+	"fmt"
+	"mynav/pkg/constants"
+)
 
 type EditorDialog struct {
 	view *View
 }
 
 type EditorSize = uint
-
-const EditorDialogName = "EditorDialog"
 
 const (
 	Small EditorSize = iota
@@ -30,7 +31,7 @@ func OpenEditorDialogWithDefaultValue(onEnter func(string), onEsc func(), title 
 		height = 7
 	}
 
-	ed.view = SetCenteredView(EditorDialogName, 80, height, 0)
+	ed.view = SetCenteredView(constants.EditorDialogName, 80, height, 0)
 	ed.view.Editable = true
 	ed.view.Title = withSurroundingSpaces(title)
 	ed.view.Wrap = true

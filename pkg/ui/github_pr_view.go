@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"log"
+	"mynav/pkg/constants"
 	"mynav/pkg/github"
 	"mynav/pkg/system"
 
@@ -16,8 +17,6 @@ type GithubPrView struct {
 }
 
 var _ Viewable = new(GithubPrView)
-
-const GithubPrViewName = "GithubPrView"
 
 func NewGithubPrView() *GithubPrView {
 	return &GithubPrView{}
@@ -36,7 +35,7 @@ func (g *GithubPrView) Focus() {
 }
 
 func (g *GithubPrView) Init() {
-	g.view = GetViewPosition(GithubPrViewName).Set()
+	g.view = GetViewPosition(constants.GithubPrViewName).Set()
 
 	g.view.Title = "Pull Requests"
 	g.view.TitleColor = gocui.ColorBlue

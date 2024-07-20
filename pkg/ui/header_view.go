@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"mynav/pkg/constants"
 	"strconv"
 
 	"github.com/gookit/color"
@@ -12,8 +13,6 @@ type HeaderView struct {
 }
 
 var _ Viewable = new(HeaderView)
-
-const HeaderViewName = "HeaderView"
 
 func NewHeaderView() *HeaderView {
 	return &HeaderView{}
@@ -28,7 +27,7 @@ func (hv *HeaderView) View() *View {
 }
 
 func (hv *HeaderView) Init() {
-	hv.view = GetViewPosition(HeaderViewName).Set()
+	hv.view = GetViewPosition(constants.HeaderViewName).Set()
 	hv.view.Frame = false
 }
 

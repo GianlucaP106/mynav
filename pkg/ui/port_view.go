@@ -2,6 +2,8 @@ package ui
 
 import (
 	"fmt"
+	"mynav/pkg/constants"
+	"mynav/pkg/events"
 	"mynav/pkg/system"
 	"mynav/pkg/tmux"
 
@@ -21,8 +23,6 @@ type Port struct {
 
 var _ Viewable = new(PortView)
 
-const PortViewName = "PortView"
-
 func NewPortView() *PortView {
 	return &PortView{}
 }
@@ -41,7 +41,7 @@ func (p *PortView) View() *View {
 
 func (p *PortView) Init() {
 	screenX, screenY := ScreenSize()
-	p.view = SetCenteredView(PortViewName, screenX/2, screenY/3, 0)
+	p.view = SetCenteredView(constants.PortViewName, screenX/2, screenY/3, 0)
 
 	p.view.FrameColor = gocui.ColorBlue
 	p.view.Title = withSurroundingSpaces("Open Ports")
@@ -71,6 +71,10 @@ func (p *PortView) Init() {
 			return nil
 		})
 	}()
+
+	events.AddEventListener(constants.PortChangeEventName, func() {
+		p.refreshPorts()
+	})
 
 	p.view.KeyBinding().
 		set('j', func() {
@@ -109,8 +113,6 @@ func (p *PortView) Init() {
 					if err := Api().Port.KillPort(port.Port); err != nil {
 						OpenToastDialogError(err.Error())
 					}
-					Api().Tmux.SyncPorts()
-					p.refreshPorts()
 				}
 			}, "Are you sure you want to kill this port?")
 		}, "Kill port").

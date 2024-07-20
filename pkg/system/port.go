@@ -1,6 +1,8 @@
 package system
 
 import (
+	"mynav/pkg/constants"
+	"mynav/pkg/events"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -97,6 +99,7 @@ func (pc *PortController) KillPort(p *Port) error {
 		return err
 	}
 
+	events.EmitEvent(constants.PortChangeEventName)
 	return nil
 }
 

@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"mynav/pkg/constants"
 
 	"github.com/awesome-gocui/gocui"
 	"github.com/gookit/color"
@@ -13,8 +14,6 @@ type HelpDialog struct {
 	globalMappings []*KeyBindingInfo
 	mappings       []*KeyBindingInfo
 }
-
-const HelpDialogName = "HelpDialog"
 
 func NewHelpViewEditor(up func(), down func(), enter func(), exit func()) gocui.EditorFunc {
 	return gocui.EditorFunc(
@@ -39,7 +38,7 @@ func OpenHelpView(mappings []*KeyBindingInfo, exit func()) *HelpDialog {
 	hv.mappings = mappings
 
 	x, _ := ScreenSize()
-	hv.view = SetCenteredView(HelpDialogName, (x*2)/3, 16, 0)
+	hv.view = SetCenteredView(constants.HelpDialogName, (x*2)/3, 16, 0)
 	hv.view.Editable = true
 	hv.view.FrameColor = gocui.ColorGreen
 

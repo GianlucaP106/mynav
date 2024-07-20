@@ -1,7 +1,9 @@
 package ui
 
 import (
+	"mynav/pkg/constants"
 	"mynav/pkg/core"
+	"mynav/pkg/events"
 
 	"github.com/awesome-gocui/gocui"
 )
@@ -14,8 +16,6 @@ type TopicsView struct {
 }
 
 var _ Viewable = new(TopicsView)
-
-const TopicViewName = "TopicsView"
 
 func NewTopicsView() *TopicsView {
 	return &TopicsView{}
@@ -34,7 +34,7 @@ func (tv *TopicsView) Focus() {
 }
 
 func (tv *TopicsView) Init() {
-	tv.view = GetViewPosition(TopicViewName).Set()
+	tv.view = GetViewPosition(constants.TopicViewName).Set()
 
 	tv.view.FrameColor = gocui.ColorBlue
 	tv.view.Title = withSurroundingSpaces("Topics")
@@ -53,6 +53,10 @@ func (tv *TopicsView) Init() {
 	tv.tableRenderer.InitTable(sizeX, sizeY, titles, colProportions)
 	tv.refreshTopics()
 
+	events.AddEventListener(constants.TopicChangeEventName, func() {
+		tv.refreshTopics()
+	})
+
 	if selectedWorkspace := Api().Core.GetSelectedWorkspace(); selectedWorkspace != nil {
 		tv.selectTopicByName(selectedWorkspace.Topic.Name)
 	}
@@ -66,25 +70,27 @@ func (tv *TopicsView) Init() {
 	tv.view.KeyBinding().
 		set('j', func() {
 			tv.tableRenderer.Down()
-			GetWorkspacesView().refreshWorkspaces()
+			events.EmitEvent(constants.WorkspaceChangeEventName)
 		}, "Move down").
 		set('k', func() {
 			tv.tableRenderer.Up()
-			GetWorkspacesView().refreshWorkspaces()
+			events.EmitEvent(constants.WorkspaceChangeEventName)
 		}, "Move up").
 		set(gocui.KeyEnter, moveRight, "Open topic").
 		set('/', func() {
 			OpenEditorDialog(func(s string) {
 				tv.search = s
 				tv.view.Subtitle = withSurroundingSpaces("Searching: " + tv.search)
-				RefreshAllData()
+				tv.refreshTopics()
+				events.EmitEvent(constants.WorkspaceChangeEventName)
 			}, func() {}, "Search", Small)
 		}, "Search by name").
 		set(gocui.KeyEsc, func() {
 			if tv.search != "" {
 				tv.search = ""
 				tv.view.Subtitle = ""
-				RefreshAllData()
+				tv.refreshTopics()
+				events.EmitEvent(constants.WorkspaceChangeEventName)
 			}
 		}, "Escape search").
 		set('a', func() {
@@ -98,7 +104,7 @@ func (tv *TopicsView) Init() {
 				// This will result in the corresponding topic going to the top
 				// because we are sorting by modifed time
 				tv.tableRenderer.SetSelectedRow(0)
-				RefreshAllData()
+				events.EmitEvent(constants.WorkspaceChangeEventName)
 			}, func() {}, "Topic name", Small)
 		}, "Create a topic").
 		set('r', func() {
@@ -112,8 +118,6 @@ func (tv *TopicsView) Init() {
 					OpenToastDialogError(err.Error())
 					return
 				}
-
-				RefreshAllData()
 			}, func() {}, "New topic name", Small, t.Name)
 		}, "Rename topic").
 		set('D', func() {
@@ -121,9 +125,12 @@ func (tv *TopicsView) Init() {
 				return
 			}
 			OpenConfirmationDialog(func(b bool) {
-				if b {
-					Api().Core.DeleteTopic(tv.getSelectedTopic())
-					RefreshAllData()
+				if !b {
+					return
+				}
+
+				if err := Api().Core.DeleteTopic(tv.getSelectedTopic()); err != nil {
+					OpenToastDialogError(err.Error())
 				}
 			}, "Are you sure you want to delete this topic? All its content will be deleted.")
 		}, "Delete topic").

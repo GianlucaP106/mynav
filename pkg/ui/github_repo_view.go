@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"mynav/pkg/constants"
 	"mynav/pkg/github"
 
 	"github.com/awesome-gocui/gocui"
@@ -14,8 +15,6 @@ type GithubRepoView struct {
 }
 
 var _ Viewable = new(GithubRepoView)
-
-const GithubRepoViewName = "GithubRepoView"
 
 func NewGithubRepoView() *GithubRepoView {
 	return &GithubRepoView{}
@@ -34,7 +33,7 @@ func (g *GithubRepoView) Focus() {
 }
 
 func (g *GithubRepoView) Init() {
-	g.view = GetViewPosition(GithubRepoViewName).Set()
+	g.view = GetViewPosition(constants.GithubRepoViewName).Set()
 
 	g.view.Title = "Repository"
 	g.view.TitleColor = gocui.ColorBlue

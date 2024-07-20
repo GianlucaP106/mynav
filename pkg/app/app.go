@@ -2,16 +2,16 @@ package app
 
 import (
 	"log"
-	"mynav/pkg/core"
+	"mynav/pkg/api"
 	"mynav/pkg/ui"
 )
 
 type App struct {
-	api *core.Api
+	api *api.Api
 }
 
 func NewApp() *App {
-	api, err := core.NewApi()
+	api, err := api.NewApi()
 	if err != nil {
 		log.Fatalln(err.Error())
 	}

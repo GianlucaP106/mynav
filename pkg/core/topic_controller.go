@@ -1,6 +1,8 @@
 package core
 
 import (
+	"mynav/pkg/constants"
+	"mynav/pkg/events"
 	"mynav/pkg/tmux"
 	"os"
 	"path/filepath"
@@ -25,6 +27,7 @@ func NewTopicController(rootPath string, tsc *tmux.TmuxController) *TopicControl
 func (tc *TopicController) CreateTopic(name string) error {
 	topic := newTopic(name, filepath.Join(tc.rootPath, name))
 	tc.TopicRepoitory.Save(topic)
+	events.EmitEvent(constants.TopicChangeEventName)
 	return nil
 }
 
@@ -42,6 +45,7 @@ func (tc *TopicController) DeleteTopic(t *Topic) error {
 	}
 
 	tc.WorkspaceController.DeleteWorkspacesByTopic(t)
+	events.EmitEvent(constants.TopicChangeEventName)
 	return nil
 }
 
@@ -80,5 +84,7 @@ func (tc *TopicController) RenameTopic(t *Topic, newName string) error {
 
 	t.Name = newName
 	t.Path = newTopicPath
+	events.EmitEvent(constants.TopicChangeEventName)
+	events.EmitEvent(constants.WorkspaceChangeEventName)
 	return nil
 }
