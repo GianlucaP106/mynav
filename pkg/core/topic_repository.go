@@ -1,13 +1,14 @@
 package core
 
 import (
+	"mynav/pkg/persistence"
 	"mynav/pkg/system"
 	"os"
 	"path/filepath"
 )
 
 type TopicRepository struct {
-	TopicContainer TopicContainer
+	TopicContainer *persistence.Container[Topic]
 }
 
 func NewTopicRepository(rootPath string) *TopicRepository {
@@ -17,7 +18,7 @@ func NewTopicRepository(rootPath string) *TopicRepository {
 }
 
 func (tr *TopicRepository) LoadContainer(rootPath string) {
-	tc := NewTopicContainer()
+	tc := persistence.NewContainer[Topic]()
 	tr.TopicContainer = tc
 	for _, topicDirEntry := range system.GetDirEntries(rootPath) {
 		if !topicDirEntry.IsDir() || topicDirEntry.Name() == ".mynav" {
@@ -26,7 +27,7 @@ func (tr *TopicRepository) LoadContainer(rootPath string) {
 
 		topicName := topicDirEntry.Name()
 		topic := newTopic(topicName, filepath.Join(rootPath, topicName))
-		tc.Set(topic)
+		tc.Set(topic.Name, topic)
 	}
 }
 
@@ -38,7 +39,7 @@ func (tr *TopicRepository) Save(t *Topic) error {
 		}
 	}
 
-	tr.TopicContainer.Set(t)
+	tr.TopicContainer.Set(t.Name, t)
 	return nil
 }
 
@@ -47,7 +48,7 @@ func (tr *TopicRepository) Delete(t *Topic) error {
 		return err
 	}
 
-	tr.TopicContainer.Delete(t)
+	tr.TopicContainer.Delete(t.Name)
 	return nil
 }
 

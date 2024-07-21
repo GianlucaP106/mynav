@@ -1,122 +1,144 @@
 package github
 
 import (
-	"context"
-	"sync"
-
-	gh "github.com/google/go-github/v62/github"
+	"mynav/pkg/constants"
+	"mynav/pkg/events"
+	"mynav/pkg/persistence"
+	"mynav/pkg/tasks"
 )
 
 type GithubController struct {
-	client        GithubClient
-	authenticator *GithubAuthenticator
-	login         string
+	client GithubClient
 
-	PullRequests GithubPullRequests
-	Repos        []*GithubRepository
-}
-
-type GithubClient struct {
-	*gh.Client
-	mu sync.Mutex
+	isLoading     *persistence.Value[bool]
+	profile       *persistence.Value[GithubProfile]
+	prContainer   *persistence.Container[GithubPullRequest]
+	repoContainer *persistence.Container[GithubRepository]
 }
 
 const FETCH_LIMIT = 1000
 
 func NewGithubController(token *GithubAuthenticationToken, onLogin func(*GithubAuthenticationToken), onLogout func()) *GithubController {
-	ga := NewGithubAuthenticator(onLogin, onLogout, "repo", "read:org")
-	gs := &GithubController{
-		authenticator: ga,
+	g := &GithubController{
+		client:        NewGithubClient(token, onLogin, onLogout),
+		prContainer:   persistence.NewContainer[GithubPullRequest](),
+		repoContainer: persistence.NewContainer[GithubRepository](),
+		profile:       persistence.NewValue(GithubProfile{}),
+		isLoading:     persistence.NewValue(false),
 	}
 
-	if token != nil {
-		gs.client.Client = gs.authenticator.InitClient(token)
+	g.LoadData()
+
+	return g
+}
+
+func (g *GithubController) LoadData() {
+	if g.IsAuthenticated() {
+		tasks.AddTask(func() {
+			g.isLoading.Set(true)
+			defer g.isLoading.Set(false)
+			g.LoadProfile()
+			g.LoadUserRepos()
+			g.LoadUserPullRequests()
+		})
 	}
-
-	return gs
 }
 
-func (gs *GithubController) AuthenticateWithDevice(callback func()) *GithubDevicePreAuthentication {
-	gda, f := gs.authenticator.AuthenticateWithDevice()
-
-	go func() {
-		gs.client.Client = f()
-		callback()
-	}()
-
-	return gda
+func (g *GithubController) IsAuthenticated() bool {
+	return g.client.IsAuthenticated()
 }
 
-func (gs *GithubController) AuthenticateWithPersonalAccessToken(token string) error {
-	client, err := gs.authenticator.AuthenticateWithPersonalAccessToken(token)
+func (g *GithubController) IsLoading() bool {
+	return g.isLoading.Get()
+}
+
+func (g *GithubController) InitWithDeviceAuth() *GithubDevicePreAuthentication {
+	return g.client.AuthenticateWithDevice()
+}
+
+func (g *GithubController) InitWithPAT(token string) error {
+	return g.client.AuthenticateWithPersonalAccessToken(token)
+}
+
+func (g *GithubController) LogoutUser() {
+	if g.isLoading.Get() {
+		return
+	}
+	g.client.Logout()
+}
+
+func (g *GithubController) LoadUserPullRequests() {
+	prs, err := g.fetchUserPullRequests()
 	if err != nil {
-		return err
+		return
 	}
-	gs.client.Client = client
-	return nil
+
+	g.prContainer.SetAll(prs, func(gpr *GithubPullRequest) string {
+		return gpr.GetURL()
+	})
+
+	events.Emit(constants.GithubPrsChangesEventName)
 }
 
-func (gs *GithubController) LogoutUser() {
-	gs.client.mu.Lock()
-	defer gs.client.mu.Unlock()
-	gs.client.Client = nil
-	gs.login = ""
-	gs.authenticator.onLogout()
-}
-
-func (gs *GithubController) IsAuthenticated() bool {
-	return gs.client.Client != nil
-}
-
-func (gs *GithubController) Principal() *gh.User {
-	principal, _, err := gs.client.Users.Get(context.TODO(), "")
+func (g *GithubController) LoadUserRepos() {
+	repos, err := g.fetchUserRepos()
 	if err != nil {
-		return nil
+		return
 	}
 
-	return principal
+	g.repoContainer.SetAll(repos, func(gr *GithubRepository) string {
+		return gr.GetURL()
+	})
+
+	events.Emit(constants.GithubReposChangesEventName)
 }
 
-func (gs *GithubController) GetPrincipalLogin() string {
-	if gs.login == "" {
-		p := gs.Principal()
-		gs.login = *p.Login
+func (g *GithubController) LoadProfile() {
+	profile, err := g.fetchProfile()
+	if err != nil {
+		return
 	}
 
-	return gs.login
+	g.profile.Set(*profile)
 }
 
-func (gc *GithubController) GetUserPullRequestsLocked() (GithubPullRequests, error) {
-	gc.client.mu.Lock()
-	defer gc.client.mu.Unlock()
-
-	return gc.GetUserPullRequests()
+func (g *GithubController) GetUserPullRequests() GithubPullRequests {
+	return g.prContainer.All()
 }
 
-func (gc *GithubController) GetUserReposLocked() ([]*GithubRepository, error) {
-	gc.client.mu.Lock()
-	defer gc.client.mu.Unlock()
-
-	return gc.GetUserRepos()
+func (g *GithubController) GetUserRepos() []*GithubRepository {
+	return g.repoContainer.All()
 }
 
-func (gc *GithubController) GetUserPullRequests() (GithubPullRequests, error) {
-	if gc.PullRequests != nil {
-		return gc.PullRequests, nil
+func (g *GithubController) GetProfile() GithubProfile {
+	return g.profile.Get()
+}
+
+func (g *GithubController) fetchProfile() (*GithubProfile, error) {
+	principal, err := g.client.Principal()
+	if err != nil {
+		return nil, err
 	}
 
-	allRepos, err := gc.GetUserRepos()
+	pr := &GithubProfile{
+		Login: principal.GetLogin(),
+		Name:  principal.GetName(),
+		Email: principal.GetEmail(),
+		Url:   principal.GetHTMLURL(),
+	}
+
+	return pr, nil
+}
+
+func (gc *GithubController) fetchUserPullRequests() (GithubPullRequests, error) {
+	allRepos, err := gc.fetchUserRepos()
 	if err != nil {
 		return nil, err
 	}
 
 	allPrs := NewGithubPrContainer()
 	for _, repo := range allRepos {
-		prs, _, err := gc.client.PullRequests.List(context.Background(), *repo.GetOwner().Login, *repo.Name, &gh.PullRequestListOptions{
-			ListOptions: gh.ListOptions{
-				PerPage: FETCH_LIMIT,
-			},
-		})
+		prs, err := gc.client.PullRequests(*repo.GetOwner().Login, *repo.Name, FETCH_LIMIT)
 		if err != nil {
 			return nil, err
 		}
@@ -124,7 +146,12 @@ func (gc *GithubController) GetUserPullRequests() (GithubPullRequests, error) {
 		allPrs.AddPrs(repo, prs...)
 	}
 
-	login := gc.GetPrincipalLogin()
+	principal, err := gc.client.Principal()
+	if err != nil {
+		return nil, err
+	}
+
+	login := principal.GetLogin()
 	out := NewGithubPrContainer()
 	for _, pr := range allPrs {
 		belongsToUser, relation := func() (bool, string) {
@@ -167,22 +194,12 @@ func (gc *GithubController) GetUserPullRequests() (GithubPullRequests, error) {
 		}
 	}
 
-	gc.PullRequests = out
-
 	return out, nil
 }
 
-func (gc *GithubController) GetUserRepos() ([]*GithubRepository, error) {
-	if gc.Repos != nil {
-		return gc.Repos, nil
-	}
-
+func (gc *GithubController) fetchUserRepos() ([]*GithubRepository, error) {
 	allRepos := make(map[string]*GithubRepository)
-	userRepos, _, err := gc.client.Repositories.ListByAuthenticatedUser(context.Background(), &gh.RepositoryListByAuthenticatedUserOptions{
-		ListOptions: gh.ListOptions{
-			PerPage: FETCH_LIMIT,
-		},
-	})
+	userRepos, err := gc.client.PrincipalRepositories(FETCH_LIMIT)
 	if err != nil {
 		return nil, err
 	}
@@ -193,19 +210,13 @@ func (gc *GithubController) GetUserRepos() ([]*GithubRepository, error) {
 		}
 	}
 
-	orgs, _, err := gc.client.Organizations.List(context.Background(), "", &gh.ListOptions{
-		PerPage: FETCH_LIMIT,
-	})
+	orgs, err := gc.client.PrincipalOrganizations(FETCH_LIMIT)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, org := range orgs {
-		orgRepos, _, err := gc.client.Repositories.ListByOrg(context.Background(), *org.Login, &gh.RepositoryListByOrgOptions{
-			ListOptions: gh.ListOptions{
-				PerPage: FETCH_LIMIT,
-			},
-		})
+		orgRepos, err := gc.client.RepositoriesByOrg(org.GetLogin(), FETCH_LIMIT)
 		if err != nil {
 			return nil, err
 		}
@@ -221,8 +232,6 @@ func (gc *GithubController) GetUserRepos() ([]*GithubRepository, error) {
 	for _, r := range allRepos {
 		out = append(out, r)
 	}
-
-	gc.Repos = out
 
 	return out, nil
 }

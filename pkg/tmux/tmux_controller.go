@@ -4,6 +4,7 @@ import (
 	"mynav/pkg/constants"
 	"mynav/pkg/events"
 	"mynav/pkg/system"
+	"mynav/pkg/tasks"
 	"sync"
 )
 
@@ -23,8 +24,9 @@ func NewTmuxController(pc *system.PortController) *TmuxController {
 		PortController:   pc,
 	}
 
-	events.AddEventListener(constants.PortChangeEventName, func() {
-		tmc.SyncPorts()
+	// TODO: improve this
+	events.AddEventListener(constants.PortSyncNeededEventName, func(_ string) {
+		tmc.syncPorts()
 	})
 
 	return tmc
@@ -35,20 +37,25 @@ func (tc *TmuxController) RenameTmuxSession(s *TmuxSession, newName string) erro
 		return err
 	}
 
+	events.Emit(constants.TmuxSessionChangeEventName)
 	return nil
 }
 
 func (tc *TmuxController) CreateAndAttachTmuxSession(session string, path string) error {
 	tc.TmuxCommunicator.CreateAndAttachTmuxSession(session, path)
 	tc.TmuxRepository.LoadSessions()
-	events.EmitEvent(constants.TmuxSessionChangeEventName)
+	tc.syncPorts()
+
+	events.Emit(constants.TmuxSessionChangeEventName)
 	return nil
 }
 
 func (tc *TmuxController) AttachTmuxSession(s *TmuxSession) error {
 	tc.TmuxCommunicator.AttachTmuxSession(s.Name)
 	tc.TmuxRepository.LoadSessions()
-	events.EmitEvent(constants.TmuxSessionChangeEventName)
+	tc.syncPorts()
+
+	events.Emit(constants.TmuxSessionChangeEventName)
 	return nil
 }
 
@@ -67,14 +74,14 @@ func (tc *TmuxController) GetTmuxSessionByName(name string) *TmuxSession {
 func (tc *TmuxController) DeleteTmuxSession(s *TmuxSession) error {
 	refreshPorts := len(s.Ports.ToList()) > 0
 	if refreshPorts {
-		defer events.EmitEvent(constants.PortChangeEventName)
+		defer tc.syncPorts()
 	}
 
 	if err := tc.TmuxRepository.DeleteSession(s); err != nil {
 		return err
 	}
 
-	events.EmitEvent(constants.TmuxSessionChangeEventName)
+	events.Emit(constants.TmuxSessionChangeEventName)
 	return nil
 }
 
@@ -96,13 +103,13 @@ func (tc *TmuxController) GetTmuxPanesBySession(ts *TmuxSession) []*TmuxPane {
 }
 
 func (tc *TmuxController) DeleteAllTmuxSessions() error {
-	for _, s := range tc.TmuxRepository.GetSessionContainer() {
+	for _, s := range tc.TmuxRepository.GetSessions() {
 		if err := tc.TmuxRepository.DeleteSession(s); err != nil {
 			return err
 		}
 	}
 
-	events.EmitEvent(constants.TmuxSessionChangeEventName)
+	events.Emit(constants.TmuxSessionChangeEventName)
 	return nil
 }
 
@@ -110,7 +117,7 @@ func (tc *TmuxController) GetTmuxStats() (sessionCount int, windowCount int) {
 	sessionCount = 0
 	windowCount = 0
 
-	for _, s := range tc.TmuxRepository.GetSessionContainer() {
+	for _, s := range tc.TmuxRepository.GetSessions() {
 		sessionCount++
 		windowCount += s.NumWindows
 	}
@@ -130,30 +137,34 @@ func (tc *TmuxController) GetTmuxSessionByPort(port *system.Port) *TmuxSession {
 	return nil
 }
 
-func (tc *TmuxController) SyncPorts() {
-	tmap := tc.GetTmuxSessionPidMap()
+func (tc *TmuxController) syncPorts() {
+	tasks.AddTask(func() {
+		tmap := tc.GetTmuxSessionPidMap()
 
-	tc.PortController.InitPorts()
-	ports := tc.PortController.GetPorts()
+		tc.PortController.InitPorts()
+		ports := tc.PortController.GetPorts()
 
-	var wg sync.WaitGroup
+		var wg sync.WaitGroup
 
-	for _, session := range tmap {
-		session.Ports = make(system.Ports)
-	}
+		for _, session := range tmap {
+			session.Ports = make(system.Ports)
+		}
 
-	for _, port := range ports {
-		prt := port
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for pid, ts := range tmap {
-				if system.IsProcessChildOf(prt.Pid, pid) {
-					ts.Ports.AddPort(prt)
+		for _, port := range ports {
+			prt := port
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				for pid, ts := range tmap {
+					if system.IsProcessChildOf(prt.Pid, pid) {
+						ts.Ports.AddPort(prt)
+					}
 				}
-			}
-		}()
-	}
+			}()
+		}
 
-	wg.Wait()
+		wg.Wait()
+
+		events.Emit(constants.PortChangeEventName)
+	})
 }

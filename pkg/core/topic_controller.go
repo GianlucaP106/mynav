@@ -9,7 +9,7 @@ import (
 )
 
 type TopicController struct {
-	TopicRepoitory      *TopicRepository
+	TopicRepository     *TopicRepository
 	WorkspaceController *WorkspaceController
 	TmuxController      *tmux.TmuxController
 	rootPath            string
@@ -20,32 +20,32 @@ func NewTopicController(rootPath string, tsc *tmux.TmuxController) *TopicControl
 		rootPath:       rootPath,
 		TmuxController: tsc,
 	}
-	tc.TopicRepoitory = NewTopicRepository(rootPath)
+	tc.TopicRepository = NewTopicRepository(rootPath)
 	return tc
 }
 
 func (tc *TopicController) CreateTopic(name string) error {
 	topic := newTopic(name, filepath.Join(tc.rootPath, name))
-	tc.TopicRepoitory.Save(topic)
-	events.EmitEvent(constants.TopicChangeEventName)
+	tc.TopicRepository.Save(topic)
+	events.Emit(constants.TopicChangeEventName)
 	return nil
 }
 
 func (tc *TopicController) GetTopics() Topics {
-	return tc.TopicRepoitory.TopicContainer.ToList()
+	return tc.TopicRepository.TopicContainer.All()
 }
 
 func (tc *TopicController) GetTopicCount() int {
-	return len(tc.TopicRepoitory.TopicContainer)
+	return tc.TopicRepository.TopicContainer.Size()
 }
 
 func (tc *TopicController) DeleteTopic(t *Topic) error {
-	if err := tc.TopicRepoitory.Delete(t); err != nil {
+	if err := tc.TopicRepository.Delete(t); err != nil {
 		return err
 	}
 
 	tc.WorkspaceController.DeleteWorkspacesByTopic(t)
-	events.EmitEvent(constants.TopicChangeEventName)
+	events.Emit(constants.TopicChangeEventName)
 	return nil
 }
 
@@ -63,28 +63,29 @@ func (tc *TopicController) RenameTopic(t *Topic, newName string) error {
 		newWorkspacePath := filepath.Join(newTopicPath, w.Name)
 		newShortPath := filepath.Join(newName, w.Name)
 
-		wr.Container.Delete(w)
+		wr.Container.Delete(w.ShortPath())
 		wr.DeleteMetadata(w)
 
-		if wr.Datasource.Data.SelectedWorkspace == w.ShortPath() {
-			wr.Datasource.Data.SelectedWorkspace = newShortPath
+		if wr.Datasource.GetData().SelectedWorkspace == w.ShortPath() {
+			wr.Datasource.GetData().SelectedWorkspace = newShortPath
 		}
 
 		if s := tc.TmuxController.GetTmuxSessionByName(w.Path); s != nil {
 			tc.TmuxController.RenameTmuxSession(s, newWorkspacePath)
 		}
 
-		wr.Container[newShortPath] = w
+		wr.Container.Set(w.ShortPath(), w)
 		w.Path = newWorkspacePath
 
-		wr.Datasource.Data.Workspaces[newShortPath] = w.Metadata
-		wr.Datasource.SaveData()
+		data := wr.Datasource.GetData()
+		data.Workspaces[newShortPath] = w.Metadata
+		wr.Datasource.SaveData(data)
 
 	}
 
 	t.Name = newName
 	t.Path = newTopicPath
-	events.EmitEvent(constants.TopicChangeEventName)
-	events.EmitEvent(constants.WorkspaceChangeEventName)
+	events.Emit(constants.TopicChangeEventName)
+	events.Emit(constants.WorkspaceChangeEventName)
 	return nil
 }

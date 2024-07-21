@@ -11,8 +11,7 @@ import (
 
 type TmuxSessionView struct {
 	view          *View
-	tableRenderer *TableRenderer
-	sessions      []*tmux.TmuxSession
+	tableRenderer *TableRenderer[*tmux.TmuxSession]
 }
 
 var _ Viewable = new(TmuxSessionView)
@@ -42,7 +41,7 @@ func (tv *TmuxSessionView) Init() {
 	tv.view.FrameColor = gocui.ColorGreen
 
 	sizeX, sizeY := tv.view.Size()
-	tv.tableRenderer = NewTableRenderer()
+	tv.tableRenderer = NewTableRenderer[*tmux.TmuxSession]()
 	titles := []string{
 		"workspace",
 		"Windows",
@@ -54,11 +53,13 @@ func (tv *TmuxSessionView) Init() {
 		0.6,
 	}
 	tv.tableRenderer.InitTable(sizeX, sizeY, titles, proportions)
-	tv.refreshTmuxSessions()
 
-	events.AddEventListener(constants.TmuxSessionChangeEventName, func() {
+	events.AddEventListener(constants.TmuxSessionChangeEventName, func(_ string) {
 		tv.refreshTmuxSessions()
+		RenderView(tv)
 	})
+
+	tv.refreshTmuxSessions()
 
 	tv.view.KeyBinding().
 		set(gocui.KeyEnter, func() {
@@ -84,6 +85,7 @@ func (tv *TmuxSessionView) Init() {
 						OpenToastDialogError(err.Error())
 						return
 					}
+					events.Emit(constants.WorkspaceChangeEventName)
 				}
 			}, "Are you sure you want to delete this session?")
 		}, "Delete session").
@@ -137,22 +139,22 @@ func (tv *TmuxSessionView) Init() {
 }
 
 func (tv *TmuxSessionView) getSelectedSession() *tmux.TmuxSession {
-	return tv.sessions[tv.tableRenderer.GetSelectedRowIndex()]
+	_, ts := tv.tableRenderer.GetSelectedRow()
+	if ts != nil {
+		return *ts
+	}
+
+	return nil
 }
 
 func (ts *TmuxSessionView) refreshTmuxSessions() {
-	out := make([]*tmux.TmuxSession, 0)
+	sessions := make([]*tmux.TmuxSession, 0)
 	for _, session := range Api().Tmux.GetTmuxSessions() {
-		out = append(out, session)
+		sessions = append(sessions, session)
 	}
 
-	ts.sessions = out
-	ts.syncSessionsToTable()
-}
-
-func (tv *TmuxSessionView) syncSessionsToTable() {
 	rows := make([][]string, 0)
-	for _, session := range tv.sessions {
+	for _, session := range sessions {
 		workspace := "external"
 		if !Api().Configuration.Standalone {
 			w := Api().Core.GetWorkspaceByTmuxSession(session)
@@ -168,14 +170,15 @@ func (tv *TmuxSessionView) syncSessionsToTable() {
 			session.Name,
 		})
 	}
-	tv.tableRenderer.FillTable(rows)
+
+	ts.tableRenderer.FillTable(rows, sessions)
 }
 
 func (tv *TmuxSessionView) Render() error {
 	isViewFocused := tv.view.IsFocused()
 
 	tv.view.Clear()
-	tv.tableRenderer.RenderWithSelectCallBack(tv.view, func(_ int, _ *TableRow) bool {
+	tv.tableRenderer.RenderWithSelectCallBack(tv.view, func(_ int, _ *TableRow[*tmux.TmuxSession]) bool {
 		return isViewFocused
 	})
 

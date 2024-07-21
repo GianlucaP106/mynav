@@ -12,8 +12,7 @@ import (
 
 type PortView struct {
 	view          *View
-	tableRenderer *TableRenderer
-	ports         []*Port
+	tableRenderer *TableRenderer[*Port]
 }
 
 type Port struct {
@@ -48,7 +47,7 @@ func (p *PortView) Init() {
 	p.view.TitleColor = gocui.ColorBlue
 
 	sizeX, sizeY := p.view.Size()
-	p.tableRenderer = NewTableRenderer()
+	p.tableRenderer = NewTableRenderer[*Port]()
 	p.tableRenderer.InitTable(
 		sizeX,
 		sizeY,
@@ -63,18 +62,12 @@ func (p *PortView) Init() {
 			0.5,
 		})
 
-	go func() {
-		Api().Tmux.SyncPorts()
+	events.AddEventListener(constants.PortChangeEventName, func(_ string) {
 		p.refreshPorts()
-		UpdateGui(func(_ *Gui) error {
-			p.Render()
-			return nil
-		})
-	}()
-
-	events.AddEventListener(constants.PortChangeEventName, func() {
-		p.refreshPorts()
+		RenderView(p)
 	})
+
+	events.Emit(constants.PortSyncNeededEventName)
 
 	p.view.KeyBinding().
 		set('j', func() {
@@ -123,7 +116,6 @@ func (p *PortView) Init() {
 
 func (pv *PortView) refreshPorts() {
 	ports := make([]*Port, 0)
-
 	for _, p := range Api().Port.GetPorts().ToList().Sorted() {
 		if t := Api().Tmux.GetTmuxSessionByPort(p); t != nil {
 			ports = append(ports, &Port{
@@ -138,13 +130,9 @@ func (pv *PortView) refreshPorts() {
 		}
 	}
 
-	pv.ports = ports
-	pv.syncPortsToTable()
-}
-
-func (pv *PortView) syncPortsToTable() {
 	rows := make([][]string, 0)
-	for _, p := range pv.ports {
+	rowValues := make([]*Port, 0)
+	for _, p := range ports {
 		linkedTo := func() string {
 			if p.tmux == nil {
 				return "external"
@@ -158,6 +146,7 @@ func (pv *PortView) syncPortsToTable() {
 			}
 		}()
 
+		rowValues = append(rowValues, p)
 		rows = append(rows, []string{
 			p.GetPortStr(),
 			p.GetExeName(),
@@ -165,28 +154,28 @@ func (pv *PortView) syncPortsToTable() {
 		})
 	}
 
-	pv.tableRenderer.FillTable(rows)
+	pv.tableRenderer.FillTable(rows, rowValues)
 }
 
 func (p *PortView) getSelectedPort() *Port {
-	if len(p.ports) <= 0 {
-		return nil
+	_, port := p.tableRenderer.GetSelectedRow()
+	if port != nil {
+		return *port
 	}
 
-	return p.ports[p.tableRenderer.GetSelectedRowIndex()]
+	return nil
 }
 
 func (p *PortView) Render() error {
 	p.view.Clear()
 
 	currentViewSelected := p.view.IsFocused()
-
-	p.tableRenderer.RenderWithSelectCallBack(p.view, func(_ int, _ *TableRow) bool {
+	p.tableRenderer.RenderWithSelectCallBack(p.view, func(_ int, _ *TableRow[*Port]) bool {
 		return currentViewSelected
 	})
 
-	if p.ports == nil {
-		fmt.Fprintln(p.view, "Loading...")
+	if p.tableRenderer.GetTableSize() == 0 {
+		fmt.Fprintln(p.view, "Nothing to show")
 	}
 
 	return nil

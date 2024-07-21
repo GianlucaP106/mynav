@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"mynav/pkg/constants"
+	"mynav/pkg/events"
 	"mynav/pkg/github"
 
 	"github.com/awesome-gocui/gocui"
@@ -10,8 +11,7 @@ import (
 
 type GithubRepoView struct {
 	view          *View
-	tableRenderer *TableRenderer
-	repos         []*github.GithubRepository
+	tableRenderer *TableRenderer[*github.GithubRepository]
 }
 
 var _ Viewable = new(GithubRepoView)
@@ -35,11 +35,11 @@ func (g *GithubRepoView) Focus() {
 func (g *GithubRepoView) Init() {
 	g.view = GetViewPosition(constants.GithubRepoViewName).Set()
 
-	g.view.Title = "Repository"
+	g.view.Title = "Repositories"
 	g.view.TitleColor = gocui.ColorBlue
 	g.view.FrameColor = gocui.ColorGreen
 
-	g.tableRenderer = NewTableRenderer()
+	g.tableRenderer = NewTableRenderer[*github.GithubRepository]()
 	sizeX, sizeY := g.view.Size()
 
 	g.tableRenderer.InitTable(
@@ -55,13 +55,10 @@ func (g *GithubRepoView) Init() {
 		},
 	)
 
-	go func() {
+	events.AddEventListener(constants.GithubReposChangesEventName, func(s string) {
 		g.refreshRepos()
-		UpdateGui(func(_ *Gui) error {
-			g.Render()
-			return nil
-		})
-	}()
+		RenderView(g)
+	})
 
 	moveRight := func() {
 		GetGithubPrView().Focus()
@@ -86,21 +83,18 @@ func (g *GithubRepoView) refreshRepos() {
 		return
 	}
 
-	repos, _ := Api().Github.GetUserReposLocked()
-	g.repos = repos
+	repos := Api().Github.GetUserRepos()
 
-	g.syncReposToTable()
-}
-
-func (g *GithubRepoView) syncReposToTable() {
 	rows := make([][]string, 0)
-	for _, repo := range g.repos {
+	rowValues := make([]*github.GithubRepository, 0)
+	for _, repo := range repos {
+		rowValues = append(rowValues, repo)
 		rows = append(rows, []string{
 			repo.GetName(),
 			repo.GetOwner().GetLogin(),
 		})
 	}
-	g.tableRenderer.FillTable(rows)
+	g.tableRenderer.FillTable(rows, rowValues)
 }
 
 func (g *GithubRepoView) Render() error {
@@ -111,16 +105,15 @@ func (g *GithubRepoView) Render() error {
 	}
 
 	g.view.Clear()
-	g.view.Subtitle = "Login: " + Api().Github.GetPrincipalLogin()
 
 	isFocused := g.view.IsFocused()
-	g.tableRenderer.render(g.view, func(_ int, _ *TableRow) bool {
+	g.tableRenderer.render(g.view, func(_ int, _ *TableRow[*github.GithubRepository]) bool {
 		return isFocused
 	})
 
-	if g.repos == nil {
+	if Api().Github.IsLoading() {
 		fmt.Fprintln(g.view, "Loading...")
-	} else if len(g.repos) == 0 {
+	} else if g.tableRenderer.GetTableSize() == 0 {
 		fmt.Fprintln(g.view, "No repos to display")
 	}
 

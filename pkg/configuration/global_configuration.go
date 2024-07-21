@@ -1,10 +1,11 @@
-package core
+package configuration
 
 import (
 	"log"
 	"mynav/pkg"
 	"mynav/pkg/git"
 	"mynav/pkg/github"
+	"mynav/pkg/persistence"
 	"mynav/pkg/system"
 	"os"
 	"path/filepath"
@@ -20,17 +21,22 @@ type GlobalConfigurationDataSchema struct {
 }
 
 type GlobalConfiguration struct {
-	Datasource *Datasource[GlobalConfigurationDataSchema]
+	Datasource *persistence.Datasource[GlobalConfigurationDataSchema]
 	Standalone bool
+}
+
+type Configuration struct {
+	*LocalConfiguration
+	*GlobalConfiguration
 }
 
 func NewGlobalConfiguration() *GlobalConfiguration {
 	gc := &GlobalConfiguration{}
 	gc.Standalone = system.IsCurrentProcessHomeDir()
-	gc.Datasource = NewDatasource[GlobalConfigurationDataSchema](gc.GetConfigFile())
+	gc.Datasource = persistence.NewDatasource[GlobalConfigurationDataSchema](gc.GetConfigFile())
 	gc.Datasource.LoadData()
-	if gc.Datasource.Data == nil {
-		gc.Datasource.Data = &GlobalConfigurationDataSchema{}
+	if gc.Datasource.GetData() == nil {
+		gc.Datasource.SaveData(&GlobalConfigurationDataSchema{})
 	}
 
 	return gc
@@ -62,12 +68,13 @@ func (gc *GlobalConfiguration) DetectUpdate() (update bool, newTag string) {
 
 func (gc *GlobalConfiguration) SetUpdateAsked() {
 	now := time.Now()
-	gc.Datasource.Data.UpdateAsked = &now
-	gc.Datasource.SaveData()
+	data := gc.Datasource.GetData()
+	data.UpdateAsked = &now
+	gc.Datasource.SaveData(data)
 }
 
 func (gc *GlobalConfiguration) IsUpdateAsked() bool {
-	time := gc.Datasource.Data.UpdateAsked
+	time := gc.Datasource.GetData().UpdateAsked
 	if time == nil {
 		return false
 	}
@@ -76,12 +83,13 @@ func (gc *GlobalConfiguration) IsUpdateAsked() bool {
 }
 
 func (gc *GlobalConfiguration) GetGithubToken() *github.GithubAuthenticationToken {
-	return gc.Datasource.Data.GithubToken
+	return gc.Datasource.GetData().GithubToken
 }
 
 func (gc *GlobalConfiguration) SetGithubToken(token *github.GithubAuthenticationToken) {
-	gc.Datasource.Data.GithubToken = token
-	gc.Datasource.SaveData()
+	data := gc.Datasource.GetData()
+	data.GithubToken = token
+	gc.Datasource.SaveData(data)
 }
 
 func (gc *GlobalConfiguration) UpdateMynav() error {
@@ -89,12 +97,13 @@ func (gc *GlobalConfiguration) UpdateMynav() error {
 }
 
 func (c *GlobalConfiguration) SetLastTab(lastTab string) {
-	c.Datasource.Data.LastTab = lastTab
-	c.Datasource.SaveData()
+	data := c.Datasource.GetData()
+	data.LastTab = lastTab
+	c.Datasource.SaveData(data)
 }
 
 func (c *GlobalConfiguration) GetLastTab() string {
-	return c.Datasource.Data.LastTab
+	return c.Datasource.GetData().LastTab
 }
 
 func (c *GlobalConfiguration) SetStandalone(s bool) {
