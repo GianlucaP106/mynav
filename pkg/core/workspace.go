@@ -1,6 +1,7 @@
 package core
 
 import (
+	"mynav/pkg/configuration"
 	"mynav/pkg/git"
 	"mynav/pkg/system"
 	"path/filepath"
@@ -42,7 +43,7 @@ func (w *Workspace) GetLastModifiedTime() time.Time {
 }
 
 func (w *Workspace) GetLastModifiedTimeFormatted() string {
-	time := w.GetLastModifiedTime().Format(TimeFormat())
+	time := w.GetLastModifiedTime().Format(configuration.TimeFormat())
 	return time
 }
 
@@ -133,30 +134,4 @@ func (w Workspaces) GetWorkspaceByShortPath(s string) *Workspace {
 func (w Workspaces) Sorted() Workspaces {
 	sort.Sort(w)
 	return w
-}
-
-type WorkspaceContainer map[string]*Workspace
-
-func NewWorkspaceContainer() WorkspaceContainer {
-	return make(WorkspaceContainer)
-}
-
-func (wc WorkspaceContainer) Get(id string) *Workspace {
-	return wc[id]
-}
-
-func (wc WorkspaceContainer) Set(w *Workspace) {
-	wc[w.ShortPath()] = w
-}
-
-func (wc WorkspaceContainer) Delete(w *Workspace) {
-	delete(wc, w.ShortPath())
-}
-
-func (wc WorkspaceContainer) ToList() Workspaces {
-	out := make(Workspaces, 0)
-	for _, w := range wc {
-		out = append(out, w)
-	}
-	return out
 }

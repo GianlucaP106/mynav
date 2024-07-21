@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"mynav/pkg/configuration"
 	"mynav/pkg/core"
 	"mynav/pkg/github"
 	"mynav/pkg/system"
@@ -11,33 +12,23 @@ import (
 
 type Api struct {
 	Tmux          *tmux.TmuxController
-	Core          *Core
-	Configuration *Configuration
+	Core          *core.Core
+	Configuration *configuration.Configuration
 	Github        *github.GithubController
 	Port          *system.PortController
 }
 
-type Configuration struct {
-	*core.LocalConfiguration
-	*core.GlobalConfiguration
-}
-
-type Core struct {
-	*core.TopicController
-	*core.WorkspaceController
-}
-
 func NewApi() (*Api, error) {
 	api := &Api{}
-	api.Core = &Core{}
-	api.Configuration = &Configuration{}
-	api.Configuration.LocalConfiguration = core.NewLocalConfiguration()
-	api.Configuration.GlobalConfiguration = core.NewGlobalConfiguration()
+	api.Core = &core.Core{}
+	api.Configuration = &configuration.Configuration{}
+	api.Configuration.LocalConfiguration = configuration.NewLocalConfiguration()
+	api.Configuration.GlobalConfiguration = configuration.NewGlobalConfiguration()
 
 	if api.Configuration.IsConfigInitialized {
 		api.InitControllers()
 	} else {
-		api.InitTmuxController()
+		api.InitStandaloneController()
 	}
 
 	return api, nil
@@ -59,22 +50,22 @@ func (api *Api) InitConfiguration() error {
 	return nil
 }
 
-func (api *Api) InitTmuxController() {
+func (api *Api) InitStandaloneController() {
 	api.Port = system.NewPortController()
 	api.Tmux = tmux.NewTmuxController(api.Port)
 }
 
 func (api *Api) InitControllers() {
 	if api.Configuration.IsConfigInitialized {
-		api.InitTmuxController()
+		api.InitStandaloneController()
 		api.Core.TopicController = core.NewTopicController(api.Configuration.GetLocalConfigDir(), api.Tmux)
 		api.Core.WorkspaceController = core.NewWorkspaceController(
 			api.Core.GetTopics(),
 			api.Configuration.GetWorkspaceStorePath(),
 			api.Tmux,
-			api.Port,
 		)
 
+		// TODO: move config to seperate module
 		api.Github = github.NewGithubController(api.Configuration.GetGithubToken(), func(gat *github.GithubAuthenticationToken) {
 			api.Configuration.SetGithubToken(gat)
 		}, func() {

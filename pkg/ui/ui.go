@@ -68,6 +68,7 @@ func (ui *UI) InitUI() *UI {
 		NewWorkspcacesView(),
 		NewPortView(),
 		NewTmuxSessionView(),
+		NewGithubProfileView(),
 		NewGithubPrView(),
 		NewGithubRepoView(),
 	}
@@ -89,10 +90,12 @@ func (ui *UI) InitUI() *UI {
 	tab3.AddView(GetPortView(), None)
 	tab3.AddView(GetHeaderView(), None)
 
-	tab4 := NewTab("github", GetGithubPrView().View().Name())
-	tab4.AddView(GetGithubRepoView(), TopLeft)
-	tab4.AddView(GetGithubPrView(), TopRight)
+	tab4 := NewTab("github", GetGithubProfileView().View().Name())
+	tab4.AddView(GetGithubProfileView(), TopLeft)
+	tab4.AddView(GetGithubRepoView(), TopRight)
+	tab4.AddView(GetGithubPrView(), BottomLeft)
 	tab4.AddView(GetHeaderView(), None)
+	tab4.GenerateNavigationKeyBindings()
 
 	ui.mainTabGroup = NewTabGroup([]*Tab{
 		tab1,
@@ -118,7 +121,6 @@ func (ui *UI) InitUI() *UI {
 	}
 
 	ui.InitGlobalKeybindings()
-
 	return ui
 }
 
@@ -187,6 +189,13 @@ func GetViewable[T Viewable]() T {
 	}
 
 	panic("invalid view")
+}
+
+func RenderView(v Viewable) {
+	UpdateGui(func(g *Gui) error {
+		v.Render()
+		return nil
+	})
 }
 
 func FocusView(viewName string) {

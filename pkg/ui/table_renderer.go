@@ -5,19 +5,21 @@ import (
 	"io"
 	"log"
 	"math"
+	"sync"
 
 	"github.com/gookit/color"
 )
 
 type (
-	TableRenderer struct {
-		Table        *Table
+	TableRenderer[T any] struct {
+		Table        *Table[T]
 		ListRenderer *ListRenderer
+		mu           *sync.RWMutex
 	}
 
-	Table struct {
+	Table[T any] struct {
 		Title          *TableTitle
-		Rows           []*TableRow
+		Rows           []*TableRow[T]
 		ColProportions []float64
 
 		Width  int
@@ -28,71 +30,107 @@ type (
 		Titles []string
 	}
 
-	TableRow struct {
+	TableRow[T any] struct {
+		Value    T
 		Cols     []string
 		Selected bool
 	}
 )
 
-func NewTableRenderer() *TableRenderer {
-	return &TableRenderer{}
+func NewTableRenderer[T any]() *TableRenderer[T] {
+	return &TableRenderer[T]{
+		mu: &sync.RWMutex{},
+	}
 }
 
-func (tr *TableRenderer) InitTable(width int, height int, titles []string, colProportions []float64) {
+func (tr *TableRenderer[T]) InitTable(width int, height int, titles []string, colProportions []float64) {
 	if len(titles) != len(colProportions) {
 		log.Panicln("the number of titles and col proportions should be the same")
 	}
 	tr.ListRenderer = newListRenderer(0, height-1, 0)
-	tr.Table = &Table{
+	tr.Table = &Table[T]{
 		Title: &TableTitle{
 			Titles: titles,
 		},
 		ColProportions: colProportions,
-		Rows:           make([]*TableRow, 0),
+		Rows:           make([]*TableRow[T], 0),
 
 		Width:  width,
 		Height: height,
 	}
 }
 
-func (t *Table) AddTableRow(cols []string) {
-	tr := &TableRow{
-		Cols: cols,
+func (tr TableRenderer[T]) GetTableSize() int {
+	tr.mu.RLock()
+	defer tr.mu.RUnlock()
+	return len(tr.Table.Rows)
+}
+
+func (tr *TableRenderer[T]) GetSelectedRow() (idx int, value *T) {
+	tr.mu.RLock()
+	defer tr.mu.RUnlock()
+	if len(tr.Table.Rows) == 0 {
+		return 0, nil
 	}
-
-	t.Rows = append(t.Rows, tr)
+	return tr.ListRenderer.selected, &tr.Table.Rows[tr.ListRenderer.selected].Value
 }
 
-func (t *Table) ClearTable() {
-	t.Rows = make([]*TableRow, 0)
-}
-
-func (tr *TableRenderer) GetSelectedRowIndex() int {
-	return tr.ListRenderer.selected
-}
-
-func (tr *TableRenderer) SetSelectedRow(idx int) {
+func (tr *TableRenderer[T]) SetSelectedRow(idx int) {
+	tr.mu.Lock()
+	defer tr.mu.Unlock()
 	tr.ListRenderer.setSelected(idx)
 }
 
-func (tr *TableRenderer) Up() {
+// TODO: RENAME
+func (tr *TableRenderer[T]) SetSelectedRowByValue(f func(T) bool) {
+	tr.mu.Lock()
+	defer tr.mu.Unlock()
+
+	for idx, row := range tr.Table.Rows {
+		if f(row.Value) {
+			tr.ListRenderer.setSelected(idx)
+			return
+		}
+	}
+}
+
+func (tr *TableRenderer[T]) Up() {
 	tr.ListRenderer.decrement()
 }
 
-func (tr *TableRenderer) Down() {
+func (tr *TableRenderer[T]) Down() {
 	tr.ListRenderer.increment()
 }
 
-func (tr *TableRenderer) RenderWithSelectCallBack(w io.Writer, onSelected func(int, *TableRow) bool) {
+func (tr *TableRenderer[T]) FillTable(rows [][]string, rowValues []T) {
+	tr.mu.Lock()
+	defer tr.mu.Unlock()
+
+	if (len(rows) > 0 && len(rows[0]) != len(tr.Table.Title.Titles)) || len(rowValues) != len(rows) {
+		log.Panicln("invalid row length")
+	}
+
+	tr.Table.Clear()
+	for idx, row := range rows {
+		tr.Table.addTableRow(row, rowValues[idx])
+	}
+
+	tr.ListRenderer.resetSize(len(rows))
+}
+
+func (tr *TableRenderer[T]) RenderWithSelectCallBack(w io.Writer, onSelected func(int, *TableRow[T]) bool) {
 	tr.render(w, onSelected)
 }
 
-func (tr *TableRenderer) Render(w io.Writer) {
-	tr.render(w, func(i int, tr *TableRow) bool { return true })
+func (tr *TableRenderer[T]) Render(w io.Writer) {
+	tr.render(w, func(i int, tr *TableRow[T]) bool { return true })
 }
 
-func (tr *TableRenderer) render(w io.Writer, onSelected func(int, *TableRow) bool) {
-	tr.RenderTitle(w)
+func (tr *TableRenderer[T]) render(w io.Writer, onSelected func(int, *TableRow[T]) bool) {
+	tr.mu.RLock()
+	defer tr.mu.RUnlock()
+
+	tr.renderTitle(w)
 
 	tr.ListRenderer.forEach(func(idx int) {
 		currentRow := tr.Table.Rows[idx]
@@ -121,7 +159,7 @@ func (tr *TableRenderer) render(w io.Writer, onSelected func(int, *TableRow) boo
 	})
 }
 
-func (tr *TableRenderer) RenderTitle(w io.Writer) {
+func (tr *TableRenderer[T]) renderTitle(w io.Writer) {
 	var line string
 	for i, title := range tr.Table.Title.Titles {
 		proportion := tr.Table.ColProportions[i]
@@ -134,15 +172,15 @@ func (tr *TableRenderer) RenderTitle(w io.Writer) {
 	fmt.Fprintln(w, line)
 }
 
-func (tr *TableRenderer) FillTable(rows [][]string) {
-	if len(rows) > 0 && len(rows[0]) != len(tr.Table.Title.Titles) {
-		log.Panicln("invalid row length")
+func (t *Table[T]) addTableRow(cols []string, value T) {
+	tr := &TableRow[T]{
+		Cols:  cols,
+		Value: value,
 	}
 
-	tr.Table.ClearTable()
-	for _, row := range rows {
-		tr.Table.AddTableRow(row)
-	}
+	t.Rows = append(t.Rows, tr)
+}
 
-	tr.ListRenderer.resetSize(len(rows))
+func (t *Table[T]) Clear() {
+	t.Rows = make([]*TableRow[T], 0)
 }

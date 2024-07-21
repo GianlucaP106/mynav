@@ -1,7 +1,9 @@
 package tmux
 
+import "mynav/pkg/persistence"
+
 type TmuxRepository struct {
-	TmuxSessionContainer TmuxSessionContainer
+	TmuxSessionContainer *persistence.Container[TmuxSession]
 	TmuxCommunicator     *TmuxCommunicator
 }
 
@@ -14,15 +16,15 @@ func NewTmuxRepository(tc *TmuxCommunicator) *TmuxRepository {
 }
 
 func (tr *TmuxRepository) GetSessions() TmuxSessions {
-	return tr.TmuxSessionContainer.ToList()
-}
-
-func (tr *TmuxRepository) GetSessionContainer() TmuxSessionContainer {
-	return tr.TmuxSessionContainer
+	return tr.TmuxSessionContainer.All()
 }
 
 func (tr *TmuxRepository) LoadSessions() {
-	tr.TmuxSessionContainer = tr.TmuxCommunicator.GetSessions()
+	tr.TmuxSessionContainer = persistence.NewContainer[TmuxSession]()
+	sessions := tr.TmuxCommunicator.GetSessions()
+	for _, s := range sessions {
+		tr.TmuxSessionContainer.Set(s.Name, s)
+	}
 }
 
 func (tr *TmuxRepository) DeleteSession(ts *TmuxSession) error {
@@ -30,7 +32,7 @@ func (tr *TmuxRepository) DeleteSession(ts *TmuxSession) error {
 		return err
 	}
 
-	tr.TmuxSessionContainer.Delete(ts)
+	tr.TmuxSessionContainer.Delete(ts.Name)
 	return nil
 }
 
@@ -43,13 +45,13 @@ func (tr *TmuxRepository) RenameSession(ts *TmuxSession, newName string) error {
 		return err
 	}
 
-	tr.TmuxSessionContainer.Delete(ts)
+	tr.TmuxSessionContainer.Delete(ts.Name)
 	ts.Name = newName
-	tr.TmuxSessionContainer.Set(ts)
+	tr.TmuxSessionContainer.Set(ts.Name, ts)
 
 	return nil
 }
 
 func (tr *TmuxRepository) SessionCount() int {
-	return len(tr.TmuxSessionContainer)
+	return tr.TmuxSessionContainer.Size()
 }

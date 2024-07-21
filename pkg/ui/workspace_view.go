@@ -14,9 +14,8 @@ import (
 
 type WorkspacesView struct {
 	view          *View
-	tableRenderer *TableRenderer
+	tableRenderer *TableRenderer[*core.Workspace]
 	search        string
-	workspaces    core.Workspaces
 }
 
 var _ Viewable = new(WorkspacesView)
@@ -60,13 +59,15 @@ func (wv *WorkspacesView) Init() {
 		0.2,
 		0.2,
 	}
-	wv.tableRenderer = NewTableRenderer()
+	wv.tableRenderer = NewTableRenderer[*core.Workspace]()
 	wv.tableRenderer.InitTable(sizeX, sizeY, titles, proportions)
-	wv.refreshWorkspaces()
 
-	events.AddEventListener(constants.WorkspaceChangeEventName, func() {
+	events.AddEventListener(constants.WorkspaceChangeEventName, func(_ string) {
 		wv.refreshWorkspaces()
+		RenderView(wv)
 	})
+
+	wv.refreshWorkspaces()
 
 	if selectedWorkspace := Api().Core.GetSelectedWorkspace(); selectedWorkspace != nil {
 		wv.selectWorkspaceByShortPath(selectedWorkspace.ShortPath())
@@ -245,11 +246,9 @@ func (wv *WorkspacesView) Init() {
 }
 
 func (wv *WorkspacesView) selectWorkspaceByShortPath(shortPath string) {
-	for idx, w := range wv.workspaces {
-		if w.ShortPath() == shortPath {
-			wv.tableRenderer.SetSelectedRow(idx)
-		}
-	}
+	wv.tableRenderer.SetSelectedRowByValue(func(w *core.Workspace) bool {
+		return w.ShortPath() == shortPath
+	})
 }
 
 func (wv *WorkspacesView) refreshWorkspaces() {
@@ -264,14 +263,11 @@ func (wv *WorkspacesView) refreshWorkspaces() {
 		workspaces = workspaces.FilterByNameContaining(wv.search)
 	}
 
-	wv.workspaces = workspaces
-	wv.syncWorkspacesToTable()
-}
-
-func (wv *WorkspacesView) syncWorkspacesToTable() {
 	rows := make([][]string, 0)
-	for _, w := range wv.workspaces {
+	rowValues := make([]*core.Workspace, 0)
+	for _, w := range workspaces {
 		tmux := func() string {
+			// TODO: improve how this is done
 			if tm := Api().Tmux.GetTmuxSessionByName(w.Path); tm != nil {
 				numWindows := strconv.Itoa(tm.NumWindows)
 				return numWindows + " - tmux"
@@ -290,6 +286,7 @@ func (wv *WorkspacesView) syncWorkspacesToTable() {
 			remote = git.TrimGithubUrl(remote)
 		}
 
+		rowValues = append(rowValues, w)
 		rows = append(rows, []string{
 			w.Name,
 			w.GetDescription(),
@@ -299,15 +296,16 @@ func (wv *WorkspacesView) syncWorkspacesToTable() {
 		})
 	}
 
-	wv.tableRenderer.FillTable(rows)
+	wv.tableRenderer.FillTable(rows, rowValues)
 }
 
 func (wv *WorkspacesView) getSelectedWorkspace() *core.Workspace {
-	idx := wv.tableRenderer.GetSelectedRowIndex()
-	if idx >= len(wv.workspaces) || idx < 0 {
-		return nil
+	_, w := wv.tableRenderer.GetSelectedRow()
+	if w != nil {
+		return *w
 	}
-	return wv.workspaces[idx]
+
+	return nil
 }
 
 func (wv *WorkspacesView) Render() error {
@@ -315,7 +313,7 @@ func (wv *WorkspacesView) Render() error {
 
 	isFocused := wv.view.IsFocused()
 
-	wv.tableRenderer.RenderWithSelectCallBack(wv.view, func(_ int, _ *TableRow) bool {
+	wv.tableRenderer.RenderWithSelectCallBack(wv.view, func(_ int, _ *TableRow[*core.Workspace]) bool {
 		return isFocused
 	})
 
