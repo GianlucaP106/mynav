@@ -10,7 +10,7 @@ import (
 
 type HelpDialog struct {
 	view           *View
-	tableRenderer  *TableRenderer
+	tableRenderer  *TableRenderer[*KeyBindingInfo]
 	globalMappings []*KeyBindingInfo
 	mappings       []*KeyBindingInfo
 }
@@ -59,7 +59,7 @@ func OpenHelpView(mappings []*KeyBindingInfo, exit func()) *HelpDialog {
 	})
 
 	sizeX, _ := hv.view.Size()
-	hv.tableRenderer = NewTableRenderer()
+	hv.tableRenderer = NewTableRenderer[*KeyBindingInfo]()
 	title := []string{
 		"Key",
 		"Action",
@@ -83,7 +83,9 @@ func (hv *HelpDialog) Close() {
 
 func (hv *HelpDialog) refreshTable() {
 	rows := make([][]string, 0)
+	rowValues := make([]*KeyBindingInfo, 0)
 	for _, m := range hv.mappings {
+		rowValues = append(rowValues, m)
 		rows = append(rows, []string{
 			m.key,
 			m.action,
@@ -91,12 +93,14 @@ func (hv *HelpDialog) refreshTable() {
 	}
 
 	for _, gm := range hv.globalMappings {
+		rowValues = append(rowValues, gm)
 		rows = append(rows, []string{
 			gm.key,
 			gm.action,
 		})
 	}
-	hv.tableRenderer.FillTable(rows)
+
+	hv.tableRenderer.FillTable(rows, rowValues)
 }
 
 func (hv *HelpDialog) render() error {

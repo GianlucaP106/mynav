@@ -99,7 +99,7 @@ func (pc *PortController) KillPort(p *Port) error {
 		return err
 	}
 
-	events.EmitEvent(constants.PortChangeEventName)
+	events.Emit(constants.PortSyncNeededEventName)
 	return nil
 }
 

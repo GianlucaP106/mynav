@@ -14,13 +14,6 @@ func NewGithubPrContainer() GithubPullRequests {
 	return make(GithubPullRequests, 0)
 }
 
-func (g *GithubPullRequests) AddPr(repo *GithubRepository, pr *github.PullRequest) {
-	*g = append(*g, &GithubPullRequest{
-		Repo:        repo,
-		PullRequest: pr,
-	})
-}
-
 func (g *GithubPullRequests) AddFromPr(pr *GithubPullRequest) {
 	*g = append(*g, &GithubPullRequest{
 		Repo:        pr.Repo,

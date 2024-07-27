@@ -10,9 +10,8 @@ import (
 
 type TopicsView struct {
 	view          *View
-	tableRenderer *TableRenderer
+	tableRenderer *TableRenderer[*core.Topic]
 	search        string
-	topics        core.Topics
 }
 
 var _ Viewable = new(TopicsView)
@@ -41,7 +40,7 @@ func (tv *TopicsView) Init() {
 	tv.view.TitleColor = gocui.ColorBlue
 
 	sizeX, sizeY := tv.view.Size()
-	tv.tableRenderer = NewTableRenderer()
+	tv.tableRenderer = NewTableRenderer[*core.Topic]()
 	titles := []string{
 		"Name",
 		"Last Modified",
@@ -51,11 +50,13 @@ func (tv *TopicsView) Init() {
 		0.5,
 	}
 	tv.tableRenderer.InitTable(sizeX, sizeY, titles, colProportions)
-	tv.refreshTopics()
 
-	events.AddEventListener(constants.TopicChangeEventName, func() {
+	events.AddEventListener(constants.TopicChangeEventName, func(_ string) {
 		tv.refreshTopics()
+		RenderView(tv)
 	})
+
+	tv.refreshTopics()
 
 	if selectedWorkspace := Api().Core.GetSelectedWorkspace(); selectedWorkspace != nil {
 		tv.selectTopicByName(selectedWorkspace.Topic.Name)
@@ -70,11 +71,11 @@ func (tv *TopicsView) Init() {
 	tv.view.KeyBinding().
 		set('j', func() {
 			tv.tableRenderer.Down()
-			events.EmitEvent(constants.WorkspaceChangeEventName)
+			GetWorkspacesView().refreshWorkspaces()
 		}, "Move down").
 		set('k', func() {
 			tv.tableRenderer.Up()
-			events.EmitEvent(constants.WorkspaceChangeEventName)
+			GetWorkspacesView().refreshWorkspaces()
 		}, "Move up").
 		set(gocui.KeyEnter, moveRight, "Open topic").
 		set('/', func() {
@@ -82,7 +83,7 @@ func (tv *TopicsView) Init() {
 				tv.search = s
 				tv.view.Subtitle = withSurroundingSpaces("Searching: " + tv.search)
 				tv.refreshTopics()
-				events.EmitEvent(constants.WorkspaceChangeEventName)
+				GetWorkspacesView().refreshWorkspaces()
 			}, func() {}, "Search", Small)
 		}, "Search by name").
 		set(gocui.KeyEsc, func() {
@@ -90,7 +91,7 @@ func (tv *TopicsView) Init() {
 				tv.search = ""
 				tv.view.Subtitle = ""
 				tv.refreshTopics()
-				events.EmitEvent(constants.WorkspaceChangeEventName)
+				GetWorkspacesView().refreshWorkspaces()
 			}
 		}, "Escape search").
 		set('a', func() {
@@ -104,7 +105,7 @@ func (tv *TopicsView) Init() {
 				// This will result in the corresponding topic going to the top
 				// because we are sorting by modifed time
 				tv.tableRenderer.SetSelectedRow(0)
-				events.EmitEvent(constants.WorkspaceChangeEventName)
+				GetWorkspacesView().refreshWorkspaces()
 			}, func() {}, "Topic name", Small)
 		}, "Create a topic").
 		set('r', func() {
@@ -146,43 +147,38 @@ func (tv *TopicsView) refreshTopics() {
 		topics = topics.FilterByNameContaining(tv.search)
 	}
 
-	tv.topics = topics
-	tv.syncTopicsToTable()
-}
-
-func (tv *TopicsView) syncTopicsToTable() {
 	rows := make([][]string, 0)
-	for _, topic := range tv.topics {
+	rowValues := make([]*core.Topic, 0)
+	for _, topic := range topics {
+		rowValues = append(rowValues, topic)
 		rows = append(rows, []string{
 			topic.Name,
 			topic.GetLastModifiedTimeFormatted(),
 		})
 	}
 
-	tv.tableRenderer.FillTable(rows)
+	tv.tableRenderer.FillTable(rows, rowValues)
 }
 
 func (tv *TopicsView) getSelectedTopic() *core.Topic {
-	if tv.topics.Len() <= 0 {
-		return nil
+	_, t := tv.tableRenderer.GetSelectedRow()
+	if t != nil {
+		return *t
 	}
-
-	return tv.topics[tv.tableRenderer.GetSelectedRowIndex()]
+	return nil
 }
 
 func (tv *TopicsView) selectTopicByName(name string) {
-	for idx, t := range tv.topics {
-		if t.Name == name {
-			tv.tableRenderer.SetSelectedRow(idx)
-		}
-	}
+	tv.tableRenderer.SetSelectedRowByValue(func(t *core.Topic) bool {
+		return t.Name == name
+	})
 }
 
 func (tv *TopicsView) Render() error {
 	tv.view.Clear()
 	currentViewSelected := tv.view.IsFocused()
 
-	tv.tableRenderer.RenderWithSelectCallBack(tv.view, func(_ int, _ *TableRow) bool {
+	tv.tableRenderer.RenderWithSelectCallBack(tv.view, func(_ int, _ *TableRow[*core.Topic]) bool {
 		return currentViewSelected
 	})
 
