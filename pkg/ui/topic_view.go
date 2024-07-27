@@ -53,7 +53,9 @@ func (tv *TopicsView) Init() {
 
 	events.AddEventListener(constants.TopicChangeEventName, func(_ string) {
 		tv.refreshTopics()
+		GetWorkspacesView().refreshWorkspaces()
 		RenderView(tv)
+		RenderView(GetWorkspacesView())
 	})
 
 	tv.refreshTopics()
@@ -105,7 +107,6 @@ func (tv *TopicsView) Init() {
 				// This will result in the corresponding topic going to the top
 				// because we are sorting by modifed time
 				tv.tableRenderer.SetSelectedRow(0)
-				GetWorkspacesView().refreshWorkspaces()
 			}, func() {}, "Topic name", Small)
 		}, "Create a topic").
 		set('r', func() {
