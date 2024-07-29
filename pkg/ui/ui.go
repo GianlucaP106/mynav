@@ -149,19 +149,19 @@ func (ui *UI) InitGlobalKeybindings() {
 		setWithQuit(gocui.KeyCtrlC, quit, "Quit").
 		setWithQuit('q', quit, "Quit").
 		setWithQuit('q', quit, "Quit").
-		set(']', func() {
+		set(']', "Cycle tab right", func() {
 			ui.mainTabGroup.IncrementSelectedTab(func(tab *Tab) {
 				Api().Configuration.SetLastTab(tab.Frame.Name())
 			})
-		}, "Cycle tab right").
-		set('[', func() {
+		}).
+		set('[', "Cycle tab left", func() {
 			ui.mainTabGroup.DecrementSelectedTab(func(tab *Tab) {
 				Api().Configuration.SetLastTab(tab.Frame.Name())
 			})
-		}, "Cycle tab left").
-		set('?', func() {
+		}).
+		set('?', "Toggle cheatsheet", func() {
 			OpenHelpView(nil, func() {})
-		}, "Toggle cheatsheet")
+		})
 }
 
 func SetViewManagers(vs []Viewable) {

@@ -126,6 +126,7 @@ func GetFocusedView() *View {
 
 func (v *View) Delete() {
 	_gui.DeleteView(v.Name())
+	_gui.DeleteKeybindings(v.Name())
 }
 
 func (vw *View) Focus() *View {
@@ -177,7 +178,7 @@ func (v *View) KeyBinding() *KeyBindingBuilder {
 	return NewKeybindingBuilder(v)
 }
 
-func (kb *KeyBindingBuilder) set(key interface{}, action func(), description string) *KeyBindingBuilder {
+func (kb *KeyBindingBuilder) set(key interface{}, description string, action func()) *KeyBindingBuilder {
 	kb.setWithQuit(key, func() bool {
 		action()
 		return false

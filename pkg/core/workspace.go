@@ -2,7 +2,6 @@ package core
 
 import (
 	"mynav/pkg/configuration"
-	"mynav/pkg/git"
 	"mynav/pkg/system"
 	"path/filepath"
 	"sort"
@@ -65,7 +64,7 @@ func (w *Workspace) GetGitRemote() (string, error) {
 			return "", err
 		}
 
-		gitRemote, _ := git.GitRemote(gitPath)
+		gitRemote, _ := system.GitRemote(gitPath)
 		w.GitRemote = &gitRemote
 	}
 
@@ -73,7 +72,7 @@ func (w *Workspace) GetGitRemote() (string, error) {
 }
 
 func (w *Workspace) CloneRepo(url string) error {
-	err := git.GitClone(url, w.Path)
+	err := system.GitClone(url, w.Path)
 	if err != nil {
 		return err
 	}
@@ -104,7 +103,7 @@ func (w Workspaces) FilterByNameContaining(s string) Workspaces {
 	return filtered
 }
 
-func (w Workspaces) ByTopic(topic *Topic) Workspaces {
+func (w Workspaces) FilterByTopic(topic *Topic) Workspaces {
 	out := make(Workspaces, 0)
 	for _, workspace := range w {
 		if workspace.Topic == topic {

@@ -57,7 +57,7 @@ func (tc *TopicController) RenameTopic(t *Topic, newName string) error {
 		return err
 	}
 
-	topicWorkspaces := tc.WorkspaceController.GetWorkspaces().ByTopic(t)
+	topicWorkspaces := tc.WorkspaceController.GetWorkspaces().FilterByTopic(t)
 
 	for _, w := range topicWorkspaces {
 		newWorkspacePath := filepath.Join(newTopicPath, w.Name)

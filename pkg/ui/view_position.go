@@ -32,6 +32,10 @@ func NewViewPosition(
 	}
 }
 
+func (p *ViewPosition) Set() *View {
+	return SetView(p.viewName, p.x0, p.y0, p.x1, p.y1, p.overlaps)
+}
+
 func GetViewPosition(viewName string) *ViewPosition {
 	maxX, maxY := ScreenSize()
 	positionMap := map[string]*ViewPosition{}
@@ -99,8 +103,4 @@ func GetViewPosition(viewName string) *ViewPosition {
 	p.viewName = viewName
 
 	return p
-}
-
-func (p *ViewPosition) Set() *View {
-	return SetView(p.viewName, p.x0, p.y0, p.x1, p.y1, p.overlaps)
 }

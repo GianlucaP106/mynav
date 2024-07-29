@@ -5,6 +5,7 @@ import (
 	"mynav/pkg/events"
 	"mynav/pkg/persistence"
 	"mynav/pkg/tasks"
+	"strings"
 )
 
 type GithubController struct {
@@ -234,4 +235,9 @@ func (gc *GithubController) fetchUserRepos() ([]*GithubRepository, error) {
 	}
 
 	return out, nil
+}
+
+func TrimGithubUrl(url string) string {
+	items := strings.Split(url, "/")
+	return strings.Join(items[len(items)-2:], "/")
 }

@@ -32,7 +32,7 @@ func (g *GithubProfileView) Init() {
 	g.view.FrameColor = gocui.ColorGreen
 
 	g.view.KeyBinding().
-		set('L', func() {
+		set('L', "Login with device code and browser", func() {
 			if Api().Github.IsAuthenticated() {
 				return
 			}
@@ -63,14 +63,14 @@ func (g *GithubProfileView) Init() {
 				system.CopyToClip(deviceAuth.UserCode)
 				deviceAuth.OpenBrowser()
 			}
-		}, "Login with device code and browser").
-		set('o', func() {
+		}).
+		set('o', "Open in browser", func() {
 			profile := Api().Github.GetProfile()
 			if profile.IsLoaded() {
 				profile.OpenBrowser()
 			}
-		}, "Open in browser").
-		set('P', func() {
+		}).
+		set('P', "Login with personal access token", func() {
 			if Api().Github.IsAuthenticated() {
 				return
 			}
@@ -81,13 +81,13 @@ func (g *GithubProfileView) Init() {
 					return
 				}
 			}, func() {}, "Personal Access Token", Small)
-		}, "Login with personal access token").
-		set('O', func() {
+		}).
+		set('O', "Logout", func() {
 			Api().Github.LogoutUser()
-		}, "Logout").
-		set('?', func() {
+		}).
+		set('?', "Toggle cheatsheet", func() {
 			OpenHelpView(g.view.keybindingInfo.toList(), func() {})
-		}, "Toggle cheatsheet")
+		})
 }
 
 func (g *GithubProfileView) Render() error {

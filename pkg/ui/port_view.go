@@ -70,13 +70,13 @@ func (p *PortView) Init() {
 	events.Emit(constants.PortSyncNeededEventName)
 
 	p.view.KeyBinding().
-		set('j', func() {
+		set('j', "Move down", func() {
 			p.tableRenderer.Down()
-		}, "Move down").
-		set('k', func() {
+		}).
+		set('k', "Move up", func() {
 			p.tableRenderer.Up()
-		}, "Move up").
-		set(gocui.KeyEnter, func() {
+		}).
+		set(gocui.KeyEnter, "Open associated tmux session (if it exists)", func() {
 			port := p.getSelectedPort()
 			if port == nil {
 				return
@@ -89,8 +89,8 @@ func (p *PortView) Init() {
 			RunAction(func() {
 				Api().Tmux.AttachTmuxSession(port.tmux)
 			})
-		}, "Open associated tmux session (if it exists)").
-		set('D', func() {
+		}).
+		set('D', "Kill port", func() {
 			port := p.getSelectedPort()
 			if port == nil {
 				return
@@ -108,10 +108,10 @@ func (p *PortView) Init() {
 					}
 				}
 			}, "Are you sure you want to kill this port?")
-		}, "Kill port").
-		set('?', func() {
+		}).
+		set('?', "Toggle cheatsheet", func() {
 			OpenHelpView(p.view.keybindingInfo.toList(), func() {})
-		}, "Toggle cheatsheet")
+		})
 }
 
 func (pv *PortView) refreshPorts() {

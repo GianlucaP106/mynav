@@ -232,9 +232,9 @@ func (t *Tab) GenerateNavigationKeyBindings() {
 
 			viewName := targetSlot.View.Name()
 			for _, key := range relation.keys {
-				kbb.set(key, func() {
+				kbb.set(key, "Focus "+viewName, func() {
 					FocusView(viewName)
-				}, "Focus "+viewName)
+				})
 			}
 		}
 	}

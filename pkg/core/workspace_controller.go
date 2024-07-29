@@ -170,7 +170,7 @@ func (wc *WorkspaceController) GetWorkspaceCount() int {
 }
 
 func (wc *WorkspaceController) GetWorkspacesByTopicCount(t *Topic) int {
-	return wc.GetWorkspaces().ByTopic(t).Len()
+	return wc.GetWorkspaces().FilterByTopic(t).Len()
 }
 
 func (wc *WorkspaceController) GetWorkspaces() Workspaces {
@@ -179,7 +179,7 @@ func (wc *WorkspaceController) GetWorkspaces() Workspaces {
 
 func (wc *WorkspaceController) DeleteWorkspacesByTopic(t *Topic) error {
 	var workspaces Workspaces = wc.WorkspaceRepository.Container.All()
-	for _, w := range workspaces.ByTopic(t) {
+	for _, w := range workspaces.FilterByTopic(t) {
 		ts := wc.TmuxController.GetTmuxSessionByName(w.Path)
 		if ts != nil {
 			// TODO: deleteManytmuxSessions
