@@ -62,29 +62,29 @@ func (g *GithubPrView) Init() {
 	})
 
 	g.view.KeyBinding().
-		set('j', func() {
+		set('j', "Move down", func() {
 			g.tableRenderer.Down()
-		}, "Move down").
-		set('k', func() {
+		}).
+		set('k', "Move up", func() {
 			g.tableRenderer.Up()
-		}, "Move up").
-		set('o', func() {
+		}).
+		set('o', "Open browser to PR", func() {
 			pr := g.getSelectedPr()
 			if pr == nil {
 				return
 			}
 
 			system.OpenBrowser(pr.GetHTMLURL())
-		}, "Open browser to PR").
-		set('?', func() {
+		}).
+		set('?', "Toggle cheatsheet", func() {
 			OpenHelpView(g.view.keybindingInfo.toList(), func() {})
-		}, "Toggle cheatsheet").
-		set(gocui.KeyCtrlL, func() {
+		}).
+		set(gocui.KeyCtrlL, "Focus "+constants.GithubRepoViewName, func() {
 			GetGithubRepoView().Focus()
-		}, "Focus "+constants.GithubRepoViewName).
-		set(gocui.KeyArrowRight, func() {
+		}).
+		set(gocui.KeyArrowRight, "Focus "+constants.GithubRepoViewName, func() {
 			GetGithubRepoView().Focus()
-		}, "Focus "+constants.GithubRepoViewName)
+		})
 }
 
 func (g *GithubPrView) getSelectedPr() *github.GithubPullRequest {

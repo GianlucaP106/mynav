@@ -62,7 +62,7 @@ func (tv *TmuxSessionView) Init() {
 	tv.refreshTmuxSessions()
 
 	tv.view.KeyBinding().
-		set(gocui.KeyEnter, func() {
+		set(gocui.KeyEnter, "Attach to session", func() {
 			if tmux.IsTmuxSession() {
 				OpenToastDialogError("You are already in a tmux session. Nested tmux sessions are not supported yet.")
 				return
@@ -72,8 +72,8 @@ func (tv *TmuxSessionView) Init() {
 			RunAction(func() {
 				Api().Tmux.AttachTmuxSession(session)
 			})
-		}, "Attach to session").
-		set('D', func() {
+		}).
+		set('D', "Delete session", func() {
 			if Api().Tmux.GetTmuxSessionCount() == 0 {
 				return
 			}
@@ -88,8 +88,8 @@ func (tv *TmuxSessionView) Init() {
 					events.Emit(constants.WorkspaceChangeEventName)
 				}
 			}, "Are you sure you want to delete this session?")
-		}, "Delete session").
-		set('X', func() {
+		}).
+		set('X', "Kill ALL tmux sessions", func() {
 			if Api().Tmux.GetTmuxSessionCount() == 0 {
 				return
 			}
@@ -102,8 +102,8 @@ func (tv *TmuxSessionView) Init() {
 					}
 				}
 			}, "Are you sure you want to delete ALL tmux sessions?")
-		}, "Kill ALL tmux sessions").
-		set('W', func() {
+		}).
+		set('W', "Kill ALL non-externalt mux sessions (has a workspace)", func() {
 			if Api().Configuration.Standalone || Api().Core.GetWorkspaceTmuxSessionCount() == 0 {
 				return
 			}
@@ -116,14 +116,14 @@ func (tv *TmuxSessionView) Init() {
 					}
 				}
 			}, "Are you sure you want to delete ALL non-external tmux sessions?")
-		}, "Kill ALL non-external (has a workspace) tmux sessions").
-		set('j', func() {
+		}).
+		set('j', "Move down", func() {
 			tv.tableRenderer.Down()
-		}, "Move down").
-		set('k', func() {
+		}).
+		set('k', "Move up", func() {
 			tv.tableRenderer.Up()
-		}, "Move up").
-		set('a', func() {
+		}).
+		set('a', "New external session (not associated to a workspace)", func() {
 			if tmux.IsTmuxSession() {
 				return
 			}
@@ -132,10 +132,10 @@ func (tv *TmuxSessionView) Init() {
 					Api().Tmux.CreateAndAttachTmuxSession(s, "~")
 				})
 			}, func() {}, "New session name", Small)
-		}, "New external session (not associated to a workspace)").
-		set('?', func() {
+		}).
+		set('?', "Toggle cheatsheet", func() {
 			OpenHelpView(tv.view.keybindingInfo.toList(), func() {})
-		}, "Toggle cheatsheet")
+		})
 }
 
 func (tv *TmuxSessionView) getSelectedSession() *tmux.TmuxSession {

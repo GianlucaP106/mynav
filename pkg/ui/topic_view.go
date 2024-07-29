@@ -4,6 +4,7 @@ import (
 	"mynav/pkg/constants"
 	"mynav/pkg/core"
 	"mynav/pkg/events"
+	"mynav/pkg/persistence"
 
 	"github.com/awesome-gocui/gocui"
 )
@@ -11,13 +12,16 @@ import (
 type TopicsView struct {
 	view          *View
 	tableRenderer *TableRenderer[*core.Topic]
-	search        string
+	search        *persistence.Value[string]
+	globalSearch  *persistence.Value[string]
 }
 
 var _ Viewable = new(TopicsView)
 
 func NewTopicsView() *TopicsView {
-	return &TopicsView{}
+	return &TopicsView{
+		search: persistence.NewValue(""),
+	}
 }
 
 func GetTopicsView() *TopicsView {
@@ -71,32 +75,32 @@ func (tv *TopicsView) Init() {
 	}
 
 	tv.view.KeyBinding().
-		set('j', func() {
+		set('j', "Move down", func() {
 			tv.tableRenderer.Down()
 			GetWorkspacesView().refreshWorkspaces()
-		}, "Move down").
-		set('k', func() {
+		}).
+		set('k', "Move up", func() {
 			tv.tableRenderer.Up()
 			GetWorkspacesView().refreshWorkspaces()
-		}, "Move up").
-		set(gocui.KeyEnter, moveRight, "Open topic").
-		set('/', func() {
+		}).
+		set(gocui.KeyEnter, "Open topic", moveRight).
+		set('/', "Search by name", func() {
 			OpenEditorDialog(func(s string) {
-				tv.search = s
-				tv.view.Subtitle = withSurroundingSpaces("Searching: " + tv.search)
+				tv.search.Set(s)
+				tv.view.Subtitle = withSurroundingSpaces("Searching: " + s)
 				tv.refreshTopics()
 				GetWorkspacesView().refreshWorkspaces()
 			}, func() {}, "Search", Small)
-		}, "Search by name").
-		set(gocui.KeyEsc, func() {
-			if tv.search != "" {
-				tv.search = ""
+		}).
+		set(gocui.KeyEsc, "Escape search", func() {
+			if tv.search.Get() != "" {
+				tv.search.Set("")
 				tv.view.Subtitle = ""
 				tv.refreshTopics()
 				GetWorkspacesView().refreshWorkspaces()
 			}
-		}, "Escape search").
-		set('a', func() {
+		}).
+		set('a', "Create a topic", func() {
 			OpenEditorDialog(func(s string) {
 				if err := Api().Core.CreateTopic(s); err != nil {
 					OpenToastDialogError(err.Error())
@@ -108,8 +112,8 @@ func (tv *TopicsView) Init() {
 				// because we are sorting by modifed time
 				tv.tableRenderer.SetSelectedRow(0)
 			}, func() {}, "Topic name", Small)
-		}, "Create a topic").
-		set('r', func() {
+		}).
+		set('r', "Rename topic", func() {
 			t := tv.getSelectedTopic()
 			if t == nil {
 				return
@@ -121,8 +125,52 @@ func (tv *TopicsView) Init() {
 					return
 				}
 			}, func() {}, "New topic name", Small, t.Name)
-		}, "Rename topic").
-		set('D', func() {
+		}).
+		set('s', "Search for a workspace", func() {
+			sd := new(*SearchListDialog[*core.Workspace])
+			*sd = OpenSearchListDialog(SearchDialogConfig[*core.Workspace]{
+				onSearch: func(s string) ([][]string, []*core.Workspace) {
+					workspaces := Api().Core.GetWorkspaces().Sorted().FilterByNameContaining(s)
+					rows := make([][]string, 0)
+					for _, w := range workspaces {
+						rows = append(rows, []string{
+							w.Topic.Name,
+							w.Name,
+						})
+					}
+
+					return rows, workspaces
+				},
+				onSelect: func(w *core.Workspace) {
+					tv.tableRenderer.SetSelectedRowByValue(func(t *core.Topic) bool {
+						return w.Topic.Name == t.Name
+					})
+
+					wv := GetWorkspacesView()
+					wv.refreshWorkspaces()
+					wv.tableRenderer.SetSelectedRowByValue(func(workspace *core.Workspace) bool {
+						return w.ShortPath() == workspace.ShortPath()
+					})
+
+					if *sd != nil {
+						(*sd).Close()
+					}
+
+					wv.Focus()
+				},
+				onSelectDescription: "Go to workspace",
+				searchViewTitle:     "Search a workspace",
+				tableViewTitle:      "Result",
+				tableTitles: []string{
+					"Topic",
+					"Name",
+				}, tableProportions: []float64{
+					0.5,
+					0.5,
+				},
+			})
+		}).
+		set('D', "Delete topic", func() {
 			if Api().Core.GetTopicCount() <= 0 {
 				return
 			}
@@ -135,17 +183,18 @@ func (tv *TopicsView) Init() {
 					OpenToastDialogError(err.Error())
 				}
 			}, "Are you sure you want to delete this topic? All its content will be deleted.")
-		}, "Delete topic").
-		set('?', func() {
+		}).
+		set('?', "Toggle cheatsheet", func() {
 			OpenHelpView(tv.view.keybindingInfo.toList(), func() {})
-		}, "Toggle cheatsheet")
+		})
 }
 
 func (tv *TopicsView) refreshTopics() {
 	topics := Api().Core.GetTopics().Sorted()
 
-	if tv.search != "" {
-		topics = topics.FilterByNameContaining(tv.search)
+	search := tv.search.Get()
+	if search != "" {
+		topics = topics.FilterByNameContaining(search)
 	}
 
 	rows := make([][]string, 0)

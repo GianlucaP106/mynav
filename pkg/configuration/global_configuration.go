@@ -1,12 +1,14 @@
 package configuration
 
 import (
+	"encoding/json"
+	"io"
 	"log"
 	"mynav/pkg"
-	"mynav/pkg/git"
 	"mynav/pkg/github"
 	"mynav/pkg/persistence"
 	"mynav/pkg/system"
+	"net/http"
 	"os"
 	"path/filepath"
 	"time"
@@ -57,7 +59,7 @@ func (gc *GlobalConfiguration) GetConfigFile() string {
 }
 
 func (gc *GlobalConfiguration) DetectUpdate() (update bool, newTag string) {
-	tag, err := git.GetLatestReleaseTag()
+	tag, err := getLatestReleaseTag()
 	if err != nil {
 		return false, ""
 	}
@@ -108,4 +110,31 @@ func (c *GlobalConfiguration) GetLastTab() string {
 
 func (c *GlobalConfiguration) SetStandalone(s bool) {
 	c.Standalone = s
+}
+
+type Release struct {
+	TagName string `json:"tag_name"`
+}
+
+func getLatestReleaseTag() (string, error) {
+	url := "https://api.github.com/repos/GianlucaP106/mynav/releases/latest"
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	var release Release
+	err = json.Unmarshal(body, &release)
+	if err != nil {
+		return "", err
+	}
+
+	return release.TagName, nil
 }
