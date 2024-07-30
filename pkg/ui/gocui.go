@@ -4,6 +4,7 @@ import (
 	"log"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/awesome-gocui/gocui"
 )
@@ -18,6 +19,7 @@ type (
 )
 
 type View struct {
+	mu sync.RWMutex
 	*gocui.View
 	keybindingInfo KeybindingMap
 }

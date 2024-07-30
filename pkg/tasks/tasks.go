@@ -2,8 +2,8 @@ package tasks
 
 var executor *TaskExecutor = NewTaskExecutor()
 
-func AddTask(task func()) {
-	executor.Add(task)
+func QueueTask(task func()) {
+	executor.QueueTask(task)
 }
 
 func StartExecutor() {

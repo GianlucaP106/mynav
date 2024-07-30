@@ -6,6 +6,20 @@ import (
 	"github.com/shirou/gopsutil/process"
 )
 
+func GetChildProcesses(pid int) ([]*process.Process, error) {
+	proc, err := process.NewProcess(int32(pid))
+	if err != nil {
+		return nil, err
+	}
+
+	children, err := proc.Children()
+	if err != nil {
+		return nil, err
+	}
+
+	return children, nil
+}
+
 func IsProcessChildOf(child int, parent int) bool {
 	var pid int32
 	pid = int32(child)

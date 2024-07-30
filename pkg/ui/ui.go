@@ -67,6 +67,7 @@ func (ui *UI) InitUI() *UI {
 		NewTopicsView(),
 		NewWorkspcacesView(),
 		NewPortView(),
+		NewPsView(),
 		NewTmuxSessionView(),
 		NewGithubProfileView(),
 		NewGithubPrView(),
@@ -87,8 +88,10 @@ func (ui *UI) InitUI() *UI {
 	tab2.AddView(GetHeaderView(), None)
 
 	tab3 := NewTab("system", GetPortView().View().Name())
-	tab3.AddView(GetPortView(), None)
+	tab3.AddView(GetPortView(), TopRight)
+	tab3.AddView(GetPsView(), TopLeft)
 	tab3.AddView(GetHeaderView(), None)
+	tab3.GenerateNavigationKeyBindings()
 
 	tab4 := NewTab("github", GetGithubProfileView().View().Name())
 	tab4.AddView(GetGithubProfileView(), TopLeft)

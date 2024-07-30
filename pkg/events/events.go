@@ -15,7 +15,7 @@ func RemoveEventListener(name string, listenerId string) {
 }
 
 func Emit(name string) {
-	tasks.AddTask(func() {
+	tasks.QueueTask(func() {
 		emitter.Event(name).Emit()
 	})
 }

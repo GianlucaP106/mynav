@@ -35,7 +35,7 @@ func NewGithubController(token *GithubAuthenticationToken, onLogin func(*GithubA
 
 func (g *GithubController) LoadData() {
 	if g.IsAuthenticated() {
-		tasks.AddTask(func() {
+		tasks.QueueTask(func() {
 			g.isLoading.Set(true)
 			defer g.isLoading.Set(false)
 			g.LoadProfile()
