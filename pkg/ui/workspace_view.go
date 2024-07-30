@@ -156,7 +156,7 @@ func (wv *WorkspacesView) Init() {
 				Api().Core.OpenNeovimInWorkspace(curWorkspace)
 			})
 		}).
-		set('m', "Open in terminal", func() {
+		set('t', "Open in terminal", func() {
 			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
 				return
@@ -164,6 +164,62 @@ func (wv *WorkspacesView) Init() {
 
 			RunAction(func() {
 				Api().Core.OpenTerminalInWorkspace(curWorkspace)
+			})
+		}).
+		set('m', "Move workspace to another topic", func() {
+			curWorkspace := wv.getSelectedWorkspace()
+			if curWorkspace == nil {
+				return
+			}
+
+			sd := new(*SearchListDialog[*core.Topic])
+			*sd = OpenSearchListDialog(SearchDialogConfig[*core.Topic]{
+				onSearch: func(s string) ([][]string, []*core.Topic) {
+					rows := make([][]string, 0)
+					topics := Api().Core.GetTopics().FilterByNameContaining(s)
+					for _, t := range topics {
+						rows = append(rows, []string{
+							t.Name,
+						})
+					}
+
+					return rows, topics
+				},
+				initial: func() ([][]string, []*core.Topic) {
+					rows := make([][]string, 0)
+					topics := Api().Core.GetTopics()
+					for _, t := range topics {
+						rows = append(rows, []string{
+							t.Name,
+						})
+					}
+
+					return rows, topics
+				},
+				onSelect: func(a *core.Topic) {
+					if err := Api().Core.MoveWorkspace(curWorkspace, a); err != nil {
+						OpenToastDialogError(err.Error())
+						return
+					}
+
+					if *sd != nil {
+						(*sd).Close()
+					}
+
+					GetTopicsView().tableRenderer.SetSelectedRow(0)
+
+					wv.Focus()
+				},
+				onSelectDescription: "Move workspace to this topic",
+				searchViewTitle:     "Filter",
+				tableViewTitle:      "Result",
+				focusList:           true,
+				tableTitles: []string{
+					"Name",
+				},
+				tableProportions: []float64{
+					1.0,
+				},
 			})
 		}).
 		set('D', "Delete a workspace", func() {

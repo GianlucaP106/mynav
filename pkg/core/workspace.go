@@ -120,6 +120,16 @@ func (w Workspaces) GetWorkspace(idx int) *Workspace {
 	return w[idx]
 }
 
+func (w Workspaces) GetWorkspaceByName(name string) *Workspace {
+	for _, workspace := range w {
+		if workspace.Name == name {
+			return workspace
+		}
+	}
+
+	return nil
+}
+
 func (w Workspaces) GetWorkspaceByShortPath(s string) *Workspace {
 	for _, workspace := range w {
 		if workspace.ShortPath() == s {

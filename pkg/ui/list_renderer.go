@@ -8,7 +8,7 @@ type ListRenderer struct {
 	renderSize int
 }
 
-func newListRenderer(initial int, renderSize int, listSize int) *ListRenderer {
+func NewListRenderer(initial int, renderSize int, listSize int) *ListRenderer {
 	size := min(listSize, renderSize)
 	return &ListRenderer{
 		selected:   initial,
@@ -19,9 +19,9 @@ func newListRenderer(initial int, renderSize int, listSize int) *ListRenderer {
 	}
 }
 
-func (lr *ListRenderer) increment() {
+func (lr *ListRenderer) Increment() {
 	if lr.selected >= lr.listSize-1 {
-		lr.setSelected(0)
+		lr.SetSelected(0)
 		return
 	}
 
@@ -32,9 +32,9 @@ func (lr *ListRenderer) increment() {
 	}
 }
 
-func (lr *ListRenderer) decrement() {
+func (lr *ListRenderer) Decrement() {
 	if lr.selected <= 0 {
-		lr.setSelected(lr.listSize - 1)
+		lr.SetSelected(lr.listSize - 1)
 		return
 	}
 	lr.selected--
@@ -44,7 +44,7 @@ func (lr *ListRenderer) decrement() {
 	}
 }
 
-func (lr *ListRenderer) setSelected(idx int) {
+func (lr *ListRenderer) SetSelected(idx int) {
 	if idx < 0 || idx > lr.listSize {
 		return
 	}
@@ -55,25 +55,25 @@ func (lr *ListRenderer) setSelected(idx int) {
 	lr.endIdx = lr.startIdx + size
 }
 
+func (lr *ListRenderer) ResetSize(newSize int) {
+	if newSize != lr.listSize {
+		lr.setListSize(newSize)
+	}
+}
+
 func (lr *ListRenderer) setListSize(listSize int) {
 	lr.listSize = listSize
 	if listSize == 0 {
-		lr.setSelected(0)
+		lr.SetSelected(0)
 	} else if lr.selected >= listSize {
-		lr.setSelected(listSize - 1)
+		lr.SetSelected(listSize - 1)
 	} else {
-		lr.setSelected(lr.selected)
+		lr.SetSelected(lr.selected)
 	}
 }
 
 func (lr *ListRenderer) forEach(f func(idx int)) {
 	for i := lr.startIdx; i < lr.endIdx; i++ {
 		f(i)
-	}
-}
-
-func (lr *ListRenderer) resetSize(newSize int) {
-	if newSize != lr.listSize {
-		lr.setListSize(newSize)
 	}
 }

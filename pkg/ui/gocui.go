@@ -217,7 +217,6 @@ func GetKeyStr(key gocui.Key) string {
 
 // commenting some temporarily to avoid colliding keys
 var translate = map[string]gocui.Key{
-	"CtrlI":      gocui.KeyCtrlI,
 	"CtrlJ":      gocui.KeyCtrlJ,
 	"CtrlK":      gocui.KeyCtrlK,
 	"CtrlL":      gocui.KeyCtrlL,
@@ -228,7 +227,9 @@ var translate = map[string]gocui.Key{
 	"ArrowRight": gocui.KeyArrowRight,
 	"CtrlH":      gocui.KeyCtrlH,
 	"Esc":        gocui.KeyEsc,
+	"Tab":        gocui.KeyTab,
 
+	// "CtrlI":      gocui.KeyCtrlI,
 	// "F1":             gocui.KeyF1,
 	// "F2":             gocui.KeyF2,
 	// "F3":             gocui.KeyF3,
@@ -258,7 +259,6 @@ var translate = map[string]gocui.Key{
 	// "CtrlF":          gocui.KeyCtrlF,
 	// "CtrlG":          gocui.KeyCtrlG,
 	// "Backspace":      gocui.KeyBackspace,
-	// "Tab":            gocui.KeyTab,
 	// "Backtab":        gocui.KeyBacktab,
 	// "CtrlM":          gocui.KeyCtrlM,
 	// "CtrlN":          gocui.KeyCtrlN,
