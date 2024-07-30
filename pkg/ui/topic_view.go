@@ -57,9 +57,10 @@ func (tv *TopicsView) Init() {
 
 	events.AddEventListener(constants.TopicChangeEventName, func(_ string) {
 		tv.refreshTopics()
-		GetWorkspacesView().refreshWorkspaces()
+		wv := GetWorkspacesView()
+		wv.refreshWorkspaces()
 		RenderView(tv)
-		RenderView(GetWorkspacesView())
+		RenderView(wv)
 	})
 
 	tv.refreshTopics()
@@ -142,15 +143,10 @@ func (tv *TopicsView) Init() {
 					return rows, workspaces
 				},
 				onSelect: func(w *core.Workspace) {
-					tv.tableRenderer.SetSelectedRowByValue(func(t *core.Topic) bool {
-						return w.Topic.Name == t.Name
-					})
-
+					tv.selectTopicByName(w.Topic.Name)
 					wv := GetWorkspacesView()
 					wv.refreshWorkspaces()
-					wv.tableRenderer.SetSelectedRowByValue(func(workspace *core.Workspace) bool {
-						return w.ShortPath() == workspace.ShortPath()
-					})
+					wv.selectWorkspaceByShortPath(w.ShortPath())
 
 					if *sd != nil {
 						(*sd).Close()

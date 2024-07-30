@@ -15,12 +15,13 @@ type SearchListDialog[T any] struct {
 type SearchDialogConfig[T any] struct {
 	onSearch            func(s string) ([][]string, []T)
 	onSelect            func(a T)
-	onSelectDescription string
 	initial             func() ([][]string, []T)
+	onSelectDescription string
 	searchViewTitle     string
 	tableViewTitle      string
 	tableTitles         []string
 	tableProportions    []float64
+	focusList           bool
 }
 
 func OpenSearchListDialog[T any](params SearchDialogConfig[T]) *SearchListDialog[T] {
@@ -60,6 +61,9 @@ func OpenSearchListDialog[T any](params SearchDialogConfig[T]) *SearchListDialog
 		}).
 		set(gocui.KeyTab, "Toggle focus", func() {
 			s.focusList()
+		}).
+		set('?', "Toggle cheatsheet", func() {
+			OpenHelpView(s.searchView.keybindingInfo.toList(), func() {})
 		})
 
 	s.tableView.KeyBinding().
@@ -80,9 +84,16 @@ func OpenSearchListDialog[T any](params SearchDialogConfig[T]) *SearchListDialog
 		set('k', "Move up", func() {
 			s.tableRenderer.Up()
 			s.renderTable()
+		}).
+		set('?', "Toggle cheatsheet", func() {
+			OpenHelpView(s.tableView.keybindingInfo.toList(), func() {})
 		})
 
-	s.focusSearch()
+	if params.focusList {
+		s.focusList()
+	} else {
+		s.focusSearch()
+	}
 	s.renderTable()
 
 	return s

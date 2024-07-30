@@ -49,6 +49,18 @@ func (w *WorkspaceRepository) Save(workspace *Workspace) error {
 	return nil
 }
 
+func (w *WorkspaceRepository) Move(workspace *Workspace, newTopic *Topic) error {
+	w.Container.Delete(workspace.ShortPath())
+	w.DeleteMetadata(workspace)
+	workspace.Topic = newTopic
+
+	if err := w.Rename(workspace, workspace.Name); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (w *WorkspaceRepository) Rename(workspace *Workspace, newName string) error {
 	newShortPath := filepath.Join(workspace.Topic.Name, newName)
 	if w.Container.Get(newShortPath) != nil {

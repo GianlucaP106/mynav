@@ -21,15 +21,8 @@ func NewWorkspaceController(topics Topics, storePath string, tr *tmux.TmuxContro
 	return wc
 }
 
-func (wc *WorkspaceController) PeriodValidation(name string) error {
-	if strings.ContainsRune(name, '.') {
-		return errors.New("workspace name cannot contain '.'")
-	}
-	return nil
-}
-
 func (wc *WorkspaceController) CreateWorkspace(name string, topic *Topic) (*Workspace, error) {
-	if err := wc.PeriodValidation(name); err != nil {
+	if err := wc.periodValidation(name); err != nil {
 		return nil, err
 	}
 
@@ -39,7 +32,6 @@ func (wc *WorkspaceController) CreateWorkspace(name string, topic *Topic) (*Work
 		return nil, err
 	}
 
-	events.Emit(constants.WorkspaceChangeEventName)
 	events.Emit(constants.TopicChangeEventName)
 
 	return workspace, nil
@@ -53,12 +45,35 @@ func (wc *WorkspaceController) DeleteWorkspace(w *Workspace) error {
 	}
 
 	events.Emit(constants.TopicChangeEventName)
-	events.Emit(constants.WorkspaceChangeEventName)
+	return nil
+}
+
+func (wc *WorkspaceController) MoveWorkspace(w *Workspace, newTopic *Topic) error {
+	if w.Topic.Name == newTopic.Name {
+		return errors.New("workspace is already in this topic")
+	}
+
+	if wc.GetWorkspaces().FilterByTopic(newTopic).GetWorkspaceByName(w.Name) != nil {
+		return errors.New("workspace with this name already exists")
+	}
+
+	s := wc.TmuxController.GetTmuxSessionByName(w.Path)
+
+	if err := wc.WorkspaceRepository.Move(w, newTopic); err != nil {
+		return err
+	}
+
+	if s != nil {
+		wc.TmuxController.RenameTmuxSession(s, w.Path)
+	}
+
+	events.Emit(constants.TopicChangeEventName)
+	events.Emit(constants.PortSyncNeededEventName)
 	return nil
 }
 
 func (wc *WorkspaceController) RenameWorkspace(w *Workspace, newName string) error {
-	if err := wc.PeriodValidation(newName); err != nil {
+	if err := wc.periodValidation(newName); err != nil {
 		return err
 	}
 
@@ -216,5 +231,12 @@ func (wc *WorkspaceController) CloneRepo(repoUrl string, w *Workspace) error {
 	w.GitRemote = &repoUrl
 	wc.WorkspaceRepository.SetSelectedWorkspace(w)
 	events.Emit(constants.WorkspaceChangeEventName)
+	return nil
+}
+
+func (wc *WorkspaceController) periodValidation(name string) error {
+	if strings.ContainsRune(name, '.') {
+		return errors.New("workspace name cannot contain '.'")
+	}
 	return nil
 }

@@ -47,7 +47,7 @@ func (tr *TableRenderer[T]) InitTable(width int, height int, titles []string, co
 	if len(titles) != len(colProportions) {
 		log.Panicln("the number of titles and col proportions should be the same")
 	}
-	tr.ListRenderer = newListRenderer(0, height-1, 0)
+	tr.ListRenderer = NewListRenderer(0, height-1, 0)
 	tr.Table = &Table[T]{
 		Title: &TableTitle{
 			Titles: titles,
@@ -78,7 +78,7 @@ func (tr *TableRenderer[T]) GetSelectedRow() (idx int, value *T) {
 func (tr *TableRenderer[T]) SetSelectedRow(idx int) {
 	tr.mu.Lock()
 	defer tr.mu.Unlock()
-	tr.ListRenderer.setSelected(idx)
+	tr.ListRenderer.SetSelected(idx)
 }
 
 // TODO: RENAME
@@ -88,18 +88,18 @@ func (tr *TableRenderer[T]) SetSelectedRowByValue(f func(T) bool) {
 
 	for idx, row := range tr.Table.Rows {
 		if f(row.Value) {
-			tr.ListRenderer.setSelected(idx)
+			tr.ListRenderer.SetSelected(idx)
 			return
 		}
 	}
 }
 
 func (tr *TableRenderer[T]) Up() {
-	tr.ListRenderer.decrement()
+	tr.ListRenderer.Decrement()
 }
 
 func (tr *TableRenderer[T]) Down() {
-	tr.ListRenderer.increment()
+	tr.ListRenderer.Increment()
 }
 
 func (tr *TableRenderer[T]) FillTable(rows [][]string, rowValues []T) {
@@ -115,7 +115,7 @@ func (tr *TableRenderer[T]) FillTable(rows [][]string, rowValues []T) {
 		tr.Table.addTableRow(row, rowValues[idx])
 	}
 
-	tr.ListRenderer.resetSize(len(rows))
+	tr.ListRenderer.ResetSize(len(rows))
 }
 
 func (tr *TableRenderer[T]) RenderWithSelectCallBack(w io.Writer, onSelected func(int, *TableRow[T]) bool) {
