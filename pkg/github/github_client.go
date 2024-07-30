@@ -34,7 +34,7 @@ func NewGithubClient(token *GithubAuthenticationToken, onLogin func(*GithubAuthe
 func (g *GithubClient) AuthenticateWithDevice() *GithubDevicePreAuthentication {
 	gda, f := g.authenticator.AuthenticateWithDevice()
 
-	tasks.AddTask(func() {
+	tasks.QueueTask(func() {
 		client := f()
 		g.mu.Lock()
 		defer g.mu.Unlock()

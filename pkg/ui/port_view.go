@@ -39,8 +39,7 @@ func (p *PortView) View() *View {
 }
 
 func (p *PortView) Init() {
-	screenX, screenY := ScreenSize()
-	p.view = SetCenteredView(constants.PortViewName, screenX/2, screenY/3, 0)
+	p.view = GetViewPosition(constants.PortViewName).Set()
 
 	p.view.FrameColor = gocui.ColorBlue
 	p.view.Title = withSurroundingSpaces("Open Ports")

@@ -6,6 +6,7 @@ const (
 	WorkspaceInfoDialogName   = "WorkspaceInfoDialog"
 	TopicViewName             = "TopicsView"
 	PortViewName              = "PortView"
+	PsViewName                = "PsView"
 	HelpDialogName            = "HelpDialog"
 	HeaderViewName            = "HeaderView"
 	GithubRepoViewName        = "GithubRepoView"

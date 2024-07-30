@@ -37,7 +37,7 @@ func (te *TaskExecutor) pop() *Task {
 	return first
 }
 
-func (te *TaskExecutor) Add(task func()) {
+func (te *TaskExecutor) QueueTask(task func()) {
 	te.mu.Lock()
 	defer te.mu.Unlock()
 	te.q = append(te.q, &Task{task: task})

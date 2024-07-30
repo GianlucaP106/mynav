@@ -32,6 +32,28 @@ func NewTmuxController(pc *system.PortController) *TmuxController {
 	return tmc
 }
 
+func (t *TmuxController) GetTmuxSessionChildProcesses(ts *TmuxSession) []*TmuxPaneProcess {
+	panes := t.GetTmuxPanesBySession(ts)
+	out := make([]*TmuxPaneProcess, 0)
+	for _, p := range panes {
+		processes, err := system.GetChildProcesses(p.Pid)
+		if err != nil {
+			continue
+		}
+
+		for _, process := range processes {
+			paneProcess := &TmuxPaneProcess{
+				Process: process,
+				Pane:    p,
+			}
+
+			out = append(out, paneProcess)
+		}
+	}
+
+	return out
+}
+
 func (tc *TmuxController) RenameTmuxSession(s *TmuxSession, newName string) error {
 	if err := tc.TmuxRepository.RenameSession(s, newName); err != nil {
 		return err
@@ -138,7 +160,7 @@ func (tc *TmuxController) GetTmuxSessionByPort(port *system.Port) *TmuxSession {
 }
 
 func (tc *TmuxController) syncPorts() {
-	tasks.AddTask(func() {
+	tasks.QueueTask(func() {
 		tmap := tc.GetTmuxSessionPidMap()
 
 		tc.PortController.InitPorts()

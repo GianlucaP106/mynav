@@ -61,10 +61,17 @@ func GetViewPosition(viewName string) *ViewPosition {
 	}
 
 	positionMap[constants.PortViewName] = &ViewPosition{
+		x0: maxX/2 + 1,
+		y0: maxY/2 - 10,
+		x1: maxX - 2,
+		y1: maxY/2 + 10,
+	}
+
+	positionMap[constants.PsViewName] = &ViewPosition{
 		x0: 2,
-		y0: (maxY / 2) - 1,
-		x1: maxX/3 - 1,
-		y1: maxY - 4,
+		y0: maxY/2 - 10,
+		x1: maxX/2 - 1,
+		y1: maxY/2 + 10,
 	}
 
 	positionMap[constants.GithubRepoViewName] = &ViewPosition{
