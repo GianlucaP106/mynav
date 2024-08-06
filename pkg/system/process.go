@@ -44,26 +44,6 @@ func IsProcessChildOf(child int, parent int) bool {
 	}
 }
 
-type ProcessInfo struct {
-	Exe string
-}
-
-func GetProcessInfo(pid int) *ProcessInfo {
-	proc, err := process.NewProcess(int32(pid))
-	if err != nil {
-		return nil
-	}
-
-	exe, err := proc.Exe()
-	if err != nil {
-		return nil
-	}
-
-	return &ProcessInfo{
-		Exe: exe,
-	}
-}
-
 func KillProcess(pid int) error {
 	proc, err := os.FindProcess(pid)
 	if err != nil {

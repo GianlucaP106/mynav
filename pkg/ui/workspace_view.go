@@ -6,7 +6,6 @@ import (
 	"mynav/pkg/events"
 	"mynav/pkg/github"
 	"mynav/pkg/system"
-	"mynav/pkg/tmux"
 	"strconv"
 
 	"github.com/awesome-gocui/gocui"
@@ -139,7 +138,7 @@ func (wv *WorkspacesView) Init() {
 			}
 
 			RunAction(func() {
-				if tmux.IsTmuxSession() {
+				if core.IsTmuxSession() {
 					Api().Core.OpenNeovimInWorkspace(curWorkspace)
 				} else {
 					Api().Core.CreateOrAttachTmuxSession(curWorkspace)
@@ -325,7 +324,7 @@ func (wv *WorkspacesView) refreshWorkspaces() {
 		tmux := func() string {
 			// TODO: improve how this is done
 			if tm := Api().Tmux.GetTmuxSessionByName(w.Path); tm != nil {
-				numWindows := strconv.Itoa(tm.NumWindows)
+				numWindows := strconv.Itoa(tm.Windows)
 				return numWindows + " - tmux"
 			}
 

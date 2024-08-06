@@ -2,16 +2,17 @@ package ui
 
 import (
 	"mynav/pkg/constants"
+	"mynav/pkg/core"
 	"mynav/pkg/events"
-	"mynav/pkg/tmux"
 	"strconv"
 
+	"github.com/GianlucaP106/gotmux/gotmux"
 	"github.com/awesome-gocui/gocui"
 )
 
 type TmuxSessionView struct {
 	view          *View
-	tableRenderer *TableRenderer[*tmux.TmuxSession]
+	tableRenderer *TableRenderer[*gotmux.Session]
 }
 
 var _ Viewable = new(TmuxSessionView)
@@ -41,7 +42,7 @@ func (tv *TmuxSessionView) Init() {
 	tv.view.FrameColor = gocui.ColorGreen
 
 	sizeX, sizeY := tv.view.Size()
-	tv.tableRenderer = NewTableRenderer[*tmux.TmuxSession]()
+	tv.tableRenderer = NewTableRenderer[*gotmux.Session]()
 	titles := []string{
 		"workspace",
 		"Windows",
@@ -63,7 +64,7 @@ func (tv *TmuxSessionView) Init() {
 
 	tv.view.KeyBinding().
 		set(gocui.KeyEnter, "Attach to session", func() {
-			if tmux.IsTmuxSession() {
+			if core.IsTmuxSession() {
 				OpenToastDialogError("You are already in a tmux session. Nested tmux sessions are not supported yet.")
 				return
 			}
@@ -96,7 +97,7 @@ func (tv *TmuxSessionView) Init() {
 
 			OpenConfirmationDialog(func(b bool) {
 				if b {
-					if err := Api().Tmux.DeleteAllTmuxSessions(); err != nil {
+					if err := Api().Tmux.KillTmuxServer(); err != nil {
 						OpenToastDialogError(err.Error())
 						return
 					}
@@ -124,7 +125,7 @@ func (tv *TmuxSessionView) Init() {
 			tv.tableRenderer.Up()
 		}).
 		set('a', "New external session (not associated to a workspace)", func() {
-			if tmux.IsTmuxSession() {
+			if core.IsTmuxSession() {
 				return
 			}
 			OpenEditorDialog(func(s string) {
@@ -138,7 +139,7 @@ func (tv *TmuxSessionView) Init() {
 		})
 }
 
-func (tv *TmuxSessionView) getSelectedSession() *tmux.TmuxSession {
+func (tv *TmuxSessionView) getSelectedSession() *gotmux.Session {
 	_, ts := tv.tableRenderer.GetSelectedRow()
 	if ts != nil {
 		return *ts
@@ -148,10 +149,8 @@ func (tv *TmuxSessionView) getSelectedSession() *tmux.TmuxSession {
 }
 
 func (ts *TmuxSessionView) refreshTmuxSessions() {
-	sessions := make([]*tmux.TmuxSession, 0)
-	for _, session := range Api().Tmux.GetTmuxSessions() {
-		sessions = append(sessions, session)
-	}
+	sessions := make([]*gotmux.Session, 0)
+	sessions = append(sessions, Api().Tmux.GetTmuxSessions()...)
 
 	rows := make([][]string, 0)
 	for _, session := range sessions {
@@ -163,7 +162,7 @@ func (ts *TmuxSessionView) refreshTmuxSessions() {
 			}
 		}
 
-		windows := strconv.Itoa(session.NumWindows)
+		windows := strconv.Itoa(session.Windows)
 		rows = append(rows, []string{
 			workspace,
 			windows,
@@ -178,7 +177,7 @@ func (tv *TmuxSessionView) Render() error {
 	isViewFocused := tv.view.IsFocused()
 
 	tv.view.Clear()
-	tv.tableRenderer.RenderWithSelectCallBack(tv.view, func(_ int, _ *TableRow[*tmux.TmuxSession]) bool {
+	tv.tableRenderer.RenderWithSelectCallBack(tv.view, func(_ int, _ *TableRow[*gotmux.Session]) bool {
 		return isViewFocused
 	})
 

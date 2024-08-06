@@ -5,15 +5,15 @@ import (
 	"mynav/pkg/constants"
 	"mynav/pkg/persistence"
 	"mynav/pkg/tasks"
-	"mynav/pkg/tmux"
 	"strconv"
 
 	"github.com/awesome-gocui/gocui"
+	"github.com/shirou/gopsutil/process"
 )
 
 type PsView struct {
 	view          *View
-	tableRenderer *TableRenderer[*tmux.TmuxPaneProcess]
+	tableRenderer *TableRenderer[*process.Process]
 
 	// tmp
 	isLoading *persistence.Value[bool]
@@ -38,7 +38,7 @@ func (p *PsView) Init() {
 	p.view.Title = withSurroundingSpaces("Processes")
 	p.view.TitleColor = gocui.ColorBlue
 
-	p.tableRenderer = NewTableRenderer[*tmux.TmuxPaneProcess]()
+	p.tableRenderer = NewTableRenderer[*process.Process]()
 
 	sizeX, sizeY := p.view.Size()
 	p.tableRenderer.InitTable(sizeX, sizeY, []string{
@@ -54,25 +54,24 @@ func (p *PsView) Init() {
 	tasks.QueueTask(func() {
 		// TODO: move this to core, system or tmux
 		p.isLoading.Set(true)
-		processes := make([]*tmux.TmuxPaneProcess, 0)
+		rows := make([][]string, 0)
+		processes := make([]*process.Process, 0)
 		for _, ts := range Api().Tmux.GetTmuxSessions() {
 			ps := Api().Tmux.GetTmuxSessionChildProcesses(ts)
-			processes = append(processes, ps...)
-		}
+			for _, proc := range ps {
+				name, err := proc.Name()
+				if err != nil {
+					continue
+				}
 
-		rows := make([][]string, 0)
-		for _, tpp := range processes {
-			name, err := tpp.Process.Name()
-			if err != nil {
-				continue
+				pid := strconv.Itoa(int(proc.Pid))
+				rows = append(rows, []string{
+					name,
+					ts.Name,
+					pid,
+				})
+				processes = append(processes, proc)
 			}
-
-			pid := strconv.Itoa(int(tpp.Process.Pid))
-			rows = append(rows, []string{
-				name,
-				tpp.Pane.Session.Name,
-				pid,
-			})
 		}
 
 		p.tableRenderer.FillTable(rows, processes)
@@ -94,7 +93,7 @@ func (p *PsView) Render() error {
 	p.view.Clear()
 
 	isFocused := p.view.IsFocused()
-	p.tableRenderer.RenderWithSelectCallBack(p.view, func(i int, tr *TableRow[*tmux.TmuxPaneProcess]) bool {
+	p.tableRenderer.RenderWithSelectCallBack(p.view, func(i int, tr *TableRow[*process.Process]) bool {
 		return isFocused
 	})
 

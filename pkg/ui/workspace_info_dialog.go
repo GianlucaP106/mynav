@@ -92,20 +92,8 @@ func (wd *WorkspaceInfoDialog) getWorkspaceInfoContent(w *core.Workspace) []stri
 
 	if s := Api().Tmux.GetTmuxSessionByName(w.Path); s != nil {
 		out = append(out, formatItem("Tmux session: ", s.Name)...)
-		out = append(out, withSpacePadding(strconv.Itoa(s.NumWindows)+" window(s)", sizeX))
+		out = append(out, withSpacePadding(strconv.Itoa(s.Windows)+" window(s)", sizeX))
 		out = append(out, blankLine(sizeX))
-	}
-
-	if pw := Api().Core.GetPortsByWorkspace(w); pw != nil && pw.Len() > 0 {
-		ports := ""
-		for _, p := range pw {
-			ports += p.GetPortStr() + ", "
-		}
-
-		ports = trimEnd(ports, 2)
-		out = append(out, formatItem("Open Ports: ", ports)...)
-		out = append(out, blankLine(sizeX))
-
 	}
 
 	out = append(out, formatItem("Last modified: ", w.GetLastModifiedTimeFormatted())...)

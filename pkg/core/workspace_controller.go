@@ -5,16 +5,17 @@ import (
 	"mynav/pkg/constants"
 	"mynav/pkg/events"
 	"mynav/pkg/system"
-	"mynav/pkg/tmux"
 	"strings"
+
+	"github.com/GianlucaP106/gotmux/gotmux"
 )
 
 type WorkspaceController struct {
 	WorkspaceRepository *WorkspaceRepository
-	TmuxController      *tmux.TmuxController
+	TmuxController      *TmuxController
 }
 
-func NewWorkspaceController(topics Topics, storePath string, tr *tmux.TmuxController) *WorkspaceController {
+func NewWorkspaceController(topics Topics, storePath string, tr *TmuxController) *WorkspaceController {
 	wc := &WorkspaceController{}
 	wc.TmuxController = tr
 	wc.WorkspaceRepository = NewWorkspaceRepository(topics, storePath)
@@ -68,7 +69,7 @@ func (wc *WorkspaceController) MoveWorkspace(w *Workspace, newTopic *Topic) erro
 	}
 
 	events.Emit(constants.TopicChangeEventName)
-	events.Emit(constants.PortSyncNeededEventName)
+	events.Emit(constants.PortChangeEventName)
 	return nil
 }
 
@@ -88,7 +89,7 @@ func (wc *WorkspaceController) RenameWorkspace(w *Workspace, newName string) err
 	}
 
 	events.Emit(constants.WorkspaceChangeEventName)
-	events.Emit(constants.PortSyncNeededEventName)
+	events.Emit(constants.PortChangeEventName)
 	return nil
 }
 
@@ -170,7 +171,7 @@ func (wc *WorkspaceController) SetSelectedWorkspace(w *Workspace) {
 	wc.WorkspaceRepository.SetSelectedWorkspace(w)
 }
 
-func (wc *WorkspaceController) GetWorkspaceByTmuxSession(s *tmux.TmuxSession) *Workspace {
+func (wc *WorkspaceController) GetWorkspaceByTmuxSession(s *gotmux.Session) *Workspace {
 	for _, w := range wc.GetWorkspaces() {
 		if ts := wc.TmuxController.GetTmuxSessionByName(w.Path); ts != nil && ts.Name == s.Name {
 			return w
@@ -198,7 +199,7 @@ func (wc *WorkspaceController) DeleteWorkspacesByTopic(t *Topic) error {
 		ts := wc.TmuxController.GetTmuxSessionByName(w.Path)
 		if ts != nil {
 			// TODO: deleteManytmuxSessions
-			wc.TmuxController.TmuxRepository.DeleteSession(ts)
+			ts.Kill()
 		}
 
 		if err := wc.WorkspaceRepository.Delete(w); err != nil {
@@ -206,22 +207,23 @@ func (wc *WorkspaceController) DeleteWorkspacesByTopic(t *Topic) error {
 		}
 	}
 
-	events.Emit(constants.PortSyncNeededEventName)
+	events.Emit(constants.PortChangeEventName)
 	events.Emit(constants.TmuxSessionChangeEventName)
 	events.Emit(constants.WorkspaceChangeEventName)
 	return nil
 }
 
-func (wc *WorkspaceController) GetPortsByWorkspace(w *Workspace) system.PortList {
-	out := make(system.PortList, 0)
-
-	session := wc.TmuxController.GetTmuxSessionByName(w.Path)
-	if session == nil {
-		return out
-	}
-
-	return session.Ports.ToList().Sorted()
-}
+// TODO:
+// func (wc *WorkspaceController) GetPortsByWorkspace(w *Workspace) system.PortList {
+// 	out := make(system.PortList, 0)
+//
+// 	session := wc.TmuxController.GetTmuxSessionByName(w.Path)
+// 	if session == nil {
+// 		return out
+// 	}
+//
+// 	return session.Ports.ToList().Sorted()
+// }
 
 func (wc *WorkspaceController) CloneRepo(repoUrl string, w *Workspace) error {
 	err := w.CloneRepo(repoUrl)

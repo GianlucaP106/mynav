@@ -3,7 +3,6 @@ package core
 import (
 	"mynav/pkg/constants"
 	"mynav/pkg/events"
-	"mynav/pkg/tmux"
 	"os"
 	"path/filepath"
 )
@@ -11,11 +10,11 @@ import (
 type TopicController struct {
 	TopicRepository     *TopicRepository
 	WorkspaceController *WorkspaceController
-	TmuxController      *tmux.TmuxController
+	TmuxController      *TmuxController
 	rootPath            string
 }
 
-func NewTopicController(rootPath string, tsc *tmux.TmuxController) *TopicController {
+func NewTopicController(rootPath string, tsc *TmuxController) *TopicController {
 	tc := &TopicController{
 		rootPath:       rootPath,
 		TmuxController: tsc,

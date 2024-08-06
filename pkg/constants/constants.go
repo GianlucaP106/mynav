@@ -23,7 +23,6 @@ const (
 	TmuxSessionChangeEventName         = "TmuxSessionChangeEvent"
 	TopicChangeEventName               = "TopicChangeEvent"
 	PortChangeEventName                = "PortChangeEvent"
-	PortSyncNeededEventName            = "PortSyncNeededEvent"
 	GithubPrsChangesEventName          = "GithubPrsChangesEvent"
 	GithubReposChangesEventName        = "GithubReposChangesEvent"
 	GithubDeviceAuthenticatedEventName = "GithubDeviceAuthenticatedEvent"

@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/shirou/gopsutil/net"
+	"github.com/shirou/gopsutil/process"
 )
 
 type Port struct {
@@ -63,35 +64,31 @@ func (p PortList) Sorted() PortList {
 	return p
 }
 
-type PortController struct {
-	ports Ports
-}
+type PortController struct{}
 
 func NewPortController() *PortController {
-	pc := &PortController{
-		ports: make(Ports),
-	}
-
+	pc := &PortController{}
 	return pc
 }
 
-func (pc *PortController) InitPorts() {
-	allActivePorts, err := pc.GetRunningPorts()
+func (pc *PortController) GetPorts() Ports {
+	allActivePorts, err := pc.getRunningPorts()
 	if err != nil {
-		return
+		return nil
 	}
 
 	out := make(Ports)
 	for _, port := range allActivePorts {
-		pi := GetProcessInfo(port.Pid)
-		port.Exe = ""
-		if pi != nil {
-			port.Exe = pi.Exe
+		proc, err := process.NewProcess(int32(port.Pid))
+		if err == nil {
+			exe, _ := proc.Exe()
+			port.Exe = exe
 		}
+
 		out.AddPort(port)
 	}
 
-	pc.ports = out
+	return out
 }
 
 func (pc *PortController) KillPort(p *Port) error {
@@ -99,15 +96,11 @@ func (pc *PortController) KillPort(p *Port) error {
 		return err
 	}
 
-	events.Emit(constants.PortSyncNeededEventName)
+	events.Emit(constants.PortChangeEventName)
 	return nil
 }
 
-func (pc *PortController) GetPorts() Ports {
-	return pc.ports
-}
-
-func (pc *PortController) GetRunningPorts() (PortList, error) {
+func (pc *PortController) getRunningPorts() (PortList, error) {
 	connections, err := net.Connections("inet")
 	if err != nil {
 		return nil, err
