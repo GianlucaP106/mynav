@@ -6,7 +6,6 @@ import (
 	"mynav/pkg/events"
 	"mynav/pkg/github"
 	"mynav/pkg/system"
-	"mynav/pkg/tmux"
 	"strconv"
 
 	"github.com/awesome-gocui/gocui"
@@ -139,7 +138,7 @@ func (wv *WorkspacesView) Init() {
 			}
 
 			RunAction(func() {
-				if tmux.IsTmuxSession() {
+				if core.IsTmuxSession() {
 					Api().Core.OpenNeovimInWorkspace(curWorkspace)
 				} else {
 					Api().Core.CreateOrAttachTmuxSession(curWorkspace)
@@ -206,7 +205,7 @@ func (wv *WorkspacesView) Init() {
 						(*sd).Close()
 					}
 
-					GetTopicsView().tableRenderer.SetSelectedRow(0)
+					GetTopicsView().tableRenderer.SelectRow(0)
 
 					wv.Focus()
 				},
@@ -233,7 +232,7 @@ func (wv *WorkspacesView) Init() {
 					Api().Core.DeleteWorkspace(curWorkspace)
 
 					// HACK: same as below
-					GetTopicsView().tableRenderer.SetSelectedRow(0)
+					GetTopicsView().tableRenderer.SelectRow(0)
 				}
 			}, "Are you sure you want to delete this workspace?")
 		}).
@@ -278,8 +277,8 @@ func (wv *WorkspacesView) Init() {
 				// HACK: when there a is a new workspace
 				// This will result in the workspace and the corresponding topic going to the top
 				// because we are sorting by modifed time
-				GetTopicsView().tableRenderer.SetSelectedRow(0)
-				wv.tableRenderer.SetSelectedRow(0)
+				GetTopicsView().tableRenderer.SelectRow(0)
+				wv.tableRenderer.SelectRow(0)
 			}, func() {}, "Workspace name ", Small)
 		}).
 		set('X', "Kill tmux session", func() {
@@ -302,7 +301,7 @@ func (wv *WorkspacesView) Init() {
 }
 
 func (wv *WorkspacesView) selectWorkspaceByShortPath(shortPath string) {
-	wv.tableRenderer.SetSelectedRowByValue(func(w *core.Workspace) bool {
+	wv.tableRenderer.SelectRowByValue(func(w *core.Workspace) bool {
 		return w.ShortPath() == shortPath
 	})
 }
@@ -323,9 +322,8 @@ func (wv *WorkspacesView) refreshWorkspaces() {
 	rowValues := make([]*core.Workspace, 0)
 	for _, w := range workspaces {
 		tmux := func() string {
-			// TODO: improve how this is done
 			if tm := Api().Tmux.GetTmuxSessionByName(w.Path); tm != nil {
-				numWindows := strconv.Itoa(tm.NumWindows)
+				numWindows := strconv.Itoa(tm.Windows)
 				return numWindows + " - tmux"
 			}
 

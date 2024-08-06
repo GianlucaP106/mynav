@@ -1,6 +1,6 @@
 module mynav
 
-go 1.22.1
+go 1.22.3
 
 require (
 	github.com/awesome-gocui/gocui v1.1.0
@@ -13,6 +13,7 @@ require (
 )
 
 require (
+	github.com/GianlucaP106/gotmux v0.1.1 // indirect
 	github.com/gdamore/encoding v1.0.0 // indirect
 	github.com/gdamore/tcell/v2 v2.4.0 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect

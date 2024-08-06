@@ -6,12 +6,11 @@ import (
 	"mynav/pkg/core"
 	"mynav/pkg/github"
 	"mynav/pkg/system"
-	"mynav/pkg/tmux"
 	"os"
 )
 
 type Api struct {
-	Tmux          *tmux.TmuxController
+	Tmux          *core.TmuxController
 	Core          *core.Core
 	Configuration *configuration.Configuration
 	Github        *github.GithubController
@@ -52,7 +51,7 @@ func (api *Api) InitConfiguration() error {
 
 func (api *Api) InitStandaloneController() {
 	api.Port = system.NewPortController()
-	api.Tmux = tmux.NewTmuxController(api.Port)
+	api.Tmux = core.NewTmuxController(api.Port)
 }
 
 func (api *Api) InitControllers() {

@@ -5,8 +5,8 @@ import (
 	"mynav/pkg/constants"
 	"mynav/pkg/events"
 	"mynav/pkg/system"
-	"mynav/pkg/tmux"
 
+	"github.com/GianlucaP106/gotmux/gotmux"
 	"github.com/awesome-gocui/gocui"
 )
 
@@ -16,7 +16,7 @@ type PortView struct {
 }
 
 type Port struct {
-	tmux *tmux.TmuxSession
+	tmux *gotmux.Session
 	*system.Port
 }
 
@@ -66,7 +66,7 @@ func (p *PortView) Init() {
 		RenderView(p)
 	})
 
-	events.Emit(constants.PortSyncNeededEventName)
+	events.Emit(constants.PortChangeEventName)
 
 	p.view.KeyBinding().
 		set('j', "Move down", func() {

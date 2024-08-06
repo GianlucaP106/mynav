@@ -111,7 +111,7 @@ func (tv *TopicsView) Init() {
 				// HACK: when there a is a new topic
 				// This will result in the corresponding topic going to the top
 				// because we are sorting by modifed time
-				tv.tableRenderer.SetSelectedRow(0)
+				tv.tableRenderer.SelectRow(0)
 			}, func() {}, "Topic name", Small)
 		}).
 		set('r', "Rename topic", func() {
@@ -215,7 +215,7 @@ func (tv *TopicsView) getSelectedTopic() *core.Topic {
 }
 
 func (tv *TopicsView) selectTopicByName(name string) {
-	tv.tableRenderer.SetSelectedRowByValue(func(t *core.Topic) bool {
+	tv.tableRenderer.SelectRowByValue(func(t *core.Topic) bool {
 		return t.Name == name
 	})
 }
