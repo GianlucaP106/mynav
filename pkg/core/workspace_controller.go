@@ -173,7 +173,7 @@ func (wc *WorkspaceController) SetSelectedWorkspace(w *Workspace) {
 
 func (wc *WorkspaceController) GetWorkspaceByTmuxSession(s *gotmux.Session) *Workspace {
 	for _, w := range wc.GetWorkspaces() {
-		if ts := wc.TmuxController.GetTmuxSessionByName(w.Path); ts != nil && ts.Name == s.Name {
+		if w.Path == s.Name {
 			return w
 		}
 	}
