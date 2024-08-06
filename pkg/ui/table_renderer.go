@@ -75,14 +75,13 @@ func (tr *TableRenderer[T]) GetSelectedRow() (idx int, value *T) {
 	return tr.ListRenderer.selected, &tr.Table.Rows[tr.ListRenderer.selected].Value
 }
 
-func (tr *TableRenderer[T]) SetSelectedRow(idx int) {
+func (tr *TableRenderer[T]) SelectRow(idx int) {
 	tr.mu.Lock()
 	defer tr.mu.Unlock()
 	tr.ListRenderer.SetSelected(idx)
 }
 
-// TODO: RENAME
-func (tr *TableRenderer[T]) SetSelectedRowByValue(f func(T) bool) {
+func (tr *TableRenderer[T]) SelectRowByValue(f func(T) bool) {
 	tr.mu.Lock()
 	defer tr.mu.Unlock()
 

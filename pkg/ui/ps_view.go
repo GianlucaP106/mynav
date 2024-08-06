@@ -52,7 +52,6 @@ func (p *PsView) Init() {
 	})
 
 	tasks.QueueTask(func() {
-		// TODO: move this to core, system or tmux
 		p.isLoading.Set(true)
 		rows := make([][]string, 0)
 		processes := make([]*process.Process, 0)

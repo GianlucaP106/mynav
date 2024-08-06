@@ -121,6 +121,6 @@ func (g *GithubClient) RepositoriesByOrg(org string, fetchLimit int) ([]*gh.Repo
 }
 
 func (g *GithubClient) Principal() (*gh.User, error) {
-	principal, _, err := g.client.Users.Get(context.TODO(), "")
+	principal, _, err := g.client.Users.Get(context.Background(), "")
 	return principal, err
 }

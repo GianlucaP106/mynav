@@ -198,7 +198,6 @@ func (wc *WorkspaceController) DeleteWorkspacesByTopic(t *Topic) error {
 	for _, w := range workspaces.FilterByTopic(t) {
 		ts := wc.TmuxController.GetTmuxSessionByName(w.Path)
 		if ts != nil {
-			// TODO: deleteManytmuxSessions
 			ts.Kill()
 		}
 
@@ -212,18 +211,6 @@ func (wc *WorkspaceController) DeleteWorkspacesByTopic(t *Topic) error {
 	events.Emit(constants.WorkspaceChangeEventName)
 	return nil
 }
-
-// TODO:
-// func (wc *WorkspaceController) GetPortsByWorkspace(w *Workspace) system.PortList {
-// 	out := make(system.PortList, 0)
-//
-// 	session := wc.TmuxController.GetTmuxSessionByName(w.Path)
-// 	if session == nil {
-// 		return out
-// 	}
-//
-// 	return session.Ports.ToList().Sorted()
-// }
 
 func (wc *WorkspaceController) CloneRepo(repoUrl string, w *Workspace) error {
 	err := w.CloneRepo(repoUrl)

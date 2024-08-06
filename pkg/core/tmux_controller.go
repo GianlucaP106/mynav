@@ -90,18 +90,13 @@ func (tc *TmuxController) GetTmuxSessionByName(name string) *gotmux.Session {
 }
 
 func (tc *TmuxController) DeleteTmuxSession(s *gotmux.Session) error {
-	// TODO:
-	// refreshPorts := len(s.Ports.ToList()) > 0
-	// if refreshPorts {
-	// 	defer tc.syncPorts()
-	// }
-
 	err := s.Kill()
 	if err != nil {
 		return err
 	}
 
 	events.Emit(constants.TmuxSessionChangeEventName)
+	events.Emit(constants.PortChangeEventName)
 	return nil
 }
 
@@ -190,36 +185,3 @@ func (t *TmuxController) GetTmuxSessionByChildPid(pid int) *gotmux.Session {
 func IsTmuxSession() bool {
 	return os.Getenv("TMUX") != ""
 }
-
-// TODO:
-// func (tc *TmuxController) syncPorts() {
-// 	sessions, err := tc.Tmux.ListSessions()
-// 	if err != nil {
-// 		return
-// 	}
-//
-// 	tasks.QueueTask(func() {
-// 		tmap := tc.GetTmuxSessionPidMap()
-//
-// 		tc.PortController.InitPorts()
-// 		ports := tc.PortController.GetPorts()
-//
-// 		var wg sync.WaitGroup
-// 		for _, port := range ports {
-// 			prt := port
-// 			wg.Add(1)
-// 			go func() {
-// 				defer wg.Done()
-// 				for pid, ts := range tmap {
-// 					if system.IsProcessChildOf(prt.Pid, pid) {
-// 						ts.Ports.AddPort(prt)
-// 					}
-// 				}
-// 			}()
-// 		}
-//
-// 		wg.Wait()
-//
-// 		events.Emit(constants.PortChangeEventName)
-// 	})
-// }

@@ -48,7 +48,7 @@ func NewGithubAuthenticator(onLogin func(*GithubAuthenticationToken), onLogout f
 }
 
 func (ga *GithubAuthenticator) AuthenticateWithDevice() (*GithubDevicePreAuthentication, func() *gh.Client) {
-	deviceAuth, err := ga.oauthConfig.DeviceAuth(context.TODO())
+	deviceAuth, err := ga.oauthConfig.DeviceAuth(context.Background())
 	if err != nil {
 		log.Fatal(err)
 	}
