@@ -124,6 +124,56 @@ func (tv *TmuxSessionView) Init() {
 		set('k', "Move up", func() {
 			tv.tableRenderer.Up()
 		}).
+		set('c', "Open choose tree in session", func() {
+			// TODO: move this flow in core
+			session := tv.getSelectedSession()
+			if session == nil {
+				return
+			}
+
+			windows, err := session.ListWindows()
+			if err != nil {
+				return
+			}
+
+			var window *gotmux.Window
+			for _, w := range windows {
+				if w != nil {
+					window = w
+					break
+				}
+			}
+
+			if window == nil {
+				window, err = session.New()
+				if err != nil {
+					return
+				}
+			}
+
+			var pane *gotmux.Pane
+			pane, err = window.GetPaneByIndex(0)
+			if err != nil {
+				// TODO: create pane - blocked by https://github.com/GianlucaP106/gotmux/issues/12
+				return
+			}
+
+			if pane == nil {
+				// TODO: create pane - blocked by https://github.com/GianlucaP106/gotmux/issues/12
+				return
+			}
+
+			err = pane.ChooseTree(&gotmux.ChooseTreeOptions{
+				SessionsCollapsed: true,
+			})
+			if err != nil {
+				return
+			}
+
+			RunAction(func() {
+				session.Attach()
+			})
+		}).
 		set('a', "New external session (not associated to a workspace)", func() {
 			if core.IsTmuxSession() {
 				return
