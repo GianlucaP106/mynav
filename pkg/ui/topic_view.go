@@ -78,11 +78,11 @@ func (tv *TopicsView) Init() {
 	tv.view.KeyBinding().
 		set('j', "Move down", func() {
 			tv.tableRenderer.Down()
-			GetWorkspacesView().refreshWorkspaces()
+			events.Emit(constants.WorkspaceChangeEventName)
 		}).
 		set('k', "Move up", func() {
 			tv.tableRenderer.Up()
-			GetWorkspacesView().refreshWorkspaces()
+			events.Emit(constants.WorkspaceChangeEventName)
 		}).
 		set(gocui.KeyEnter, "Open topic", moveRight).
 		set('/', "Search by name", func() {
