@@ -41,16 +41,16 @@ func GetViewPosition(viewName string) *ViewPosition {
 	positionMap := map[string]*ViewPosition{}
 	positionMap[constants.WorkspacesViewName] = &ViewPosition{
 		x0: (maxX / 3) + 1,
-		y0: maxY/2 - 15,
+		y0: maxY/2 - maxY/3,
 		x1: maxX - 2,
-		y1: maxY/2 + 15,
+		y1: maxY/2 + maxY/3,
 	}
 
 	positionMap[constants.TopicViewName] = &ViewPosition{
 		x0: 2,
-		y0: maxY/2 - 15,
+		y0: maxY/2 - maxY/3,
 		x1: maxX/3 - 1,
-		y1: maxY/2 + 15,
+		y1: maxY/2 + maxY/3,
 	}
 
 	positionMap[constants.TmuxSessionViewName] = &ViewPosition{
@@ -62,35 +62,35 @@ func GetViewPosition(viewName string) *ViewPosition {
 
 	positionMap[constants.PortViewName] = &ViewPosition{
 		x0: maxX/2 + 1,
-		y0: maxY/2 - 10,
+		y0: maxY/2 - maxY/3,
 		x1: maxX - 2,
-		y1: maxY/2 + 10,
+		y1: maxY/2 + maxY/3,
 	}
 
 	positionMap[constants.PsViewName] = &ViewPosition{
 		x0: 2,
-		y0: maxY/2 - 10,
+		y0: maxY/2 - maxY/3,
 		x1: maxX/2 - 1,
-		y1: maxY/2 + 10,
+		y1: maxY/2 + maxY/3,
 	}
 
 	positionMap[constants.GithubRepoViewName] = &ViewPosition{
 		x0: maxX/2 + 1,
-		y0: maxY/2 - 20,
+		y0: maxY/2 - maxY/3,
 		x1: maxX - 4,
-		y1: maxY/2 + 20,
+		y1: maxY/2 + maxY/3,
 	}
 
 	positionMap[constants.GithubPrViewName] = &ViewPosition{
 		x0: 4,
 		y0: maxY/2 + 1,
 		x1: maxX/2 - 1,
-		y1: maxY/2 + 20,
+		y1: maxY/2 + maxY/3,
 	}
 
 	positionMap[constants.GithubProfileViewName] = &ViewPosition{
 		x0: 4,
-		y0: maxY/2 - 20,
+		y0: maxY/2 - maxY/3,
 		x1: maxX/2 - 1,
 		y1: maxY/2 - 1,
 	}
