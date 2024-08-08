@@ -35,7 +35,7 @@ func (tv *TmuxSessionView) Focus() {
 
 func (tv *TmuxSessionView) Init() {
 	screenX, screenY := ScreenSize()
-	tv.view = SetCenteredView(constants.TmuxSessionViewName, screenX/2, screenY/3, 0)
+	tv.view = SetCenteredView(constants.TmuxSessionViewName, screenX*2/3, screenY*2/3, 0)
 
 	tv.view.Title = withSurroundingSpaces("TMUX Sessions")
 	tv.view.TitleColor = gocui.ColorBlue

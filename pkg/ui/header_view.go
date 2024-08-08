@@ -32,6 +32,12 @@ func (hv *HeaderView) Init() {
 }
 
 func (hv *HeaderView) Render() error {
+	screenX, screenY := ScreenSize()
+	if screenY < 30 || screenX < 50 {
+		hv.view.Clear()
+		return nil
+	}
+
 	sizeX, _ := hv.view.Size()
 	hv.view.Clear()
 	if !Api().Configuration.IsConfigInitialized {
