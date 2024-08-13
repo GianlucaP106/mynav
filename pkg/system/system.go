@@ -63,3 +63,7 @@ func CopyToClip(s string) error {
 	clipboard.Write(clipboard.FmtText, []byte(s))
 	return nil
 }
+
+func TimeFormat() string {
+	return "Mon, 02 Jan 15:04:05"
+}

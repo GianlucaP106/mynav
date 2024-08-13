@@ -1,6 +1,8 @@
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/GianlucaP106/gotmux v0.1.1 h1:2tg9kZ86LLpQe5Bki8wYtVSlvu17PjRNgnQtJLIKB6Q=
 github.com/GianlucaP106/gotmux v0.1.1/go.mod h1:qOsZ+exnCbgv3KJ84VaBo4Q7mXs/W23CW4fyoXAgKe4=
+github.com/GianlucaP106/gotmux v0.1.2-0.20240810193119-3c923626af1f h1:0dXMXZoHzs/Q4keXvpUylJCrPKMVi5ODcLP6g4kcP08=
+github.com/GianlucaP106/gotmux v0.1.2-0.20240810193119-3c923626af1f/go.mod h1:qOsZ+exnCbgv3KJ84VaBo4Q7mXs/W23CW4fyoXAgKe4=
 github.com/awesome-gocui/gocui v1.1.0 h1:db2j7yFEoHZjpQFeE2xqiatS8bm1lO3THeLwE6MzOII=
 github.com/awesome-gocui/gocui v1.1.0/go.mod h1:M2BXkrp7PR97CKnPRT7Rk0+rtswChPtksw/vRAESGpg=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=

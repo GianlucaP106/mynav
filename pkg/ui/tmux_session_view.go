@@ -34,17 +34,16 @@ func (tv *TmuxSessionView) Focus() {
 }
 
 func (tv *TmuxSessionView) Init() {
-	screenX, screenY := ScreenSize()
-	tv.view = SetCenteredView(constants.TmuxSessionViewName, screenX*2/3, screenY*2/3, 0)
+	tv.view = GetViewPosition(constants.TmuxSessionViewName).Set()
 
-	tv.view.Title = withSurroundingSpaces("TMUX Sessions")
+	tv.view.Title = withSurroundingSpaces("Tmux Sessions")
 	tv.view.TitleColor = gocui.ColorBlue
 	tv.view.FrameColor = gocui.ColorGreen
 
 	sizeX, sizeY := tv.view.Size()
 	tv.tableRenderer = NewTableRenderer[*gotmux.Session]()
 	titles := []string{
-		"workspace",
+		"Workspace",
 		"Windows",
 		"Session name",
 	}
@@ -56,14 +55,15 @@ func (tv *TmuxSessionView) Init() {
 	tv.tableRenderer.InitTable(sizeX, sizeY, titles, proportions)
 
 	events.AddEventListener(constants.TmuxSessionChangeEventName, func(_ string) {
-		tv.refreshTmuxSessions()
+		tv.refresh()
 		RenderView(tv)
+		events.Emit(constants.TmuxWindowChangeEventName)
 	})
 
-	tv.refreshTmuxSessions()
+	tv.refresh()
 
 	tv.view.KeyBinding().
-		set(gocui.KeyEnter, "Attach to session", func() {
+		set('o', "Attach to session", func() {
 			if core.IsTmuxSession() {
 				OpenToastDialogError("You are already in a tmux session. Nested tmux sessions are not supported yet.")
 				return
@@ -73,6 +73,9 @@ func (tv *TmuxSessionView) Init() {
 			RunAction(func() {
 				Api().Tmux.AttachTmuxSession(session)
 			})
+		}).
+		set(gocui.KeyEnter, "Focus window view", func() {
+			GetTmuxWindowView().Focus()
 		}).
 		set('D', "Delete session", func() {
 			if Api().Tmux.GetTmuxSessionCount() == 0 {
@@ -120,9 +123,11 @@ func (tv *TmuxSessionView) Init() {
 		}).
 		set('j', "Move down", func() {
 			tv.tableRenderer.Down()
+			events.Emit(constants.TmuxWindowChangeEventName)
 		}).
 		set('k', "Move up", func() {
 			tv.tableRenderer.Up()
+			events.Emit(constants.TmuxWindowChangeEventName)
 		}).
 		set('c', "Open choose tree in session", func() {
 			// TODO: move this flow in core
@@ -198,7 +203,7 @@ func (tv *TmuxSessionView) getSelectedSession() *gotmux.Session {
 	return nil
 }
 
-func (ts *TmuxSessionView) refreshTmuxSessions() {
+func (ts *TmuxSessionView) refresh() {
 	sessions := make([]*gotmux.Session, 0)
 	sessions = append(sessions, Api().Tmux.GetTmuxSessions()...)
 

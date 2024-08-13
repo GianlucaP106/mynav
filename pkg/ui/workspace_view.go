@@ -62,11 +62,11 @@ func (wv *WorkspacesView) Init() {
 	wv.tableRenderer.InitTable(sizeX, sizeY, titles, proportions)
 
 	events.AddEventListener(constants.WorkspaceChangeEventName, func(_ string) {
-		wv.refreshWorkspaces()
+		wv.refresh()
 		RenderView(wv)
 	})
 
-	wv.refreshWorkspaces()
+	wv.refresh()
 
 	if selectedWorkspace := Api().Core.GetSelectedWorkspace(); selectedWorkspace != nil {
 		wv.selectWorkspaceByShortPath(selectedWorkspace.ShortPath())
@@ -83,7 +83,7 @@ func (wv *WorkspacesView) Init() {
 			if wv.search != "" {
 				wv.search = ""
 				wv.view.Subtitle = ""
-				wv.refreshWorkspaces()
+				wv.refresh()
 				return
 			}
 
@@ -127,7 +127,7 @@ func (wv *WorkspacesView) Init() {
 				if s != "" {
 					wv.search = s
 					wv.view.Subtitle = withSurroundingSpaces("Searching: " + wv.search)
-					wv.refreshWorkspaces()
+					wv.refresh()
 				}
 			}, func() {}, "Search", Small)
 		}).
@@ -306,7 +306,7 @@ func (wv *WorkspacesView) selectWorkspaceByShortPath(shortPath string) {
 	})
 }
 
-func (wv *WorkspacesView) refreshWorkspaces() {
+func (wv *WorkspacesView) refresh() {
 	var workspaces core.Workspaces
 	if selectedTopic := GetTopicsView().getSelectedTopic(); selectedTopic != nil {
 		workspaces = Api().Core.GetWorkspaces().FilterByTopic(selectedTopic)

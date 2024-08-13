@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -92,4 +93,24 @@ func LoadJson[T any](store string) *T {
 	}
 
 	return &data
+}
+
+func ShortenPath(path string, maxLength int) string {
+	if len(path) <= maxLength {
+		return path
+	}
+
+	dir, file := filepath.Split(path)
+	dir = filepath.Clean(dir)
+
+	ellipsis := "..."
+	fileLen := len(file)
+	dirLen := maxLength - fileLen - len(ellipsis)
+
+	if dirLen <= 0 {
+		return ellipsis + file[len(file)-maxLength+len(ellipsis):]
+	}
+
+	shortenedDir := dir[:dirLen] + ellipsis
+	return filepath.Join(shortenedDir, file)
 }

@@ -1,7 +1,6 @@
 package core
 
 import (
-	"mynav/pkg/configuration"
 	"mynav/pkg/system"
 	"path/filepath"
 	"sort"
@@ -42,7 +41,7 @@ func (w *Workspace) GetLastModifiedTime() time.Time {
 }
 
 func (w *Workspace) GetLastModifiedTimeFormatted() string {
-	time := w.GetLastModifiedTime().Format(configuration.TimeFormat())
+	time := w.GetLastModifiedTime().Format(system.TimeFormat())
 	return time
 }
 

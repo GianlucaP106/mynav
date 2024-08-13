@@ -3,6 +3,9 @@ package constants
 const (
 	WorkspacesViewName        = "WorkspacesView"
 	TmuxSessionViewName       = "TmuxSessionView"
+	TmuxWindowViewName        = "TmuxWindowView"
+	TmuxPreviewViewName       = "TmuxPreviewView"
+	TmuxPaneViewName          = "TmuxPaneView"
 	WorkspaceInfoDialogName   = "WorkspaceInfoDialog"
 	TopicViewName             = "TopicsView"
 	PortViewName              = "PortView"
@@ -21,6 +24,9 @@ const (
 const (
 	WorkspaceChangeEventName           = "WorkspaceChange"
 	TmuxSessionChangeEventName         = "TmuxSessionChangeEvent"
+	TmuxWindowChangeEventName          = "TmuxWindowChangeEvent"
+	TmuxPreviewChangeEventName         = "TmuxPreviewChangeEvent"
+	TmuxPaneChangeEventName            = "TmuxPaneChangeEvent"
 	TopicChangeEventName               = "TopicChangeEvent"
 	PortChangeEventName                = "PortChangeEvent"
 	GithubPrsChangesEventName          = "GithubPrsChangesEvent"

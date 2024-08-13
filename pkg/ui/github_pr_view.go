@@ -57,7 +57,7 @@ func (g *GithubPrView) Init() {
 		})
 
 	events.AddEventListener(constants.GithubPrsChangesEventName, func(_ string) {
-		g.refreshPrs()
+		g.refresh()
 		RenderView(g)
 	})
 
@@ -96,7 +96,7 @@ func (g *GithubPrView) getSelectedPr() *github.GithubPullRequest {
 	return nil
 }
 
-func (g *GithubPrView) refreshPrs() {
+func (g *GithubPrView) refresh() {
 	if !Api().Github.IsAuthenticated() {
 		return
 	}

@@ -56,14 +56,14 @@ func (tv *TopicsView) Init() {
 	tv.tableRenderer.InitTable(sizeX, sizeY, titles, colProportions)
 
 	events.AddEventListener(constants.TopicChangeEventName, func(_ string) {
-		tv.refreshTopics()
+		tv.refresh()
 		wv := GetWorkspacesView()
-		wv.refreshWorkspaces()
+		wv.refresh()
 		RenderView(tv)
 		RenderView(wv)
 	})
 
-	tv.refreshTopics()
+	tv.refresh()
 
 	if selectedWorkspace := Api().Core.GetSelectedWorkspace(); selectedWorkspace != nil {
 		tv.selectTopicByName(selectedWorkspace.Topic.Name)
@@ -89,16 +89,16 @@ func (tv *TopicsView) Init() {
 			OpenEditorDialog(func(s string) {
 				tv.search.Set(s)
 				tv.view.Subtitle = withSurroundingSpaces("Searching: " + s)
-				tv.refreshTopics()
-				GetWorkspacesView().refreshWorkspaces()
+				tv.refresh()
+				GetWorkspacesView().refresh()
 			}, func() {}, "Search", Small)
 		}).
 		set(gocui.KeyEsc, "Escape search", func() {
 			if tv.search.Get() != "" {
 				tv.search.Set("")
 				tv.view.Subtitle = ""
-				tv.refreshTopics()
-				GetWorkspacesView().refreshWorkspaces()
+				tv.refresh()
+				GetWorkspacesView().refresh()
 			}
 		}).
 		set('a', "Create a topic", func() {
@@ -145,7 +145,7 @@ func (tv *TopicsView) Init() {
 				onSelect: func(w *core.Workspace) {
 					tv.selectTopicByName(w.Topic.Name)
 					wv := GetWorkspacesView()
-					wv.refreshWorkspaces()
+					wv.refresh()
 					wv.selectWorkspaceByShortPath(w.ShortPath())
 
 					if *sd != nil {
@@ -185,7 +185,7 @@ func (tv *TopicsView) Init() {
 		})
 }
 
-func (tv *TopicsView) refreshTopics() {
+func (tv *TopicsView) refresh() {
 	topics := Api().Core.GetTopics().Sorted()
 
 	search := tv.search.Get()

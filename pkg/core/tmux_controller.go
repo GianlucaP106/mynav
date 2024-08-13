@@ -171,7 +171,7 @@ func (t *TmuxController) GetTmuxSessionByChildPid(pid int) *gotmux.Session {
 			}
 
 			for _, p := range panes {
-				if p.Pid == int32(pid) {
+				if system.IsProcessChildOf(pid, int(p.Pid)) {
 					return session
 				}
 			}
