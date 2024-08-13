@@ -1,7 +1,6 @@
 package core
 
 import (
-	"mynav/pkg/configuration"
 	"mynav/pkg/system"
 	"sort"
 	"strings"
@@ -63,6 +62,6 @@ func (t *Topic) GetLastModifiedTime() time.Time {
 }
 
 func (t *Topic) GetLastModifiedTimeFormatted() string {
-	time := t.GetLastModifiedTime().Format(configuration.TimeFormat())
+	time := t.GetLastModifiedTime().Format(system.TimeFormat())
 	return time
 }

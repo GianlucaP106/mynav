@@ -39,67 +39,92 @@ func (p *ViewPosition) Set() *View {
 func GetViewPosition(viewName string) *ViewPosition {
 	maxX, maxY := ScreenSize()
 	positionMap := map[string]*ViewPosition{}
+
+	top := maxY / 20
+	bottom := ((maxY * 92) / 100)
+
 	positionMap[constants.WorkspacesViewName] = &ViewPosition{
 		x0: (maxX / 3) + 1,
-		y0: maxY/2 - maxY/3,
+		y0: top,
 		x1: maxX - 2,
-		y1: maxY/2 + maxY/3,
+		y1: bottom,
 	}
 
 	positionMap[constants.TopicViewName] = &ViewPosition{
 		x0: 2,
-		y0: maxY/2 - maxY/3,
+		y0: top,
 		x1: maxX/3 - 1,
-		y1: maxY/2 + maxY/3,
+		y1: bottom,
 	}
 
 	positionMap[constants.TmuxSessionViewName] = &ViewPosition{
+		x0: 2,
+		y0: top,
+		x1: maxX/3 - 1,
+		y1: maxY/2 - 1,
+	}
+
+	positionMap[constants.TmuxWindowViewName] = &ViewPosition{
 		x0: (maxX / 3) + 1,
-		y0: (maxY / 2) - 1,
+		y0: top,
+		x1: ((maxX * 2) / 3) - 1,
+		y1: maxY/2 - 1,
+	}
+
+	positionMap[constants.TmuxPaneViewName] = &ViewPosition{
+		x0: ((maxX * 2) / 3) + 1,
+		y0: top,
 		x1: maxX - 2,
-		y1: maxY - 4,
+		y1: maxY/2 - 1,
+	}
+
+	positionMap[constants.TmuxPreviewViewName] = &ViewPosition{
+		x0: 2,
+		y0: maxY/2 + 1,
+		x1: maxX - 2,
+		y1: bottom,
 	}
 
 	positionMap[constants.PortViewName] = &ViewPosition{
 		x0: maxX/2 + 1,
-		y0: maxY/2 - maxY/3,
+		y0: top,
 		x1: maxX - 2,
-		y1: maxY/2 + maxY/3,
+		y1: bottom,
 	}
 
 	positionMap[constants.PsViewName] = &ViewPosition{
 		x0: 2,
-		y0: maxY/2 - maxY/3,
+		y0: top,
 		x1: maxX/2 - 1,
-		y1: maxY/2 + maxY/3,
+		y1: bottom,
 	}
 
 	positionMap[constants.GithubRepoViewName] = &ViewPosition{
 		x0: maxX/2 + 1,
-		y0: maxY/2 - maxY/3,
+		y0: top,
 		x1: maxX - 4,
-		y1: maxY/2 + maxY/3,
+		y1: bottom,
 	}
 
 	positionMap[constants.GithubPrViewName] = &ViewPosition{
 		x0: 4,
 		y0: maxY/2 + 1,
 		x1: maxX/2 - 1,
-		y1: maxY/2 + maxY/3,
+		y1: bottom,
 	}
 
 	positionMap[constants.GithubProfileViewName] = &ViewPosition{
 		x0: 4,
-		y0: maxY/2 - maxY/3,
+		y0: top,
 		x1: maxX/2 - 1,
 		y1: maxY/2 - 1,
 	}
 
 	positionMap[constants.HeaderViewName] = &ViewPosition{
 		x0: 2,
-		y0: 1,
+		y0: 0,
 		x1: maxX - 2,
-		y1: 3,
+		y1: 2,
 	}
 
 	p := positionMap[viewName]

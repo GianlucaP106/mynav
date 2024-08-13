@@ -62,7 +62,7 @@ func (p *PortView) Init() {
 		})
 
 	events.AddEventListener(constants.PortChangeEventName, func(_ string) {
-		p.refreshPorts()
+		p.refresh()
 		RenderView(p)
 	})
 
@@ -113,7 +113,7 @@ func (p *PortView) Init() {
 		})
 }
 
-func (pv *PortView) refreshPorts() {
+func (pv *PortView) refresh() {
 	ports := make([]*Port, 0)
 	for _, p := range Api().Port.GetPorts().ToList().Sorted() {
 		if t := Api().Tmux.GetTmuxSessionByPort(p); t != nil {

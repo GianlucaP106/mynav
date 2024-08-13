@@ -69,6 +69,9 @@ func (ui *UI) InitUI() *UI {
 		NewPortView(),
 		NewPsView(),
 		NewTmuxSessionView(),
+		NewTmuxWindowView(),
+		NewTmuxPaneView(),
+		NewTmuxPreviewView(),
 		NewGithubProfileView(),
 		NewGithubPrView(),
 		NewGithubRepoView(),
@@ -84,8 +87,12 @@ func (ui *UI) InitUI() *UI {
 	tab1.GenerateNavigationKeyBindings()
 
 	tab2 := NewTab("tmux", GetTmuxSessionView().View().Name())
-	tab2.AddView(GetTmuxSessionView(), None)
+	tab2.AddView(GetTmuxSessionView(), TopLeft)
+	tab2.AddView(GetTmuxWindowView(), TopRight)
+	tab2.AddView(GetTmuxPreviewView(), None)
+	tab2.AddView(GetTmuxPaneView(), None)
 	tab2.AddView(GetHeaderView(), None)
+	tab2.GenerateNavigationKeyBindings()
 
 	tab3 := NewTab("system", GetPortView().View().Name())
 	tab3.AddView(GetPortView(), TopRight)

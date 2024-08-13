@@ -3,7 +3,6 @@ package ui
 import (
 	"fmt"
 	"mynav/pkg/constants"
-	"strconv"
 
 	"github.com/gookit/color"
 )
@@ -45,24 +44,23 @@ func (hv *HeaderView) Render() error {
 		return nil
 	}
 
+	selectedTabName := GetMainTabGroup().GetSelectedTab().Frame.Name()
+	isMainTab := selectedTabName == "main"
 	sep := withSurroundingSpaces("- ")
 	line := ""
-	line += "Tab: " + GetMainTabGroup().GetSelectedTab().Frame.Name() + " " + sep
-
-	if w := Api().Core.GetSelectedWorkspace(); w != nil {
-		line += "Last: " + w.ShortPath() + " " + sep
+	line += "Tab: " + selectedTabName
+	if isMainTab {
+		line += " " + sep
 	}
 
-	sessionCount, windowCount := Api().Tmux.GetTmuxStats()
-	line += strconv.Itoa(sessionCount) + withSurroundingSpaces("sessions") + sep
-	line += strconv.Itoa(windowCount) + withSurroundingSpaces("windows") + sep
-
-	numTopics, numWorkspaces := Api().GetSystemStats()
-	line += strconv.Itoa(numTopics) + withSurroundingSpaces("topics") + sep
-	line += strconv.Itoa(numWorkspaces) + withSurroundingSpaces("workspaces")
+	if isMainTab {
+		if w := Api().Core.GetSelectedWorkspace(); w != nil {
+			line += "Last workspace: " + w.ShortPath()
+		}
+	}
 
 	line = color.Blue.Sprint(line)
-	line = display(line, Center, sizeX)
+	line = display(line, Left, sizeX)
 	fmt.Fprintln(hv.view, line)
 
 	return nil

@@ -56,7 +56,7 @@ func (g *GithubRepoView) Init() {
 	)
 
 	events.AddEventListener(constants.GithubReposChangesEventName, func(s string) {
-		g.refreshRepos()
+		g.refresh()
 		RenderView(g)
 	})
 
@@ -78,7 +78,7 @@ func (g *GithubRepoView) Init() {
 		})
 }
 
-func (g *GithubRepoView) refreshRepos() {
+func (g *GithubRepoView) refresh() {
 	if !Api().Github.IsAuthenticated() {
 		return
 	}
