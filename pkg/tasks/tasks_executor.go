@@ -37,11 +37,13 @@ func (te *TaskExecutor) pop() *Task {
 	return first
 }
 
-func (te *TaskExecutor) QueueTask(task func()) {
+func (te *TaskExecutor) QueueTask(task func()) *Task {
 	te.mu.Lock()
 	defer te.mu.Unlock()
-	te.q = append(te.q, &Task{task: task})
+	t := newTask(task)
+	te.q = append(te.q, t)
 	te.qNotEmpty.Signal()
+	return t
 }
 
 func (te *TaskExecutor) Start(numWorkers int) {
@@ -50,7 +52,9 @@ func (te *TaskExecutor) Start(numWorkers int) {
 			for {
 				task := te.pop()
 				if task != nil {
+					task.start()
 					task.task()
+					task.complete()
 				}
 
 			}
@@ -59,11 +63,40 @@ func (te *TaskExecutor) Start(numWorkers int) {
 }
 
 type Task struct {
-	task func()
+	task      func()
+	mu        sync.RWMutex
+	started   bool
+	completed bool
 }
 
 func newTask(task func()) *Task {
 	return &Task{
-		task: task,
+		task:      task,
+		started:   false,
+		completed: false,
 	}
+}
+
+func (t *Task) IsCompleted() bool {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	return t.completed
+}
+
+func (t *Task) IsStarted() bool {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	return t.started
+}
+
+func (t *Task) complete() {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.completed = true
+}
+
+func (t *Task) start() {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.started = true
 }
