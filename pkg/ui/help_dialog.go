@@ -40,7 +40,8 @@ func OpenHelpView(mappings []*KeyBindingInfo, exit func()) *HelpDialog {
 	x, _ := ScreenSize()
 	hv.view = SetCenteredView(constants.HelpDialogName, (x*2)/3, 16, 0)
 	hv.view.Editable = true
-	hv.view.FrameColor = gocui.ColorGreen
+
+	StyleView(hv.view)
 
 	prevView := GetFocusedView()
 	hv.view.Editor = NewHelpViewEditor(func() {

@@ -19,9 +19,9 @@ type (
 )
 
 type View struct {
-	mu sync.RWMutex
 	*gocui.View
 	keybindingInfo KeybindingMap
+	mu             sync.RWMutex
 }
 
 type Gui struct {

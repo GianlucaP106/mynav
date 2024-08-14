@@ -37,8 +37,7 @@ func (t *TmuxPaneView) Init() {
 	t.view = GetViewPosition(constants.TmuxPaneViewName).Set()
 
 	t.view.Title = withSurroundingSpaces("Tmux Panes")
-	t.view.TitleColor = gocui.ColorBlue
-	t.view.FrameColor = gocui.ColorGreen
+	StyleView(t.view)
 
 	sizeX, sizeY := t.view.Size()
 	t.tableRenderer = NewTableRenderer[*gotmux.Pane]()

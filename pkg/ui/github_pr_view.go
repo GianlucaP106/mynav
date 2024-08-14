@@ -36,9 +36,9 @@ func (g *GithubPrView) Focus() {
 func (g *GithubPrView) Init() {
 	g.view = GetViewPosition(constants.GithubPrViewName).Set()
 
-	g.view.Title = "Pull Requests"
-	g.view.TitleColor = gocui.ColorBlue
-	g.view.FrameColor = gocui.ColorGreen
+	g.view.Title = withSurroundingSpaces("Pull Requests")
+
+	StyleView(g.view)
 
 	sizeX, sizeY := g.view.Size()
 	g.tableRenderer = NewTableRenderer[*github.GithubPullRequest]()

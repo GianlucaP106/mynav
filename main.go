@@ -1,8 +1,6 @@
 package main
 
-import (
-	"mynav/pkg/app"
-)
+import "mynav/pkg/app"
 
 func main() {
 	app.Main()

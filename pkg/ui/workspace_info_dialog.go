@@ -6,7 +6,6 @@ import (
 	"mynav/pkg/core"
 	"strconv"
 
-	"github.com/awesome-gocui/gocui"
 	"github.com/gookit/color"
 )
 
@@ -22,7 +21,7 @@ func OpenWorkspaceInfoDialog(w *core.Workspace, exit func()) *WorkspaceInfoDialo
 	wd.view = SetCenteredView(constants.WorkspaceInfoDialogName, 100, len(content), 0)
 
 	wd.view.Title = withSurroundingSpaces(wd.workspace.Name)
-	wd.view.TitleColor = gocui.ColorBlue
+	StyleView(wd.view)
 	wd.view.Editable = true
 
 	prevView := GetFocusedView()

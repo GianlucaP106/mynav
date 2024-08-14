@@ -150,10 +150,10 @@ func (tr *TableRenderer[T]) render(w io.Writer, onSelected func(int, *TableRow[T
 		if currentRow.Selected {
 			c = color.New(color.Black, color.BgCyan)
 		} else {
-			c = color.New(color.Blue)
+			c = color.New(color.White)
 		}
-		line = c.Sprint(line)
 
+		line = c.Sprint(line)
 		fmt.Fprintln(w, line)
 	})
 }
@@ -168,6 +168,8 @@ func (tr *TableRenderer[T]) renderTitle(w io.Writer) {
 		line += colLine
 	}
 
+	s := color.New(color.Blue)
+	line = s.Sprint(line)
 	fmt.Fprintln(w, line)
 }
 

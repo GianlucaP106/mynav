@@ -6,8 +6,6 @@ import (
 	"mynav/pkg/events"
 	"mynav/pkg/system"
 	"sync"
-
-	"github.com/awesome-gocui/gocui"
 )
 
 type GithubProfileView struct {
@@ -27,9 +25,9 @@ func GetGithubProfileView() *GithubProfileView {
 func (g *GithubProfileView) Init() {
 	g.view = GetViewPosition(constants.GithubProfileViewName).Set()
 
-	g.view.Title = "Profile"
-	g.view.TitleColor = gocui.ColorBlue
-	g.view.FrameColor = gocui.ColorGreen
+	g.view.Title = withSurroundingSpaces("Profile")
+
+	StyleView(g.view)
 
 	g.view.KeyBinding().
 		set('L', "Login with device code and browser", func() {
