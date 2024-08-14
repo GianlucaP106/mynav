@@ -35,9 +35,9 @@ func (g *GithubRepoView) Focus() {
 func (g *GithubRepoView) Init() {
 	g.view = GetViewPosition(constants.GithubRepoViewName).Set()
 
-	g.view.Title = "Repositories"
-	g.view.TitleColor = gocui.ColorBlue
-	g.view.FrameColor = gocui.ColorGreen
+	g.view.Title = withSurroundingSpaces("Repositories")
+
+	StyleView(g.view)
 
 	g.tableRenderer = NewTableRenderer[*github.GithubRepository]()
 	sizeX, sizeY := g.view.Size()

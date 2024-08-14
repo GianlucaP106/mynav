@@ -41,9 +41,9 @@ func (p *PortView) View() *View {
 func (p *PortView) Init() {
 	p.view = GetViewPosition(constants.PortViewName).Set()
 
-	p.view.FrameColor = gocui.ColorBlue
 	p.view.Title = withSurroundingSpaces("Open Ports")
-	p.view.TitleColor = gocui.ColorBlue
+
+	StyleView(p.view)
 
 	sizeX, sizeY := p.view.Size()
 	p.tableRenderer = NewTableRenderer[*Port]()

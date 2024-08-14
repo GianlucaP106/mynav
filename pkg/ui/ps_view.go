@@ -7,7 +7,6 @@ import (
 	"mynav/pkg/tasks"
 	"strconv"
 
-	"github.com/awesome-gocui/gocui"
 	"github.com/shirou/gopsutil/process"
 )
 
@@ -34,9 +33,9 @@ func GetPsView() *PsView {
 func (p *PsView) Init() {
 	p.view = GetViewPosition(constants.PsViewName).Set()
 
-	p.view.FrameColor = gocui.ColorBlue
 	p.view.Title = withSurroundingSpaces("Processes")
-	p.view.TitleColor = gocui.ColorBlue
+
+	StyleView(p.view)
 
 	p.tableRenderer = NewTableRenderer[*process.Process]()
 

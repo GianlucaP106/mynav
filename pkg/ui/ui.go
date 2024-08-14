@@ -201,6 +201,11 @@ func GetViewable[T Viewable]() T {
 	panic("invalid view")
 }
 
+func StyleView(v *View) {
+	v.FrameRunes = []rune{'═', '║', '╔', '╗', '╚', '╝', '╠', '╣', '╦', '╩', '╬'}
+	v.TitleColor = gocui.AttrBold | gocui.ColorYellow
+}
+
 func RenderView(v Viewable) {
 	UpdateGui(func(g *Gui) error {
 		v.Render()
@@ -215,8 +220,8 @@ func FocusView(viewName string) {
 		views = append(views, v.View())
 	}
 
-	off := gocui.ColorBlue
-	on := gocui.ColorGreen
+	off := gocui.AttrDim | gocui.ColorWhite
+	on := gocui.ColorWhite
 
 	for _, v := range views {
 		if v.Name() == viewName {

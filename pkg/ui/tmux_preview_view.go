@@ -5,8 +5,6 @@ import (
 	"mynav/pkg/constants"
 	"mynav/pkg/events"
 	"mynav/pkg/persistence"
-
-	"github.com/awesome-gocui/gocui"
 )
 
 type TmuxPreviewView struct {
@@ -36,8 +34,7 @@ func (t *TmuxPreviewView) Init() {
 	t.view = GetViewPosition(constants.TmuxPreviewViewName).Set()
 
 	t.view.Title = withSurroundingSpaces("Tmux Preview")
-	t.view.TitleColor = gocui.ColorBlue
-	t.view.FrameColor = gocui.ColorGreen
+	StyleView(t.view)
 	t.view.Wrap = false
 
 	t.content = persistence.NewValue("")

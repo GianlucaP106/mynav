@@ -39,8 +39,7 @@ func (wv *WorkspacesView) Init() {
 	wv.view = GetViewPosition(constants.WorkspacesViewName).Set()
 
 	wv.view.Title = withSurroundingSpaces("Workspaces")
-	wv.view.TitleColor = gocui.ColorBlue
-	wv.view.FrameColor = gocui.ColorBlue
+	StyleView(wv.View())
 
 	sizeX, sizeY := wv.view.Size()
 

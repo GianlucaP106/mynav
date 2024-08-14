@@ -39,9 +39,8 @@ func (tv *TopicsView) Focus() {
 func (tv *TopicsView) Init() {
 	tv.view = GetViewPosition(constants.TopicViewName).Set()
 
-	tv.view.FrameColor = gocui.ColorBlue
 	tv.view.Title = withSurroundingSpaces("Topics")
-	tv.view.TitleColor = gocui.ColorBlue
+	StyleView(tv.view)
 
 	sizeX, sizeY := tv.view.Size()
 	tv.tableRenderer = NewTableRenderer[*core.Topic]()

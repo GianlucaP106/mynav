@@ -37,8 +37,7 @@ func (tv *TmuxSessionView) Init() {
 	tv.view = GetViewPosition(constants.TmuxSessionViewName).Set()
 
 	tv.view.Title = withSurroundingSpaces("Tmux Sessions")
-	tv.view.TitleColor = gocui.ColorBlue
-	tv.view.FrameColor = gocui.ColorGreen
+	StyleView(tv.view)
 
 	sizeX, sizeY := tv.view.Size()
 	tv.tableRenderer = NewTableRenderer[*gotmux.Session]()

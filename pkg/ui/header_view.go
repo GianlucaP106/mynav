@@ -59,7 +59,8 @@ func (hv *HeaderView) Render() error {
 		}
 	}
 
-	line = color.Blue.Sprint(line)
+	s := color.New(color.Yellow, color.Bold)
+	line = s.Sprint(line)
 	line = display(line, Left, sizeX)
 	fmt.Fprintln(hv.view, line)
 
