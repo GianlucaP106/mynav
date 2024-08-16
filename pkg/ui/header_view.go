@@ -31,16 +31,10 @@ func (hv *HeaderView) Init() {
 }
 
 func (hv *HeaderView) Render() error {
+	hv.view.Clear()
 	screenX, screenY := ScreenSize()
 	if screenY < 30 || screenX < 50 {
 		hv.view.Clear()
-		return nil
-	}
-
-	sizeX, _ := hv.view.Size()
-	hv.view.Clear()
-	if !Api().Configuration.IsConfigInitialized {
-		fmt.Fprintln(hv.view, displayWhiteText("Welcome to mynav, a workspace manager", Center, sizeX))
 		return nil
 	}
 
@@ -59,6 +53,7 @@ func (hv *HeaderView) Render() error {
 		}
 	}
 
+	sizeX, _ := hv.view.Size()
 	s := color.New(color.Yellow, color.Bold)
 	line = s.Sprint(line)
 	line = display(line, Left, sizeX)

@@ -4,6 +4,7 @@ import (
 	"math"
 	"strings"
 
+	"github.com/awesome-gocui/gocui"
 	"github.com/gookit/color"
 )
 
@@ -16,6 +17,11 @@ type Alignment uint
 const (
 	Left Alignment = iota
 	Center
+)
+
+const (
+	offStyle = gocui.AttrDim | gocui.ColorWhite
+	onStyle  = gocui.ColorWhite
 )
 
 func displayLine(content string, alignment Alignment, maxWidth int, color color.Style) string {
@@ -72,6 +78,11 @@ func withCharPadding(content string, size int, c string) string {
 		return trimEnd(content, repeat+4) + "... "
 	}
 	return content + strings.Repeat(c, repeat)
+}
+
+func StyleView(v *View) {
+	v.FrameRunes = []rune{'═', '║', '╔', '╗', '╚', '╝', '╠', '╣', '╦', '╩', '╬'}
+	v.TitleColor = gocui.AttrBold | gocui.ColorYellow
 }
 
 func withSurroundingSpaces(s string) string {

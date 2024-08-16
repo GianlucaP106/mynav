@@ -1,19 +1,11 @@
 package ui
 
 import (
-	"errors"
-	"log"
 	"mynav/pkg/api"
-	"mynav/pkg/constants"
+	"reflect"
 
 	"github.com/awesome-gocui/gocui"
 )
-
-type Viewable interface {
-	Init()
-	View() *View
-	Render() error
-}
 
 type UI struct {
 	mainTabGroup *TabGroup
@@ -21,44 +13,10 @@ type UI struct {
 	views        []Viewable
 }
 
-var _ui *UI
-
-func Start(api *api.Api) {
-	g := NewGui()
-	defer g.Close()
-
-	_ui = &UI{
-		views: make([]Viewable, 0),
-		api:   api,
-	}
-
-	if Api().Configuration.IsConfigInitialized {
-		_ui.InitUI()
-	} else if Api().Configuration.Standalone {
-		_ui.InitStandaloneUI()
-	} else {
-		_ui.AskConfig()
-	}
-
-	err := g.MainLoop()
-	if err != nil {
-		if !errors.Is(err, gocui.ErrQuit) {
-			log.Panicln(err)
-		}
-	}
-}
-
-func (ui *UI) AskConfig() {
-	OpenConfirmationDialog(func(b bool) {
-		if !b {
-			Api().Configuration.SetStandalone(true)
-			ui.InitStandaloneUI()
-			return
-		}
-
-		Api().InitConfiguration()
-		ui.InitUI()
-	}, "No configuration found. Would you like to initialize this directory?")
+type Viewable interface {
+	Init()
+	View() *View
+	Render() error
 }
 
 func (ui *UI) InitUI() *UI {
@@ -77,42 +35,14 @@ func (ui *UI) InitUI() *UI {
 		NewGithubRepoView(),
 	}
 
-	SetViewManagers(ui.views)
-	InitViewables(ui.views)
+	ui.sealViews()
 
-	tab1 := NewTab("main", GetTopicsView().View().Name())
-	tab1.AddView(GetHeaderView(), None)
-	tab1.AddView(GetTopicsView(), TopLeft)
-	tab1.AddView(GetWorkspacesView(), TopRight)
-	tab1.GenerateNavigationKeyBindings()
-
-	tab2 := NewTab("tmux", GetTmuxSessionView().View().Name())
-	tab2.AddView(GetTmuxSessionView(), TopLeft)
-	tab2.AddView(GetTmuxWindowView(), TopRight)
-	tab2.AddView(GetTmuxPreviewView(), None)
-	tab2.AddView(GetTmuxPaneView(), None)
-	tab2.AddView(GetHeaderView(), None)
-	tab2.GenerateNavigationKeyBindings()
-
-	tab3 := NewTab("system", GetPortView().View().Name())
-	tab3.AddView(GetPortView(), TopRight)
-	tab3.AddView(GetPsView(), TopLeft)
-	tab3.AddView(GetHeaderView(), None)
-	tab3.GenerateNavigationKeyBindings()
-
-	tab4 := NewTab("github", GetGithubProfileView().View().Name())
-	tab4.AddView(GetGithubProfileView(), TopLeft)
-	tab4.AddView(GetGithubRepoView(), TopRight)
-	tab4.AddView(GetGithubPrView(), BottomLeft)
-	tab4.AddView(GetHeaderView(), None)
-	tab4.GenerateNavigationKeyBindings()
-
-	ui.mainTabGroup = NewTabGroup([]*Tab{
-		tab1,
-		tab2,
-		tab3,
-		tab4,
-	})
+	ui.mainTabGroup = NewTabGroup(
+		ui.buildMainTab(),
+		ui.buildTmuxTab(),
+		ui.buildSystemTab(),
+		ui.buildGithubTab(),
+	)
 
 	ui.mainTabGroup.FocusTabByIndex(0)
 
@@ -135,20 +65,54 @@ func (ui *UI) InitUI() *UI {
 }
 
 func (ui *UI) InitStandaloneUI() {
-	tmv := NewTmuxSessionView()
-	ui.views = make([]Viewable, 0)
-	ui.views = append(ui.views, tmv)
+	ui.views = []Viewable{
+		NewHeaderView(),
+		NewTmuxSessionView(),
+		NewTmuxWindowView(),
+		NewTmuxPaneView(),
+		NewTmuxPreviewView(),
+		NewPortView(),
+		NewPsView(),
+		NewGithubPrView(),
+		NewGithubProfileView(),
+		NewGithubRepoView(),
+	}
 
-	SetViewManagers(ui.views)
-	InitViewables(ui.views)
+	ui.sealViews()
 
-	tab := NewTab("tab1", constants.TmuxSessionViewName)
-	tab.AddView(tmv, None)
-	ui.mainTabGroup = NewTabGroup([]*Tab{tab})
+	ui.mainTabGroup = NewTabGroup(
+		ui.buildTmuxTab(),
+		ui.buildSystemTab(),
+		ui.buildGithubTab(),
+	)
 	ui.mainTabGroup.FocusTabByIndex(0)
 
 	SystemUpdate()
 	ui.InitGlobalKeybindings()
+}
+
+func (ui *UI) AskConfig() {
+	OpenConfirmationDialog(func(b bool) {
+		if !b {
+			Api().Configuration.SetStandalone(true)
+			ui.InitStandaloneUI()
+			return
+		}
+
+		Api().InitConfiguration()
+		ui.InitUI()
+	}, "No configuration found. Would you like to initialize this directory?")
+}
+
+func (ui *UI) addView(v Viewable) {
+	t := reflect.TypeOf(v)
+	for _, view := range ui.views {
+		t2 := reflect.TypeOf(view)
+		if t == t2 {
+			return
+		}
+	}
+	ui.views = append(ui.views, v)
 }
 
 func (ui *UI) InitGlobalKeybindings() {
@@ -174,74 +138,55 @@ func (ui *UI) InitGlobalKeybindings() {
 		})
 }
 
-func SetViewManagers(vs []Viewable) {
+func (ui *UI) sealViews() {
 	managers := make([]gocui.Manager, 0)
-	for _, view := range vs {
+	for _, view := range ui.views {
 		managers = append(managers, gocui.ManagerFunc(func(_ *gocui.Gui) error {
 			return view.Render()
 		}))
 	}
 
 	SetManagerFunctions(managers...)
-}
-
-func InitViewables(vs []Viewable) {
-	for _, v := range vs {
+	for _, v := range ui.views {
 		v.Init()
 	}
 }
 
-func GetViewable[T Viewable]() T {
-	for _, v := range _ui.views {
-		if v, ok := v.(T); ok {
-			return v
-		}
-	}
-
-	panic("invalid view")
+func (ui *UI) buildMainTab() *Tab {
+	tab := NewTab("main", GetTopicsView().View().Name())
+	tab.AddView(GetHeaderView(), None)
+	tab.AddView(GetTopicsView(), TopLeft)
+	tab.AddView(GetWorkspacesView(), TopRight)
+	tab.GenerateNavigationKeyBindings()
+	return tab
 }
 
-func StyleView(v *View) {
-	v.FrameRunes = []rune{'═', '║', '╔', '╗', '╚', '╝', '╠', '╣', '╦', '╩', '╬'}
-	v.TitleColor = gocui.AttrBold | gocui.ColorYellow
+func (ui *UI) buildTmuxTab() *Tab {
+	tab := NewTab("tmux", GetTmuxSessionView().View().Name())
+	tab.AddView(GetTmuxSessionView(), TopLeft)
+	tab.AddView(GetTmuxWindowView(), TopRight)
+	tab.AddView(GetTmuxPreviewView(), None)
+	tab.AddView(GetTmuxPaneView(), None)
+	tab.AddView(GetHeaderView(), None)
+	tab.GenerateNavigationKeyBindings()
+	return tab
 }
 
-func RenderView(v Viewable) {
-	UpdateGui(func(g *Gui) error {
-		v.Render()
-		return nil
-	})
+func (ui *UI) buildSystemTab() *Tab {
+	tab := NewTab("system", GetPortView().View().Name())
+	tab.AddView(GetPortView(), TopRight)
+	tab.AddView(GetPsView(), TopLeft)
+	tab.AddView(GetHeaderView(), None)
+	tab.GenerateNavigationKeyBindings()
+	return tab
 }
 
-func FocusView(viewName string) {
-	SetFocusView(viewName)
-	views := make([]*View, 0)
-	for _, v := range _ui.views {
-		views = append(views, v.View())
-	}
-
-	off := gocui.AttrDim | gocui.ColorWhite
-	on := gocui.ColorWhite
-
-	for _, v := range views {
-		if v.Name() == viewName {
-			v.FrameColor = on
-		} else {
-			v.FrameColor = off
-		}
-	}
-}
-
-func GetMainTabGroup() *TabGroup {
-	return _ui.mainTabGroup
-}
-
-func Api() *api.Api {
-	return _ui.api
-}
-
-func RunAction(action func()) {
-	gocui.Suspend()
-	action()
-	gocui.Resume()
+func (ui *UI) buildGithubTab() *Tab {
+	tab := NewTab("github", GetGithubProfileView().View().Name())
+	tab.AddView(GetGithubProfileView(), TopLeft)
+	tab.AddView(GetGithubRepoView(), TopRight)
+	tab.AddView(GetGithubPrView(), BottomLeft)
+	tab.AddView(GetHeaderView(), None)
+	tab.GenerateNavigationKeyBindings()
+	return tab
 }

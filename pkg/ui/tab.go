@@ -29,11 +29,17 @@ const (
 	BottomRight
 )
 
-func NewTabGroup(tabs []*Tab) *TabGroup {
-	tg := &TabGroup{}
-	tg.Tabs = tabs
+func NewTabGroup(tabs ...*Tab) *TabGroup {
+	tg := &TabGroup{
+		Tabs: make([]*Tab, 0),
+	}
+	tg.Tabs = append(tg.Tabs, tabs...)
 	tg.Selected = 0
 	return tg
+}
+
+func (t *TabGroup) AddTab(tab *Tab) {
+	t.Tabs = append(t.Tabs, tab)
 }
 
 func (tg *TabGroup) GetTab(name string) *Tab {

@@ -52,6 +52,13 @@ func (api *Api) InitConfiguration() error {
 func (api *Api) InitStandaloneController() {
 	api.Port = system.NewPortController()
 	api.Tmux = core.NewTmuxController(api.Port)
+
+	// TODO: move config to seperate module
+	api.Github = github.NewGithubController(api.Configuration.GetGithubToken(), func(gat *github.GithubAuthenticationToken) {
+		api.Configuration.SetGithubToken(gat)
+	}, func() {
+		api.Configuration.SetGithubToken(nil)
+	})
 }
 
 func (api *Api) InitControllers() {
@@ -63,13 +70,6 @@ func (api *Api) InitControllers() {
 			api.Configuration.GetWorkspaceStorePath(),
 			api.Tmux,
 		)
-
-		// TODO: move config to seperate module
-		api.Github = github.NewGithubController(api.Configuration.GetGithubToken(), func(gat *github.GithubAuthenticationToken) {
-			api.Configuration.SetGithubToken(gat)
-		}, func() {
-			api.Configuration.SetGithubToken(nil)
-		})
 		api.Core.TopicController.WorkspaceController = api.Core.WorkspaceController
 	}
 }
