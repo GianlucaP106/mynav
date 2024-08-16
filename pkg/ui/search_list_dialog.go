@@ -38,6 +38,9 @@ func OpenSearchListDialog[T any](params SearchDialogConfig[T]) *SearchListDialog
 	}, func() {
 	})
 
+	StyleView(s.searchView)
+	StyleView(s.tableView)
+
 	s.tableView = SetCenteredView(constants.SearchListDialog2ViewName, 80, 10, 0)
 	s.tableView.Title = params.tableViewTitle
 	tableViewX, tableViewY := s.tableView.Size()

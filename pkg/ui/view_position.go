@@ -107,14 +107,14 @@ func GetViewPosition(viewName string) *ViewPosition {
 	}
 
 	positionMap[constants.GithubPrViewName] = &ViewPosition{
-		x0: 4,
+		x0: 2,
 		y0: maxY/2 + 1,
 		x1: maxX/2 - 1,
 		y1: bottom,
 	}
 
 	positionMap[constants.GithubProfileViewName] = &ViewPosition{
-		x0: 4,
+		x0: 2,
 		y0: top,
 		x1: maxX/2 - 1,
 		y1: maxY/2 - 1,
