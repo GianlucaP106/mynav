@@ -3,29 +3,33 @@ package ui
 import (
 	"fmt"
 	"mynav/pkg/constants"
+	"mynav/pkg/tui"
 )
 
-type ConfirmationDialog struct {
-	view  *View
+type confirmationDialog struct {
+	view  *tui.View
 	title string
 }
 
-func OpenConfirmationDialog(onConfirm func(bool), title string) *ConfirmationDialog {
-	cd := &ConfirmationDialog{}
+func openConfirmationDialog(onConfirm func(bool), title string) *confirmationDialog {
+	cd := &confirmationDialog{}
 	cd.title = title
-	prevView := GetFocusedView()
-	cd.view = SetCenteredView(constants.ConfirmationDialogName, len(title)+5, 3, 0)
-	cd.view.Title = withSurroundingSpaces("Confirm")
+	prevView := tui.GetFocusedView()
+	cd.view = tui.SetCenteredView(constants.ConfirmationDialogName, len(title)+5, 3, 0)
+	cd.view.Title = tui.WithSurroundingSpaces("Confirm")
 	cd.view.Wrap = true
 	cd.view.Editable = true
-	cd.view.Editor = NewConfirmationEditor(func() {
-		cd.Close()
+	cd.view.FrameColor = tui.OnFrameColor
+	tui.StyleView(cd.view)
+
+	cd.view.Editor = tui.NewConfirmationEditor(func() {
+		cd.close()
 		if prevView != nil {
 			prevView.Focus()
 		}
 		onConfirm(true)
 	}, func() {
-		cd.Close()
+		cd.close()
 		if prevView != nil {
 			prevView.Focus()
 		}
@@ -35,10 +39,10 @@ func OpenConfirmationDialog(onConfirm func(bool), title string) *ConfirmationDia
 	sizeX, _ := cd.view.Size()
 	cd.view.Focus()
 	cd.view.Clear()
-	fmt.Fprintln(cd.view, displayWhiteText(cd.title, Left, sizeX))
+	fmt.Fprintln(cd.view, tui.DisplayWhite(cd.title, tui.LeftAlign, sizeX))
 	return cd
 }
 
-func (cd *ConfirmationDialog) Close() {
+func (cd *confirmationDialog) close() {
 	cd.view.Delete()
 }

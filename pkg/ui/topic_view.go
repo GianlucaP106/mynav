@@ -5,45 +5,46 @@ import (
 	"mynav/pkg/core"
 	"mynav/pkg/events"
 	"mynav/pkg/persistence"
+	"mynav/pkg/tui"
 
 	"github.com/awesome-gocui/gocui"
 )
 
-type TopicsView struct {
-	view          *View
-	tableRenderer *TableRenderer[*core.Topic]
+type topicsView struct {
+	view          *tui.View
+	tableRenderer *tui.TableRenderer[*core.Topic]
 	search        *persistence.Value[string]
 	globalSearch  *persistence.Value[string]
 }
 
-var _ Viewable = new(TopicsView)
+var _ viewable = new(topicsView)
 
-func NewTopicsView() *TopicsView {
-	return &TopicsView{
+func newTopicsView() *topicsView {
+	return &topicsView{
 		search: persistence.NewValue(""),
 	}
 }
 
-func GetTopicsView() *TopicsView {
-	return GetViewable[*TopicsView]()
+func getTopicsView() *topicsView {
+	return getViewable[*topicsView]()
 }
 
-func (tv *TopicsView) View() *View {
+func (tv *topicsView) getView() *tui.View {
 	return tv.view
 }
 
-func (tv *TopicsView) Focus() {
-	FocusView(tv.View().Name())
+func (tv *topicsView) Focus() {
+	focusView(tv.getView().Name())
 }
 
-func (tv *TopicsView) Init() {
+func (tv *topicsView) init() {
 	tv.view = GetViewPosition(constants.TopicViewName).Set()
 
-	tv.view.Title = withSurroundingSpaces("Topics")
-	StyleView(tv.view)
+	tv.view.Title = tui.WithSurroundingSpaces("Topics")
+	tui.StyleView(tv.view)
 
 	sizeX, sizeY := tv.view.Size()
-	tv.tableRenderer = NewTableRenderer[*core.Topic]()
+	tv.tableRenderer = tui.NewTableRenderer[*core.Topic]()
 	titles := []string{
 		"Name",
 		"Last Modified",
@@ -56,54 +57,54 @@ func (tv *TopicsView) Init() {
 
 	events.AddEventListener(constants.TopicChangeEventName, func(_ string) {
 		tv.refresh()
-		wv := GetWorkspacesView()
+		wv := getWorkspacesView()
 		wv.refresh()
-		RenderView(tv)
-		RenderView(wv)
+		renderView(tv)
+		renderView(wv)
 	})
 
 	tv.refresh()
 
-	if selectedWorkspace := Api().Core.GetSelectedWorkspace(); selectedWorkspace != nil {
+	if selectedWorkspace := getApi().Core.GetSelectedWorkspace(); selectedWorkspace != nil {
 		tv.selectTopicByName(selectedWorkspace.Topic.Name)
 	}
 
 	moveRight := func() {
-		if Api().Core.GetTopicCount() > 0 {
-			GetWorkspacesView().Focus()
+		if getApi().Core.GetTopicCount() > 0 {
+			getWorkspacesView().Focus()
 		}
 	}
 
 	tv.view.KeyBinding().
-		set('j', "Move down", func() {
+		Set('j', "Move down", func() {
 			tv.tableRenderer.Down()
 			events.Emit(constants.WorkspaceChangeEventName)
 		}).
-		set('k', "Move up", func() {
+		Set('k', "Move up", func() {
 			tv.tableRenderer.Up()
 			events.Emit(constants.WorkspaceChangeEventName)
 		}).
-		set(gocui.KeyEnter, "Open topic", moveRight).
-		set('/', "Search by name", func() {
-			OpenEditorDialog(func(s string) {
+		Set(gocui.KeyEnter, "Open topic", moveRight).
+		Set('/', "Search by name", func() {
+			openEditorDialog(func(s string) {
 				tv.search.Set(s)
-				tv.view.Subtitle = withSurroundingSpaces("Searching: " + s)
+				tv.view.Subtitle = tui.WithSurroundingSpaces("Searching: " + s)
 				tv.refresh()
-				GetWorkspacesView().refresh()
-			}, func() {}, "Search", Small)
+				getWorkspacesView().refresh()
+			}, func() {}, "Search", smallEditorSize)
 		}).
-		set(gocui.KeyEsc, "Escape search", func() {
+		Set(gocui.KeyEsc, "Escape search", func() {
 			if tv.search.Get() != "" {
 				tv.search.Set("")
 				tv.view.Subtitle = ""
 				tv.refresh()
-				GetWorkspacesView().refresh()
+				getWorkspacesView().refresh()
 			}
 		}).
-		set('a', "Create a topic", func() {
-			OpenEditorDialog(func(s string) {
-				if err := Api().Core.CreateTopic(s); err != nil {
-					OpenToastDialogError(err.Error())
+		Set('a', "Create a topic", func() {
+			openEditorDialog(func(s string) {
+				if err := getApi().Core.CreateTopic(s); err != nil {
+					openToastDialogError(err.Error())
 					return
 				}
 
@@ -111,26 +112,26 @@ func (tv *TopicsView) Init() {
 				// This will result in the corresponding topic going to the top
 				// because we are sorting by modifed time
 				tv.tableRenderer.SelectRow(0)
-			}, func() {}, "Topic name", Small)
+			}, func() {}, "Topic name", smallEditorSize)
 		}).
-		set('r', "Rename topic", func() {
+		Set('r', "Rename topic", func() {
 			t := tv.getSelectedTopic()
 			if t == nil {
 				return
 			}
 
-			OpenEditorDialogWithDefaultValue(func(s string) {
-				if err := Api().Core.RenameTopic(t, s); err != nil {
-					OpenToastDialogError(err.Error())
+			openEditorDialogWithDefaultValue(func(s string) {
+				if err := getApi().Core.RenameTopic(t, s); err != nil {
+					openToastDialogError(err.Error())
 					return
 				}
-			}, func() {}, "New topic name", Small, t.Name)
+			}, func() {}, "New topic name", smallEditorSize, t.Name)
 		}).
-		set('s', "Search for a workspace", func() {
-			sd := new(*SearchListDialog[*core.Workspace])
-			*sd = OpenSearchListDialog(SearchDialogConfig[*core.Workspace]{
+		Set('s', "Search for a workspace", func() {
+			sd := new(*searchListDialog[*core.Workspace])
+			*sd = openSearchListDialog(searchDialogConfig[*core.Workspace]{
 				onSearch: func(s string) ([][]string, []*core.Workspace) {
-					workspaces := Api().Core.GetWorkspaces().Sorted().FilterByNameContaining(s)
+					workspaces := getApi().Core.GetWorkspaces().Sorted().FilterByNameContaining(s)
 					rows := make([][]string, 0)
 					for _, w := range workspaces {
 						rows = append(rows, []string{
@@ -143,12 +144,12 @@ func (tv *TopicsView) Init() {
 				},
 				onSelect: func(w *core.Workspace) {
 					tv.selectTopicByName(w.Topic.Name)
-					wv := GetWorkspacesView()
+					wv := getWorkspacesView()
 					wv.refresh()
 					wv.selectWorkspaceByShortPath(w.ShortPath())
 
 					if *sd != nil {
-						(*sd).Close()
+						(*sd).close()
 					}
 
 					wv.Focus()
@@ -165,27 +166,27 @@ func (tv *TopicsView) Init() {
 				},
 			})
 		}).
-		set('D', "Delete topic", func() {
-			if Api().Core.GetTopicCount() <= 0 {
+		Set('D', "Delete topic", func() {
+			if getApi().Core.GetTopicCount() <= 0 {
 				return
 			}
-			OpenConfirmationDialog(func(b bool) {
+			openConfirmationDialog(func(b bool) {
 				if !b {
 					return
 				}
 
-				if err := Api().Core.DeleteTopic(tv.getSelectedTopic()); err != nil {
-					OpenToastDialogError(err.Error())
+				if err := getApi().Core.DeleteTopic(tv.getSelectedTopic()); err != nil {
+					openToastDialogError(err.Error())
 				}
 			}, "Are you sure you want to delete this topic? All its content will be deleted.")
 		}).
-		set('?', "Toggle cheatsheet", func() {
-			OpenHelpView(tv.view.keybindingInfo.toList(), func() {})
+		Set('?', "Toggle cheatsheet", func() {
+			OpenHelpDialog(tv.view.GetKeybindings(), func() {})
 		})
 }
 
-func (tv *TopicsView) refresh() {
-	topics := Api().Core.GetTopics().Sorted()
+func (tv *topicsView) refresh() {
+	topics := getApi().Core.GetTopics().Sorted()
 
 	search := tv.search.Get()
 	if search != "" {
@@ -205,7 +206,7 @@ func (tv *TopicsView) refresh() {
 	tv.tableRenderer.FillTable(rows, rowValues)
 }
 
-func (tv *TopicsView) getSelectedTopic() *core.Topic {
+func (tv *topicsView) getSelectedTopic() *core.Topic {
 	_, t := tv.tableRenderer.GetSelectedRow()
 	if t != nil {
 		return *t
@@ -213,17 +214,17 @@ func (tv *TopicsView) getSelectedTopic() *core.Topic {
 	return nil
 }
 
-func (tv *TopicsView) selectTopicByName(name string) {
+func (tv *topicsView) selectTopicByName(name string) {
 	tv.tableRenderer.SelectRowByValue(func(t *core.Topic) bool {
 		return t.Name == name
 	})
 }
 
-func (tv *TopicsView) Render() error {
+func (tv *topicsView) render() error {
 	tv.view.Clear()
 	currentViewSelected := tv.view.IsFocused()
 
-	tv.tableRenderer.RenderWithSelectCallBack(tv.view, func(_ int, _ *TableRow[*core.Topic]) bool {
+	tv.tableRenderer.RenderWithSelectCallBack(tv.view, func(_ int, _ *tui.TableRow[*core.Topic]) bool {
 		return currentViewSelected
 	})
 

@@ -4,43 +4,44 @@ import (
 	"mynav/pkg/constants"
 	"mynav/pkg/core"
 	"mynav/pkg/events"
+	"mynav/pkg/tui"
 	"strconv"
 
 	"github.com/GianlucaP106/gotmux/gotmux"
 	"github.com/awesome-gocui/gocui"
 )
 
-type TmuxSessionView struct {
-	view          *View
-	tableRenderer *TableRenderer[*gotmux.Session]
+type tmuxSessionView struct {
+	view          *tui.View
+	tableRenderer *tui.TableRenderer[*gotmux.Session]
 }
 
-var _ Viewable = new(TmuxSessionView)
+var _ viewable = new(tmuxSessionView)
 
-func NewTmuxSessionView() *TmuxSessionView {
-	return &TmuxSessionView{}
+func newTmuxSessionView() *tmuxSessionView {
+	return &tmuxSessionView{}
 }
 
-func GetTmuxSessionView() *TmuxSessionView {
-	return GetViewable[*TmuxSessionView]()
+func getTmuxSessionView() *tmuxSessionView {
+	return getViewable[*tmuxSessionView]()
 }
 
-func (tv *TmuxSessionView) View() *View {
+func (tv *tmuxSessionView) getView() *tui.View {
 	return tv.view
 }
 
-func (tv *TmuxSessionView) Focus() {
-	FocusView(tv.View().Name())
+func (tv *tmuxSessionView) Focus() {
+	focusView(tv.getView().Name())
 }
 
-func (tv *TmuxSessionView) Init() {
+func (tv *tmuxSessionView) init() {
 	tv.view = GetViewPosition(constants.TmuxSessionViewName).Set()
 
-	tv.view.Title = withSurroundingSpaces("Tmux Sessions")
-	StyleView(tv.view)
+	tv.view.Title = tui.WithSurroundingSpaces("Tmux Sessions")
+	tui.StyleView(tv.view)
 
 	sizeX, sizeY := tv.view.Size()
-	tv.tableRenderer = NewTableRenderer[*gotmux.Session]()
+	tv.tableRenderer = tui.NewTableRenderer[*gotmux.Session]()
 	titles := []string{
 		"Workspace",
 		"Windows",
@@ -55,80 +56,84 @@ func (tv *TmuxSessionView) Init() {
 
 	events.AddEventListener(constants.TmuxSessionChangeEventName, func(_ string) {
 		tv.refresh()
-		RenderView(tv)
+		renderView(tv)
 		events.Emit(constants.TmuxWindowChangeEventName)
 	})
 
 	tv.refresh()
 
 	tv.view.KeyBinding().
-		set('o', "Attach to session", func() {
+		Set('o', "Attach to session", func() {
 			if core.IsTmuxSession() {
-				OpenToastDialogError("You are already in a tmux session. Nested tmux sessions are not supported yet.")
+				openToastDialogError("You are already in a tmux session. Nested tmux sessions are not supported yet.")
 				return
 			}
 
 			session := tv.getSelectedSession()
-			RunAction(func() {
-				Api().Tmux.AttachTmuxSession(session)
-			})
-		}).
-		set(gocui.KeyEnter, "Focus window view", func() {
-			GetTmuxWindowView().Focus()
-		}).
-		set('D', "Delete session", func() {
-			if Api().Tmux.GetTmuxSessionCount() == 0 {
+			if session == nil {
 				return
 			}
 
-			OpenConfirmationDialog(func(b bool) {
+			tui.RunAction(func() {
+				getApi().Tmux.AttachTmuxSession(session)
+			})
+		}).
+		Set(gocui.KeyEnter, "Focus window view", func() {
+			getTmuxWindowView().Focus()
+		}).
+		Set('D', "Delete session", func() {
+			session := tv.getSelectedSession()
+			if session == nil {
+				return
+			}
+
+			openConfirmationDialog(func(b bool) {
 				if b {
-					session := tv.getSelectedSession()
-					if err := Api().Tmux.DeleteTmuxSession(session); err != nil {
-						OpenToastDialogError(err.Error())
+					if err := getApi().Tmux.DeleteTmuxSession(session); err != nil {
+						openToastDialogError(err.Error())
 						return
 					}
 					events.Emit(constants.WorkspaceChangeEventName)
 				}
 			}, "Are you sure you want to delete this session?")
 		}).
-		set('X', "Kill ALL tmux sessions", func() {
-			if Api().Tmux.GetTmuxSessionCount() == 0 {
+		Set('X', "Kill tmux server (kill all sessions)", func() {
+			if tv.getSelectedSession() == nil {
 				return
 			}
 
-			OpenConfirmationDialog(func(b bool) {
+			openConfirmationDialog(func(b bool) {
 				if b {
-					if err := Api().Tmux.KillTmuxServer(); err != nil {
-						OpenToastDialogError(err.Error())
+					if err := getApi().Tmux.KillTmuxServer(); err != nil {
+						openToastDialogError(err.Error())
 						return
 					}
 				}
 			}, "Are you sure you want to delete ALL tmux sessions?")
 		}).
-		set('W', "Kill ALL non-externalt mux sessions (has a workspace)", func() {
-			if Api().Configuration.Standalone || Api().Core.GetWorkspaceTmuxSessionCount() == 0 {
+		Set('W', "Kill ALL non-external tmux sessions (has a workspace)", func() {
+			if getApi().Configuration.Standalone || getApi().Core.GetWorkspaceTmuxSessionCount() == 0 {
 				return
 			}
 
-			OpenConfirmationDialog(func(b bool) {
+			openConfirmationDialog(func(b bool) {
 				if b {
-					if err := Api().Core.DeleteAllWorkspaceTmuxSessions(); err != nil {
-						OpenToastDialogError(err.Error())
+					if err := getApi().Core.DeleteAllWorkspaceTmuxSessions(); err != nil {
+						openToastDialogError(err.Error())
 						return
 					}
 				}
 			}, "Are you sure you want to delete ALL non-external tmux sessions?")
 		}).
-		set('j', "Move down", func() {
+		Set('j', "Move down", func() {
 			tv.tableRenderer.Down()
 			events.Emit(constants.TmuxWindowChangeEventName)
 		}).
-		set('k', "Move up", func() {
+		Set('k', "Move up", func() {
 			tv.tableRenderer.Up()
 			events.Emit(constants.TmuxWindowChangeEventName)
 		}).
-		set('c', "Open choose tree in session", func() {
+		Set('c', "Open choose tree in session", func() {
 			// TODO: move this flow in core
 			session := tv.getSelectedSession()
 			if session == nil {
@@ -174,26 +179,26 @@ func (tv *TmuxSessionView) Init() {
 				return
 			}
 
-			RunAction(func() {
+			tui.RunAction(func() {
 				session.Attach()
 			})
 		}).
-		set('a', "New external session (not associated to a workspace)", func() {
+		Set('a', "New external session (not associated to a workspace)", func() {
 			if core.IsTmuxSession() {
 				return
 			}
-			OpenEditorDialog(func(s string) {
-				RunAction(func() {
-					Api().Tmux.CreateAndAttachTmuxSession(s, "~")
+			openEditorDialog(func(s string) {
+				tui.RunAction(func() {
+					getApi().Tmux.CreateAndAttachTmuxSession(s, "~")
 				})
-			}, func() {}, "New session name", Small)
+			}, func() {}, "New session name", smallEditorSize)
 		}).
-		set('?', "Toggle cheatsheet", func() {
-			OpenHelpView(tv.view.keybindingInfo.toList(), func() {})
+		Set('?', "Toggle cheatsheet", func() {
+			OpenHelpDialog(tv.view.GetKeybindings(), func() {})
 		})
 }
 
-func (tv *TmuxSessionView) getSelectedSession() *gotmux.Session {
+func (tv *tmuxSessionView) getSelectedSession() *gotmux.Session {
 	_, ts := tv.tableRenderer.GetSelectedRow()
 	if ts != nil {
 		return *ts
@@ -202,15 +207,15 @@ func (tv *TmuxSessionView) getSelectedSession() *gotmux.Session {
 	return nil
 }
 
-func (ts *TmuxSessionView) refresh() {
+func (ts *tmuxSessionView) refresh() {
 	sessions := make([]*gotmux.Session, 0)
-	sessions = append(sessions, Api().Tmux.GetTmuxSessions()...)
+	sessions = append(sessions, getApi().Tmux.GetTmuxSessions()...)
 
 	rows := make([][]string, 0)
 	for _, session := range sessions {
 		workspace := "external"
-		if !Api().Configuration.Standalone {
-			w := Api().Core.GetWorkspaceByTmuxSession(session)
+		if !getApi().Configuration.Standalone {
+			w := getApi().Core.GetWorkspaceByTmuxSession(session)
 			if w != nil {
 				workspace = w.ShortPath()
 			}
@@ -227,11 +232,11 @@ func (ts *TmuxSessionView) refresh() {
 	ts.tableRenderer.FillTable(rows, sessions)
 }
 
-func (tv *TmuxSessionView) Render() error {
+func (tv *tmuxSessionView) render() error {
 	isViewFocused := tv.view.IsFocused()
 
 	tv.view.Clear()
-	tv.tableRenderer.RenderWithSelectCallBack(tv.view, func(_ int, _ *TableRow[*gotmux.Session]) bool {
+	tv.tableRenderer.RenderWithSelectCallBack(tv.view, func(_ int, _ *tui.TableRow[*gotmux.Session]) bool {
 		return isViewFocused
 	})
 

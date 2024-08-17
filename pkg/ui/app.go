@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"mynav/pkg/api"
+	"mynav/pkg/tui"
 
 	"github.com/awesome-gocui/gocui"
 )
@@ -11,20 +12,20 @@ import (
 var _ui *UI
 
 func Start(api *api.Api) {
-	g := NewGui()
+	g := tui.NewTui()
 	defer g.Close()
 
 	_ui = &UI{
-		views: make([]Viewable, 0),
+		views: make([]viewable, 0),
 		api:   api,
 	}
 
-	if Api().Configuration.IsConfigInitialized {
+	if getApi().Configuration.IsConfigInitialized {
 		_ui.InitUI()
-	} else if Api().Configuration.Standalone {
-		_ui.InitStandaloneUI()
+	} else if getApi().Configuration.Standalone {
+		_ui.initStandaloneUI()
 	} else {
-		_ui.AskConfig()
+		_ui.askConfig()
 	}
 
 	err := g.MainLoop()
@@ -35,13 +36,7 @@ func Start(api *api.Api) {
 	}
 }
 
-func InitViewables(vs []Viewable) {
-	for _, v := range vs {
-		v.Init()
-	}
-}
-
-func GetViewable[T Viewable]() T {
+func getViewable[T viewable]() T {
 	for _, v := range _ui.views {
 		if v, ok := v.(T); ok {
 			return v
@@ -51,42 +46,34 @@ func GetViewable[T Viewable]() T {
 	panic("invalid view")
 }
 
-func RenderView(v Viewable) {
-	UpdateGui(func(g *Gui) error {
-		v.Render()
+func renderView(v viewable) {
+	tui.UpdateTui(func(g *tui.Tui) error {
+		v.render()
 		return nil
 	})
 }
 
-func FocusView(viewName string) {
-	SetFocusView(viewName)
-	views := make([]*View, 0)
-	for _, v := range _ui.views {
-		views = append(views, v.View())
-	}
+func focusView(viewName string) {
+	tui.SetFocusView(viewName)
 
-	off := gocui.AttrDim | gocui.ColorWhite
-	on := gocui.ColorWhite
+	views := make([]*tui.View, 0)
+	for _, v := range _ui.views {
+		views = append(views, v.getView())
+	}
 
 	for _, v := range views {
 		if v.Name() == viewName {
-			v.FrameColor = on
+			v.FrameColor = tui.OnFrameColor
 		} else {
-			v.FrameColor = off
+			v.FrameColor = tui.OffFrameColor
 		}
 	}
 }
 
-func GetMainTabGroup() *TabGroup {
+func getMainTabGroup() *tui.TabGroup {
 	return _ui.mainTabGroup
 }
 
-func Api() *api.Api {
+func getApi() *api.Api {
 	return _ui.api
-}
-
-func RunAction(action func()) {
-	gocui.Suspend()
-	action()
-	gocui.Resume()
 }

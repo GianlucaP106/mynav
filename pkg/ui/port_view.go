@@ -5,48 +5,49 @@ import (
 	"mynav/pkg/constants"
 	"mynav/pkg/events"
 	"mynav/pkg/system"
+	"mynav/pkg/tui"
 
 	"github.com/GianlucaP106/gotmux/gotmux"
 	"github.com/awesome-gocui/gocui"
 )
 
-type PortView struct {
-	view          *View
-	tableRenderer *TableRenderer[*Port]
+type portView struct {
+	view          *tui.View
+	tableRenderer *tui.TableRenderer[*port]
 }
 
-type Port struct {
+type port struct {
 	tmux *gotmux.Session
 	*system.Port
 }
 
-var _ Viewable = new(PortView)
+var _ viewable = new(portView)
 
-func NewPortView() *PortView {
-	return &PortView{}
+func newPortView() *portView {
+	return &portView{}
 }
 
-func GetPortView() *PortView {
-	return GetViewable[*PortView]()
+func getPortView() *portView {
+	return getViewable[*portView]()
 }
 
-func (pv *PortView) Focus() {
-	FocusView(pv.View().Name())
+func (pv *portView) Focus() {
+	focusView(pv.getView().Name())
 }
 
-func (p *PortView) View() *View {
+func (p *portView) getView() *tui.View {
 	return p.view
 }
 
-func (p *PortView) Init() {
+func (p *portView) init() {
 	p.view = GetViewPosition(constants.PortViewName).Set()
 
-	p.view.Title = withSurroundingSpaces("Open Ports")
+	p.view.Title = tui.WithSurroundingSpaces("Open Ports")
 
-	StyleView(p.view)
+	tui.StyleView(p.view)
 
 	sizeX, sizeY := p.view.Size()
-	p.tableRenderer = NewTableRenderer[*Port]()
+	p.tableRenderer = tui.NewTableRenderer[*port]()
 	p.tableRenderer.InitTable(
 		sizeX,
 		sizeY,
@@ -63,19 +64,19 @@ func (p *PortView) Init() {
 
 	events.AddEventListener(constants.PortChangeEventName, func(_ string) {
 		p.refresh()
-		RenderView(p)
+		renderView(p)
 	})
 
 	events.Emit(constants.PortChangeEventName)
 
 	p.view.KeyBinding().
-		set('j', "Move down", func() {
+		Set('j', "Move down", func() {
 			p.tableRenderer.Down()
 		}).
-		set('k', "Move up", func() {
+		Set('k', "Move up", func() {
 			p.tableRenderer.Up()
 		}).
-		set(gocui.KeyEnter, "Open associated tmux session (if it exists)", func() {
+		Set(gocui.KeyEnter, "Open associated tmux session (if it exists)", func() {
 			port := p.getSelectedPort()
 			if port == nil {
 				return
@@ -85,44 +86,44 @@ func (p *PortView) Init() {
 				return
 			}
 
-			RunAction(func() {
-				Api().Tmux.AttachTmuxSession(port.tmux)
+			tui.RunAction(func() {
+				getApi().Tmux.AttachTmuxSession(port.tmux)
 			})
 		}).
-		set('D', "Kill port", func() {
+		Set('D', "Kill port", func() {
 			port := p.getSelectedPort()
 			if port == nil {
 				return
 			}
 
 			if port.tmux == nil {
-				OpenToastDialogError("Operation not allowed on external port")
+				openToastDialogError("Operation not allowed on external port")
 				return
 			}
 
-			OpenConfirmationDialog(func(b bool) {
+			openConfirmationDialog(func(b bool) {
 				if b {
-					if err := Api().Port.KillPort(port.Port); err != nil {
-						OpenToastDialogError(err.Error())
+					if err := getApi().Port.KillPort(port.Port); err != nil {
+						openToastDialogError(err.Error())
 					}
 				}
 			}, "Are you sure you want to kill this port?")
 		}).
-		set('?', "Toggle cheatsheet", func() {
-			OpenHelpView(p.view.keybindingInfo.toList(), func() {})
+		Set('?', "Toggle cheatsheet", func() {
+			OpenHelpDialog(p.view.GetKeybindings(), func() {})
 		})
 }
 
-func (pv *PortView) refresh() {
-	ports := make([]*Port, 0)
-	for _, p := range Api().Port.GetPorts().ToList().Sorted() {
-		if t := Api().Tmux.GetTmuxSessionByPort(p); t != nil {
-			ports = append(ports, &Port{
+func (pv *portView) refresh() {
+	ports := make([]*port, 0)
+	for _, p := range getApi().Port.GetPorts().ToList().Sorted() {
+		if t := getApi().Tmux.GetTmuxSessionByPort(p); t != nil {
+			ports = append(ports, &port{
 				tmux: t,
 				Port: p,
 			})
 		} else {
-			ports = append(ports, &Port{
+			ports = append(ports, &port{
 				tmux: nil,
 				Port: p,
 			})
@@ -130,14 +131,14 @@ func (pv *PortView) refresh() {
 	}
 
 	rows := make([][]string, 0)
-	rowValues := make([]*Port, 0)
+	rowValues := make([]*port, 0)
 	for _, p := range ports {
 		linkedTo := func() string {
 			if p.tmux == nil {
 				return "external"
 			}
 
-			workspace := Api().Core.GetWorkspaceByTmuxSession(p.tmux)
+			workspace := getApi().Core.GetWorkspaceByTmuxSession(p.tmux)
 			if workspace != nil {
 				return "workspace: " + workspace.ShortPath()
 			} else {
@@ -156,7 +157,7 @@ func (pv *PortView) refresh() {
 	pv.tableRenderer.FillTable(rows, rowValues)
 }
 
-func (p *PortView) getSelectedPort() *Port {
+func (p *portView) getSelectedPort() *port {
 	_, port := p.tableRenderer.GetSelectedRow()
 	if port != nil {
 		return *port
@@ -165,11 +166,11 @@ func (p *PortView) getSelectedPort() *Port {
 	return nil
 }
 
-func (p *PortView) Render() error {
+func (p *portView) render() error {
 	p.view.Clear()
 
 	currentViewSelected := p.view.IsFocused()
-	p.tableRenderer.RenderWithSelectCallBack(p.view, func(_ int, _ *TableRow[*Port]) bool {
+	p.tableRenderer.RenderWithSelectCallBack(p.view, func(_ int, _ *tui.TableRow[*port]) bool {
 		return currentViewSelected
 	})
 

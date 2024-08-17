@@ -5,39 +5,40 @@ import (
 	"mynav/pkg/constants"
 	"mynav/pkg/persistence"
 	"mynav/pkg/tasks"
+	"mynav/pkg/tui"
 	"strconv"
 
 	"github.com/shirou/gopsutil/process"
 )
 
-type PsView struct {
-	view          *View
-	tableRenderer *TableRenderer[*process.Process]
+type psView struct {
+	view          *tui.View
+	tableRenderer *tui.TableRenderer[*process.Process]
 
 	// tmp
 	isLoading *persistence.Value[bool]
 }
 
-var _ Viewable = new(PsView)
+var _ viewable = new(psView)
 
-func NewPsView() *PsView {
-	return &PsView{
+func newPsView() *psView {
+	return &psView{
 		isLoading: persistence.NewValue(false),
 	}
 }
 
-func GetPsView() *PsView {
-	return GetViewable[*PsView]()
+func getPsView() *psView {
+	return getViewable[*psView]()
 }
 
-func (p *PsView) Init() {
+func (p *psView) init() {
 	p.view = GetViewPosition(constants.PsViewName).Set()
 
-	p.view.Title = withSurroundingSpaces("Processes")
+	p.view.Title = tui.WithSurroundingSpaces("Processes")
 
-	StyleView(p.view)
+	tui.StyleView(p.view)
 
-	p.tableRenderer = NewTableRenderer[*process.Process]()
+	p.tableRenderer = tui.NewTableRenderer[*process.Process]()
 
 	sizeX, sizeY := p.view.Size()
 	p.tableRenderer.InitTable(sizeX, sizeY, []string{
@@ -54,8 +55,8 @@ func (p *PsView) Init() {
 		p.isLoading.Set(true)
 		rows := make([][]string, 0)
 		processes := make([]*process.Process, 0)
-		for _, ts := range Api().Tmux.GetTmuxSessions() {
-			ps := Api().Tmux.GetTmuxSessionChildProcesses(ts)
+		for _, ts := range getApi().Tmux.GetTmuxSessions() {
+			ps := getApi().Tmux.GetTmuxSessionChildProcesses(ts)
 			for _, proc := range ps {
 				name, err := proc.Name()
 				if err != nil {
@@ -74,24 +75,24 @@ func (p *PsView) Init() {
 
 		p.tableRenderer.FillTable(rows, processes)
 		p.isLoading.Set(false)
-		RenderView(p)
+		renderView(p)
 	})
 
 	p.view.KeyBinding().
-		set('?', "Toggle cheatsheet", func() {
-			OpenHelpView(p.view.keybindingInfo.toList(), func() {})
+		Set('?', "Toggle cheatsheet", func() {
+			OpenHelpDialog(p.view.GetKeybindings(), func() {})
 		})
 }
 
-func (p *PsView) View() *View {
+func (p *psView) getView() *tui.View {
 	return p.view
 }
 
-func (p *PsView) Render() error {
+func (p *psView) render() error {
 	p.view.Clear()
 
 	isFocused := p.view.IsFocused()
-	p.tableRenderer.RenderWithSelectCallBack(p.view, func(i int, tr *TableRow[*process.Process]) bool {
+	p.tableRenderer.RenderWithSelectCallBack(p.view, func(i int, tr *tui.TableRow[*process.Process]) bool {
 		return isFocused
 	})
 

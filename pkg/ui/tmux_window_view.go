@@ -2,8 +2,10 @@ package ui
 
 import (
 	"mynav/pkg/constants"
+	"mynav/pkg/core"
 	"mynav/pkg/events"
 	"mynav/pkg/system"
+	"mynav/pkg/tui"
 	"strconv"
 	"time"
 
@@ -11,30 +13,30 @@ import (
 	"github.com/awesome-gocui/gocui"
 )
 
-type TmuxWindowView struct {
-	view          *View
-	tableRenderer *TableRenderer[*gotmux.Window]
+type tmuxWindowView struct {
+	view          *tui.View
+	tableRenderer *tui.TableRenderer[*gotmux.Window]
 }
 
-var _ Viewable = new(TmuxWindowView)
+var _ viewable = new(tmuxWindowView)
 
-func NewTmuxWindowView() *TmuxWindowView {
-	return &TmuxWindowView{}
+func newTmuxWindowView() *tmuxWindowView {
+	return &tmuxWindowView{}
 }
 
-func GetTmuxWindowView() *TmuxWindowView {
-	return GetViewable[*TmuxWindowView]()
+func getTmuxWindowView() *tmuxWindowView {
+	return getViewable[*tmuxWindowView]()
 }
 
-func (t *TmuxWindowView) View() *View {
+func (t *tmuxWindowView) getView() *tui.View {
 	return t.view
 }
 
-func (t *TmuxWindowView) Focus() {
-	FocusView(t.View().Name())
+func (t *tmuxWindowView) Focus() {
+	focusView(t.getView().Name())
 }
 
-func (t *TmuxWindowView) getSelectedWindow() *gotmux.Window {
+func (t *tmuxWindowView) getSelectedWindow() *gotmux.Window {
 	_, value := t.tableRenderer.GetSelectedRow()
 	if value != nil {
 		return *value
@@ -43,14 +45,14 @@ func (t *TmuxWindowView) getSelectedWindow() *gotmux.Window {
 	return nil
 }
 
-func (t *TmuxWindowView) Init() {
+func (t *tmuxWindowView) init() {
 	t.view = GetViewPosition(constants.TmuxWindowViewName).Set()
 
-	t.view.Title = withSurroundingSpaces("Tmux Windows")
-	StyleView(t.view)
+	t.view.Title = tui.WithSurroundingSpaces("Tmux Windows")
+	tui.StyleView(t.view)
 
 	sizeX, sizeY := t.view.Size()
-	t.tableRenderer = NewTableRenderer[*gotmux.Window]()
+	t.tableRenderer = tui.NewTableRenderer[*gotmux.Window]()
 	t.tableRenderer.InitTable(sizeX, sizeY, []string{
 		"Name",
 		"# Panes",
@@ -65,38 +67,74 @@ func (t *TmuxWindowView) Init() {
 
 	events.AddEventListener(constants.TmuxWindowChangeEventName, func(s string) {
 		t.refresh()
-		RenderView(t)
+		renderView(t)
 		events.Emit(constants.TmuxPaneChangeEventName)
 	})
 
 	t.refresh()
 
 	t.view.KeyBinding().
-		set('j', "Move down", func() {
+		Set('j', "Move down", func() {
 			t.tableRenderer.Down()
 			events.Emit(constants.TmuxPaneChangeEventName)
 		}).
-		set('k', "Move up", func() {
+		Set('k', "Move up", func() {
 			t.tableRenderer.Up()
 			events.Emit(constants.TmuxPaneChangeEventName)
 		}).
-		set(gocui.KeyEnter, "Focus Pane view", func() {
-			GetTmuxPaneView().Focus()
+		Set('o', "Open tmux session", func() {
+			if core.IsTmuxSession() {
+				openToastDialogError("You are already in a tmux session. Nested tmux sessions are not supported yet.")
+				return
+			}
+
+			session := getTmuxSessionView().getSelectedSession()
+			if session == nil {
+				return
+			}
+
+			tui.RunAction(func() {
+				getApi().Tmux.AttachTmuxSession(session)
+			})
 		}).
-		set(gocui.KeyEsc, "Focus session view", func() {
-			GetTmuxSessionView().Focus()
+		Set('X', "Kill this window", func() {
+			w := t.getSelectedWindow()
+			if w == nil {
+				return
+			}
+
+			openConfirmationDialog(func(b bool) {
+				if !b {
+					return
+				}
+
+				err := getApi().Tmux.KillTmuxWindow(w)
+				if err != nil {
+					openToastDialogError(err.Error())
+				}
+			}, "Are you sure you want to kill this window?")
 		}).
-		set(gocui.KeyCtrlL, "Focus Pane view", func() {
-			GetTmuxPaneView().Focus()
+		Set(gocui.KeyEsc, "Focus session view", func() {
+			getTmuxSessionView().Focus()
 		}).
-		set(gocui.KeyArrowRight, "Focus Pane view", func() {
-			GetTmuxPaneView().Focus()
+		Set(gocui.KeyEnter, "Focus Pane view", func() {
+			getTmuxPaneView().Focus()
+		}).
+		Set(gocui.KeyCtrlL, "Focus Pane view", func() {
+			getTmuxPaneView().Focus()
+		}).
+		Set(gocui.KeyArrowRight, "Focus Pane view", func() {
+			getTmuxPaneView().Focus()
+		}).
+		Set('?', "Toggle cheatsheet", func() {
+			OpenHelpDialog(t.view.GetKeybindings(), func() {})
 		})
 }
 
-func (t *TmuxWindowView) refresh() {
-	selectedSession := GetTmuxSessionView().getSelectedSession()
+func (t *tmuxWindowView) refresh() {
+	selectedSession := getTmuxSessionView().getSelectedSession()
 	if selectedSession == nil {
+		t.tableRenderer.ClearTable()
 		return
 	}
 
@@ -126,10 +164,10 @@ func (t *TmuxWindowView) refresh() {
 	t.tableRenderer.FillTable(rows, windows)
 }
 
-func (t *TmuxWindowView) Render() error {
+func (t *tmuxWindowView) render() error {
 	isFocused := t.view.IsFocused()
 	t.view.Clear()
-	t.tableRenderer.RenderWithSelectCallBack(t.view, func(i int, tr *TableRow[*gotmux.Window]) bool {
+	t.tableRenderer.RenderWithSelectCallBack(t.view, func(i int, tr *tui.TableRow[*gotmux.Window]) bool {
 		return isFocused
 	})
 

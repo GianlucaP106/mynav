@@ -1,4 +1,4 @@
-package ui
+package tui
 
 type ListRenderer struct {
 	selected   int

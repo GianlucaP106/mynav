@@ -17,6 +17,7 @@ const (
 	GithubProfileViewName     = "GithubProfileView"
 	EditorDialogName          = "EditorDialog"
 	ConfirmationDialogName    = "ConfirmationDialog"
+	ToastDialogName           = "ToastDialogView"
 	SearchListDialog1ViewName = "SearchListDialog1"
 	SearchListDialog2ViewName = "SearchListDialog2"
 )

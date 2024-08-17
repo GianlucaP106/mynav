@@ -3,54 +3,57 @@ package ui
 import (
 	"fmt"
 	"mynav/pkg/constants"
+	"mynav/pkg/tui"
 )
 
-type EditorDialog struct {
-	view *View
+type editorDialog struct {
+	view *tui.View
 }
 
-type EditorSize = uint
+type editorSize = uint
 
 const (
-	Small EditorSize = iota
-	Large
+	smallEditorSize editorSize = iota
+	largeEditorSize
 )
 
-func OpenEditorDialog(onEnter func(string), onEsc func(), title string, size EditorSize) *EditorDialog {
-	return OpenEditorDialogWithDefaultValue(onEnter, onEsc, title, size, "")
+func openEditorDialog(onEnter func(string), onEsc func(), title string, size editorSize) *editorDialog {
+	return openEditorDialogWithDefaultValue(onEnter, onEsc, title, size, "")
 }
 
-func OpenEditorDialogWithDefaultValue(onEnter func(string), onEsc func(), title string, size EditorSize, defaultValue string) *EditorDialog {
-	ed := &EditorDialog{}
+func openEditorDialogWithDefaultValue(onEnter func(string), onEsc func(), title string, size editorSize, defaultValue string) *editorDialog {
+	ed := &editorDialog{}
 
 	var height int
 	switch size {
-	case Small:
+	case smallEditorSize:
 		height = 3
-	case Large:
+	case largeEditorSize:
 		height = 7
 	}
 
-	ed.view = SetCenteredView(constants.EditorDialogName, 80, height, 0)
+	ed.view = tui.SetCenteredView(constants.EditorDialogName, 80, height, 0)
 	ed.view.Editable = true
-	ed.view.Title = withSurroundingSpaces(title)
+	ed.view.Title = tui.WithSurroundingSpaces(title)
 	ed.view.Wrap = true
-	ToggleCursor(true)
+	ed.view.FrameColor = tui.OnFrameColor
+	tui.StyleView(ed.view)
+	tui.ToggleCursor(true)
 
 	if defaultValue != "" {
 		fmt.Fprint(ed.view, defaultValue)
 		ed.view.MoveCursor(len(defaultValue), 0)
 	}
 
-	prevView := GetFocusedView()
-	ed.view.Editor = NewSimpleEditor(func(s string) {
-		ed.Close()
+	prevView := tui.GetFocusedView()
+	ed.view.Editor = tui.NewSimpleEditor(func(s string) {
+		ed.close()
 		if prevView != nil {
 			prevView.Focus()
 		}
 		onEnter(s)
 	}, func() {
-		ed.Close()
+		ed.close()
 		if prevView != nil {
 			prevView.Focus()
 		}
@@ -62,7 +65,7 @@ func OpenEditorDialogWithDefaultValue(onEnter func(string), onEsc func(), title 
 	return ed
 }
 
-func (ed *EditorDialog) Close() {
-	ToggleCursor(false)
+func (ed *editorDialog) close() {
+	tui.ToggleCursor(false)
 	ed.view.Delete()
 }

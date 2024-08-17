@@ -4,43 +4,44 @@ import (
 	"mynav/pkg/constants"
 	"mynav/pkg/events"
 	"mynav/pkg/system"
+	"mynav/pkg/tui"
 	"strconv"
 
 	"github.com/GianlucaP106/gotmux/gotmux"
 	"github.com/awesome-gocui/gocui"
 )
 
-type TmuxPaneView struct {
-	view          *View
-	tableRenderer *TableRenderer[*gotmux.Pane]
+type tmuxPaneView struct {
+	view          *tui.View
+	tableRenderer *tui.TableRenderer[*gotmux.Pane]
 }
 
-var _ Viewable = new(TmuxPaneView)
+var _ viewable = new(tmuxPaneView)
 
-func NewTmuxPaneView() *TmuxPaneView {
-	return &TmuxPaneView{}
+func newTmuxPaneView() *tmuxPaneView {
+	return &tmuxPaneView{}
 }
 
-func GetTmuxPaneView() *TmuxPaneView {
-	return GetViewable[*TmuxPaneView]()
+func getTmuxPaneView() *tmuxPaneView {
+	return getViewable[*tmuxPaneView]()
 }
 
-func (t *TmuxPaneView) View() *View {
+func (t *tmuxPaneView) getView() *tui.View {
 	return t.view
 }
 
-func (t *TmuxPaneView) Focus() {
-	FocusView(t.view.Name())
+func (t *tmuxPaneView) Focus() {
+	focusView(t.view.Name())
 }
 
-func (t *TmuxPaneView) Init() {
+func (t *tmuxPaneView) init() {
 	t.view = GetViewPosition(constants.TmuxPaneViewName).Set()
 
-	t.view.Title = withSurroundingSpaces("Tmux Panes")
-	StyleView(t.view)
+	t.view.Title = tui.WithSurroundingSpaces("Tmux Panes")
+	tui.StyleView(t.view)
 
 	sizeX, sizeY := t.view.Size()
-	t.tableRenderer = NewTableRenderer[*gotmux.Pane]()
+	t.tableRenderer = tui.NewTableRenderer[*gotmux.Pane]()
 	t.tableRenderer.InitTable(sizeX, sizeY, []string{
 		"Current command",
 		"Pid",
@@ -53,35 +54,53 @@ func (t *TmuxPaneView) Init() {
 
 	events.AddEventListener(constants.TmuxPaneChangeEventName, func(s string) {
 		t.refresh()
-		RenderView(t)
+		renderView(t)
 		events.Emit(constants.TmuxPreviewChangeEventName)
 	})
 
 	t.refresh()
 
 	t.view.KeyBinding().
-		set('j', "Move down", func() {
+		Set('j', "Move down", func() {
 			t.tableRenderer.Down()
 			events.Emit(constants.TmuxPreviewChangeEventName)
 		}).
-		set('k', "Move up", func() {
+		Set('k', "Move up", func() {
 			t.tableRenderer.Up()
 			events.Emit(constants.TmuxPreviewChangeEventName)
 		}).
-		set(gocui.KeyEsc, "Focus window view", func() {
-			GetTmuxWindowView().Focus()
+		Set('X', "Kill this pane", func() {
+			pane := t.getSelectedPane()
+			if pane == nil {
+				return
+			}
+
+			openConfirmationDialog(func(b bool) {
+				if !b {
+					return
+				}
+
+				err := getApi().Tmux.KillTmuxPane(pane)
+				if err != nil {
+					openToastDialogError(err.Error())
+				}
+			}, "Are you sure you want to kill this pane?")
 		}).
-		set(gocui.KeyCtrlH, "Focus window view", func() {
-			GetTmuxWindowView().Focus()
+		Set(gocui.KeyEsc, "Focus window view", func() {
+			getTmuxWindowView().Focus()
 		}).
-		set(gocui.KeyArrowLeft, "Focus window view", func() {
-			GetTmuxWindowView().Focus()
+		Set(gocui.KeyCtrlH, "Focus window view", func() {
+			getTmuxWindowView().Focus()
+		}).
+		Set(gocui.KeyArrowLeft, "Focus window view", func() {
+			getTmuxWindowView().Focus()
 		})
 }
 
-func (t *TmuxPaneView) refresh() {
-	window := GetTmuxWindowView().getSelectedWindow()
+func (t *tmuxPaneView) refresh() {
+	window := getTmuxWindowView().getSelectedWindow()
 	if window == nil {
+		t.tableRenderer.ClearTable()
 		return
 	}
 
@@ -102,7 +121,7 @@ func (t *TmuxPaneView) refresh() {
 	t.tableRenderer.FillTable(rows, panes)
 }
 
-func (t *TmuxPaneView) getSelectedPane() *gotmux.Pane {
+func (t *tmuxPaneView) getSelectedPane() *gotmux.Pane {
 	_, value := t.tableRenderer.GetSelectedRow()
 	if value != nil {
 		return *value
@@ -111,10 +130,10 @@ func (t *TmuxPaneView) getSelectedPane() *gotmux.Pane {
 	return nil
 }
 
-func (t *TmuxPaneView) Render() error {
+func (t *tmuxPaneView) render() error {
 	isFocused := t.view.IsFocused()
 	t.view.Clear()
-	t.tableRenderer.RenderWithSelectCallBack(t.view, func(i int, tr *TableRow[*gotmux.Pane]) bool {
+	t.tableRenderer.RenderWithSelectCallBack(t.view, func(i int, tr *tui.TableRow[*gotmux.Pane]) bool {
 		return isFocused
 	})
 

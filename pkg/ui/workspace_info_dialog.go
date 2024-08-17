@@ -4,37 +4,39 @@ import (
 	"fmt"
 	"mynav/pkg/constants"
 	"mynav/pkg/core"
+	"mynav/pkg/tui"
 	"strconv"
 
 	"github.com/gookit/color"
 )
 
-type WorkspaceInfoDialog struct {
-	view      *View
+type workspaceInfoDialog struct {
+	view      *tui.View
 	workspace *core.Workspace
 }
 
-func OpenWorkspaceInfoDialog(w *core.Workspace, exit func()) *WorkspaceInfoDialog {
-	wd := &WorkspaceInfoDialog{}
+func openWorkspaceInfoDialog(w *core.Workspace, exit func()) *workspaceInfoDialog {
+	wd := &workspaceInfoDialog{}
 	wd.workspace = w
 	content := wd.getWorkspaceInfoContent(wd.workspace)
-	wd.view = SetCenteredView(constants.WorkspaceInfoDialogName, 100, len(content), 0)
+	wd.view = tui.SetCenteredView(constants.WorkspaceInfoDialogName, 100, len(content), 0)
 
-	wd.view.Title = withSurroundingSpaces(wd.workspace.Name)
-	StyleView(wd.view)
+	wd.view.Title = tui.WithSurroundingSpaces(wd.workspace.Name)
+	wd.view.FrameColor = tui.OnFrameColor
+	tui.StyleView(wd.view)
 	wd.view.Editable = true
 
-	prevView := GetFocusedView()
-	wd.view.Editor = NewConfirmationEditor(func() {
-		wd.Close()
+	prevView := tui.GetFocusedView()
+	wd.view.Editor = tui.NewConfirmationEditor(func() {
+		wd.close()
 		if prevView != nil {
-			SetFocusView(prevView.Name())
+			tui.SetFocusView(prevView.Name())
 		}
 		exit()
 	}, func() {
-		wd.Close()
+		wd.close()
 		if prevView != nil {
-			SetFocusView(prevView.Name())
+			tui.SetFocusView(prevView.Name())
 		}
 		exit()
 	})
@@ -44,22 +46,22 @@ func OpenWorkspaceInfoDialog(w *core.Workspace, exit func()) *WorkspaceInfoDialo
 		fmt.Fprintln(wd.view, line)
 	}
 
-	SetFocusView(wd.view.Name())
+	tui.SetFocusView(wd.view.Name())
 
 	return wd
 }
 
-func (wd *WorkspaceInfoDialog) Close() {
+func (wd *workspaceInfoDialog) close() {
 	wd.view.Delete()
 }
 
-func (wd *WorkspaceInfoDialog) getWorkspaceInfoContent(w *core.Workspace) []string {
+func (wd *workspaceInfoDialog) getWorkspaceInfoContent(w *core.Workspace) []string {
 	sizeX := 100
 
 	formatItem := func(title string, content string) []string {
 		return []string{
-			withSpacePadding(color.Blue.Sprint(title), sizeX),
-			withSpacePadding(content, sizeX),
+			tui.WithSpaces(color.Blue.Sprint(title), sizeX),
+			tui.WithSpaces(content, sizeX),
 		}
 	}
 
@@ -68,38 +70,38 @@ func (wd *WorkspaceInfoDialog) getWorkspaceInfoContent(w *core.Workspace) []stri
 		if w.Metadata.Description == "" {
 			return out
 		}
-		out = append(out, withSpacePadding(color.Blue.Sprint("Description: "), sizeX))
+		out = append(out, tui.WithSpaces(color.Blue.Sprint("Description: "), sizeX))
 		desc := splitStringByLength(w.Metadata.Description, sizeX)
 		out = append(out, desc...)
 		return out
 	}()
 
 	out := []string{}
-	out = append(out, blankLine(sizeX))
+	out = append(out, tui.BlankLine(sizeX))
 
 	for _, line := range description {
 		out = append(out, color.White.Sprint(line))
 	}
-	out = append(out, blankLine(sizeX))
+	out = append(out, tui.BlankLine(sizeX))
 
 	// TODO: handle error
 	remote, _ := w.GetGitRemote()
 	if remote != "" {
 		out = append(out, formatItem("Git remote: ", remote)...)
-		out = append(out, blankLine(sizeX))
+		out = append(out, tui.BlankLine(sizeX))
 	}
 
-	if s := Api().Tmux.GetTmuxSessionByName(w.Path); s != nil {
+	if s := getApi().Tmux.GetTmuxSessionByName(w.Path); s != nil {
 		out = append(out, formatItem("Tmux session: ", s.Name)...)
-		out = append(out, withSpacePadding(strconv.Itoa(s.Windows)+" window(s)", sizeX))
-		out = append(out, blankLine(sizeX))
+		out = append(out, tui.WithSpaces(strconv.Itoa(s.Windows)+" window(s)", sizeX))
+		out = append(out, tui.BlankLine(sizeX))
 	}
 
 	out = append(out, formatItem("Last modified: ", w.GetLastModifiedTimeFormatted())...)
-	out = append(out, blankLine(sizeX))
+	out = append(out, tui.BlankLine(sizeX))
 
-	out = append(out, blankLine(sizeX))
-	out = append(out, blankLine(sizeX))
+	out = append(out, tui.BlankLine(sizeX))
+	out = append(out, tui.BlankLine(sizeX))
 
 	return out
 }

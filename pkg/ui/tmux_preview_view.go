@@ -5,51 +5,53 @@ import (
 	"mynav/pkg/constants"
 	"mynav/pkg/events"
 	"mynav/pkg/persistence"
+	"mynav/pkg/tui"
 )
 
-type TmuxPreviewView struct {
-	view    *View
+type tmuxPreviewView struct {
+	view    *tui.View
 	content *persistence.Value[string]
 }
 
-var _ Viewable = new(TmuxPreviewView)
+var _ viewable = new(tmuxPreviewView)
 
-func NewTmuxPreviewView() *TmuxPreviewView {
-	return &TmuxPreviewView{}
+func newTmuxPreviewView() *tmuxPreviewView {
+	return &tmuxPreviewView{}
 }
 
-func GetTmuxPreviewView() *TmuxPreviewView {
-	return GetViewable[*TmuxPreviewView]()
+func getTmuxPreviewView() *tmuxPreviewView {
+	return getViewable[*tmuxPreviewView]()
 }
 
-func (t *TmuxPreviewView) Focus() {
-	FocusView(t.View().Name())
+func (t *tmuxPreviewView) Focus() {
+	focusView(t.getView().Name())
 }
 
-func (t *TmuxPreviewView) View() *View {
+func (t *tmuxPreviewView) getView() *tui.View {
 	return t.view
 }
 
-func (t *TmuxPreviewView) Init() {
+func (t *tmuxPreviewView) init() {
 	t.view = GetViewPosition(constants.TmuxPreviewViewName).Set()
 
-	t.view.Title = withSurroundingSpaces("Tmux Preview")
-	StyleView(t.view)
+	t.view.Title = tui.WithSurroundingSpaces("Tmux Preview")
+	tui.StyleView(t.view)
 	t.view.Wrap = false
 
 	t.content = persistence.NewValue("")
 
 	events.AddEventListener(constants.TmuxPreviewChangeEventName, func(s string) {
 		t.refresh()
-		RenderView(t)
+		renderView(t)
 	})
 
 	t.refresh()
 }
 
-func (t *TmuxPreviewView) refresh() {
-	pane := GetTmuxPaneView().getSelectedPane()
+func (t *tmuxPreviewView) refresh() {
+	pane := getTmuxPaneView().getSelectedPane()
 	if pane == nil {
+		t.content.Set("")
 		return
 	}
 
@@ -61,7 +63,7 @@ func (t *TmuxPreviewView) refresh() {
 	t.content.Set(content)
 }
 
-func (t *TmuxPreviewView) Render() error {
+func (t *tmuxPreviewView) render() error {
 	t.view.Clear()
 	fmt.Fprintln(t.view, t.content.Get())
 	return nil

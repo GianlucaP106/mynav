@@ -6,42 +6,43 @@ import (
 	"mynav/pkg/events"
 	"mynav/pkg/github"
 	"mynav/pkg/system"
+	"mynav/pkg/tui"
 
 	"github.com/awesome-gocui/gocui"
 )
 
-type GithubPrView struct {
-	view          *View
-	tableRenderer *TableRenderer[*github.GithubPullRequest]
+type githubPrView struct {
+	view          *tui.View
+	tableRenderer *tui.TableRenderer[*github.GithubPullRequest]
 }
 
-var _ Viewable = new(GithubPrView)
+var _ viewable = new(githubPrView)
 
-func NewGithubPrView() *GithubPrView {
-	return &GithubPrView{}
+func newGithubPrView() *githubPrView {
+	return &githubPrView{}
 }
 
-func GetGithubPrView() *GithubPrView {
-	return GetViewable[*GithubPrView]()
+func getGithubPrView() *githubPrView {
+	return getViewable[*githubPrView]()
 }
 
-func (g *GithubPrView) View() *View {
+func (g *githubPrView) getView() *tui.View {
 	return g.view
 }
 
-func (g *GithubPrView) Focus() {
-	FocusView(g.View().Name())
+func (g *githubPrView) Focus() {
+	focusView(g.getView().Name())
 }
 
-func (g *GithubPrView) Init() {
+func (g *githubPrView) init() {
 	g.view = GetViewPosition(constants.GithubPrViewName).Set()
 
-	g.view.Title = withSurroundingSpaces("Pull Requests")
+	g.view.Title = tui.WithSurroundingSpaces("Pull Requests")
 
-	StyleView(g.view)
+	tui.StyleView(g.view)
 
 	sizeX, sizeY := g.view.Size()
-	g.tableRenderer = NewTableRenderer[*github.GithubPullRequest]()
+	g.tableRenderer = tui.NewTableRenderer[*github.GithubPullRequest]()
 	g.tableRenderer.InitTable(
 		sizeX,
 		sizeY,
@@ -58,17 +59,17 @@ func (g *GithubPrView) Init() {
 
 	events.AddEventListener(constants.GithubPrsChangesEventName, func(_ string) {
 		g.refresh()
-		RenderView(g)
+		renderView(g)
 	})
 
 	g.view.KeyBinding().
-		set('j', "Move down", func() {
+		Set('j', "Move down", func() {
 			g.tableRenderer.Down()
 		}).
-		set('k', "Move up", func() {
+		Set('k', "Move up", func() {
 			g.tableRenderer.Up()
 		}).
-		set('o', "Open browser to PR", func() {
+		Set('o', "Open browser to PR", func() {
 			pr := g.getSelectedPr()
 			if pr == nil {
 				return
@@ -76,18 +77,18 @@ func (g *GithubPrView) Init() {
 
 			system.OpenBrowser(pr.GetHTMLURL())
 		}).
-		set('?', "Toggle cheatsheet", func() {
-			OpenHelpView(g.view.keybindingInfo.toList(), func() {})
+		Set('?', "Toggle cheatsheet", func() {
+			OpenHelpDialog(g.view.GetKeybindings(), func() {})
 		}).
-		set(gocui.KeyCtrlL, "Focus "+constants.GithubRepoViewName, func() {
-			GetGithubRepoView().Focus()
+		Set(gocui.KeyCtrlL, "Focus "+constants.GithubRepoViewName, func() {
+			getGithubRepoView().Focus()
 		}).
-		set(gocui.KeyArrowRight, "Focus "+constants.GithubRepoViewName, func() {
-			GetGithubRepoView().Focus()
+		Set(gocui.KeyArrowRight, "Focus "+constants.GithubRepoViewName, func() {
+			getGithubRepoView().Focus()
 		})
 }
 
-func (g *GithubPrView) getSelectedPr() *github.GithubPullRequest {
+func (g *githubPrView) getSelectedPr() *github.GithubPullRequest {
 	_, pr := g.tableRenderer.GetSelectedRow()
 	if pr != nil {
 		return *pr
@@ -96,12 +97,12 @@ func (g *GithubPrView) getSelectedPr() *github.GithubPullRequest {
 	return nil
 }
 
-func (g *GithubPrView) refresh() {
-	if !Api().Github.IsAuthenticated() {
+func (g *githubPrView) refresh() {
+	if !getApi().Github.IsAuthenticated() {
 		return
 	}
 
-	gpr := Api().Github.GetUserPullRequests()
+	gpr := getApi().Github.GetUserPullRequests()
 
 	rows := make([][]string, 0)
 	rowValues := make([]*github.GithubPullRequest, 0)
@@ -117,19 +118,19 @@ func (g *GithubPrView) refresh() {
 	g.tableRenderer.FillTable(rows, rowValues)
 }
 
-func (g *GithubPrView) Render() error {
+func (g *githubPrView) render() error {
 	g.view.Clear()
-	if !Api().Github.IsAuthenticated() {
+	if !getApi().Github.IsAuthenticated() {
 		fmt.Fprintln(g.view, "Not authenticated")
 		return nil
 	}
 
 	isFocused := g.view.IsFocused()
-	g.tableRenderer.RenderWithSelectCallBack(g.view, func(_ int, _ *TableRow[*github.GithubPullRequest]) bool {
+	g.tableRenderer.RenderWithSelectCallBack(g.view, func(_ int, _ *tui.TableRow[*github.GithubPullRequest]) bool {
 		return isFocused
 	})
 
-	if Api().Github.IsLoading() {
+	if getApi().Github.IsLoading() {
 		fmt.Fprintln(g.view, "Loading...")
 	} else if g.tableRenderer.GetTableSize() == 0 {
 		fmt.Fprintln(g.view, "Nothing to show")

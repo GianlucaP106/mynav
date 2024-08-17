@@ -5,92 +5,93 @@ import (
 	"mynav/pkg/constants"
 	"mynav/pkg/events"
 	"mynav/pkg/system"
+	"mynav/pkg/tui"
 	"sync"
 )
 
-type GithubProfileView struct {
-	view *View
+type githubProfileView struct {
+	view *tui.View
 }
 
-var _ Viewable = new(GithubProfileView)
+var _ viewable = new(githubProfileView)
 
-func NewGithubProfileView() *GithubProfileView {
-	return &GithubProfileView{}
+func newGithubProfileView() *githubProfileView {
+	return &githubProfileView{}
 }
 
-func GetGithubProfileView() *GithubProfileView {
-	return GetViewable[*GithubProfileView]()
+func getGithubProfileView() *githubProfileView {
+	return getViewable[*githubProfileView]()
 }
 
-func (g *GithubProfileView) Init() {
+func (g *githubProfileView) init() {
 	g.view = GetViewPosition(constants.GithubProfileViewName).Set()
 
-	g.view.Title = withSurroundingSpaces("Profile")
+	g.view.Title = tui.WithSurroundingSpaces("Profile")
 
-	StyleView(g.view)
+	tui.StyleView(g.view)
 
 	g.view.KeyBinding().
-		set('L', "Login with device code and browser", func() {
-			if Api().Github.IsAuthenticated() {
+		Set('L', "Login with device code and browser", func() {
+			if getApi().Github.IsAuthenticated() {
 				return
 			}
 
 			tdMu := &sync.Mutex{}
-			td := new(*ToastDialog)
+			td := new(*toastDialog)
 			events.AddEventListener(constants.GithubDeviceAuthenticatedEventName, func(listenerId string) {
 				tdMu.Lock()
 				defer tdMu.Unlock()
 
 				if td != nil && *td != nil {
-					UpdateGui(func(g *Gui) error {
-						(*td).Close()
+					tui.UpdateTui(func(g *tui.Tui) error {
+						(*td).close()
 						return nil
 					})
 				}
 
-				Api().Github.LoadData()
+				getApi().Github.LoadData()
 				events.RemoveEventListener(constants.GithubDeviceAuthenticatedEventName, listenerId)
 			})
 
-			deviceAuth := Api().Github.InitWithDeviceAuth()
+			deviceAuth := getApi().Github.InitWithDeviceAuth()
 
 			if deviceAuth != nil {
 				tdMu.Lock()
-				(*td) = OpenToastDialog(deviceAuth.UserCode, false, "User device code - automatically copied to clipboard", func() {})
+				(*td) = openToastDialog(deviceAuth.UserCode, false, "User device code - automatically copied to clipboard", func() {})
 				tdMu.Unlock()
 				system.CopyToClip(deviceAuth.UserCode)
 				deviceAuth.OpenBrowser()
 			}
 		}).
-		set('o', "Open in browser", func() {
-			profile := Api().Github.GetProfile()
+		Set('o', "Open in browser", func() {
+			profile := getApi().Github.GetProfile()
 			if profile.IsLoaded() {
 				profile.OpenBrowser()
 			}
 		}).
-		set('P', "Login with personal access token", func() {
-			if Api().Github.IsAuthenticated() {
+		Set('P', "Login with personal access token", func() {
+			if getApi().Github.IsAuthenticated() {
 				return
 			}
 
-			OpenEditorDialog(func(s string) {
-				if err := Api().Github.InitWithPAT(s); err != nil {
-					OpenToastDialogError(err.Error())
+			openEditorDialog(func(s string) {
+				if err := getApi().Github.InitWithPAT(s); err != nil {
+					openToastDialogError(err.Error())
 					return
 				}
-			}, func() {}, "Personal Access Token", Small)
+			}, func() {}, "Personal Access Token", smallEditorSize)
 		}).
-		set('O', "Logout", func() {
-			Api().Github.LogoutUser()
+		Set('O', "Logout", func() {
+			getApi().Github.LogoutUser()
 		}).
-		set('?', "Toggle cheatsheet", func() {
-			OpenHelpView(g.view.keybindingInfo.toList(), func() {})
+		Set('?', "Toggle cheatsheet", func() {
+			OpenHelpDialog(g.view.GetKeybindings(), func() {})
 		})
 }
 
-func (g *GithubProfileView) Render() error {
+func (g *githubProfileView) render() error {
 	g.view.Clear()
-	if !Api().Github.IsAuthenticated() {
+	if !getApi().Github.IsAuthenticated() {
 		fmt.Fprintln(g.view, "Not authenticated")
 		fmt.Fprintln(g.view, "Press:")
 		fmt.Fprintln(g.view, "'L' - to login with device code using a browser")
@@ -98,7 +99,7 @@ func (g *GithubProfileView) Render() error {
 		return nil
 	}
 
-	profile := Api().Github.GetProfile()
+	profile := getApi().Github.GetProfile()
 	fmt.Fprintln(g.view, "Login: ", profile.Login)
 	fmt.Fprintln(g.view, "Email: ", profile.Email)
 	fmt.Fprintln(g.view, "Name: ", profile.Name)
@@ -107,10 +108,10 @@ func (g *GithubProfileView) Render() error {
 	return nil
 }
 
-func (g *GithubProfileView) View() *View {
+func (g *githubProfileView) getView() *tui.View {
 	return g.view
 }
 
-func (g *GithubProfileView) Focus() {
-	FocusView(g.View().Name())
+func (g *githubProfileView) Focus() {
+	focusView(g.getView().Name())
 }

@@ -1,14 +1,6 @@
-package ui
+package tui
 
-import (
-	"github.com/awesome-gocui/gocui"
-)
-
-type EditFunc func(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier)
-
-type Editor interface {
-	Edit(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier)
-}
+import "github.com/awesome-gocui/gocui"
 
 func NewSimpleEditor(onEnter func(string), onEsc func()) gocui.EditorFunc {
 	return gocui.EditorFunc(

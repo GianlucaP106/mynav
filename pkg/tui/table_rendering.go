@@ -1,4 +1,4 @@
-package ui
+package tui
 
 import (
 	"fmt"
@@ -12,9 +12,9 @@ import (
 
 type (
 	TableRenderer[T any] struct {
-		Table        *Table[T]
-		ListRenderer *ListRenderer
-		mu           *sync.RWMutex
+		table        *Table[T]
+		listRenderer *ListRenderer
+		mu           sync.RWMutex
 	}
 
 	Table[T any] struct {
@@ -38,17 +38,15 @@ type (
 )
 
 func NewTableRenderer[T any]() *TableRenderer[T] {
-	return &TableRenderer[T]{
-		mu: &sync.RWMutex{},
-	}
+	return &TableRenderer[T]{}
 }
 
 func (tr *TableRenderer[T]) InitTable(width int, height int, titles []string, colProportions []float64) {
 	if len(titles) != len(colProportions) {
 		log.Panicln("the number of titles and col proportions should be the same")
 	}
-	tr.ListRenderer = NewListRenderer(0, height-1, 0)
-	tr.Table = &Table[T]{
+	tr.listRenderer = NewListRenderer(0, height-1, 0)
+	tr.table = &Table[T]{
 		Title: &TableTitle{
 			Titles: titles,
 		},
@@ -60,61 +58,72 @@ func (tr *TableRenderer[T]) InitTable(width int, height int, titles []string, co
 	}
 }
 
-func (tr TableRenderer[T]) GetTableSize() int {
+func (tr *TableRenderer[T]) GetTableSize() int {
 	tr.mu.RLock()
 	defer tr.mu.RUnlock()
-	return len(tr.Table.Rows)
+	return len(tr.table.Rows)
 }
 
 func (tr *TableRenderer[T]) GetSelectedRow() (idx int, value *T) {
 	tr.mu.RLock()
 	defer tr.mu.RUnlock()
-	if len(tr.Table.Rows) == 0 {
+	if len(tr.table.Rows) == 0 {
 		return 0, nil
 	}
-	return tr.ListRenderer.selected, &tr.Table.Rows[tr.ListRenderer.selected].Value
+	return tr.listRenderer.selected, &tr.table.Rows[tr.listRenderer.selected].Value
 }
 
 func (tr *TableRenderer[T]) SelectRow(idx int) {
 	tr.mu.Lock()
 	defer tr.mu.Unlock()
-	tr.ListRenderer.SetSelected(idx)
+	tr.listRenderer.SetSelected(idx)
 }
 
 func (tr *TableRenderer[T]) SelectRowByValue(f func(T) bool) {
 	tr.mu.Lock()
 	defer tr.mu.Unlock()
 
-	for idx, row := range tr.Table.Rows {
+	for idx, row := range tr.table.Rows {
 		if f(row.Value) {
-			tr.ListRenderer.SetSelected(idx)
+			tr.listRenderer.SetSelected(idx)
 			return
 		}
 	}
 }
 
 func (tr *TableRenderer[T]) Up() {
-	tr.ListRenderer.Decrement()
+	tr.mu.Lock()
+	defer tr.mu.Unlock()
+	tr.listRenderer.Decrement()
 }
 
 func (tr *TableRenderer[T]) Down() {
-	tr.ListRenderer.Increment()
+	tr.mu.Lock()
+	defer tr.mu.Unlock()
+	tr.listRenderer.Increment()
+}
+
+func (tr *TableRenderer[T]) ClearTable() {
+	tr.mu.Lock()
+	defer tr.mu.Unlock()
+	tr.table.clear()
+	tr.listRenderer.ResetSize(0)
 }
 
 func (tr *TableRenderer[T]) FillTable(rows [][]string, rowValues []T) {
 	tr.mu.Lock()
 	defer tr.mu.Unlock()
 
-	if (len(rows) > 0 && len(rows[0]) != len(tr.Table.Title.Titles)) || len(rowValues) != len(rows) {
+	if (len(rows) > 0 && len(rows[0]) != len(tr.table.Title.Titles)) || len(rowValues) != len(rows) {
 		log.Panicln("invalid row length")
 	}
 
-	tr.Table.Clear()
+	tr.table.clear()
 	for idx, row := range rows {
-		tr.Table.addTableRow(row, rowValues[idx])
+		tr.table.addTableRow(row, rowValues[idx])
 	}
 
-	tr.ListRenderer.ResetSize(len(rows))
+	tr.listRenderer.ResetSize(len(rows))
 }
 
 func (tr *TableRenderer[T]) RenderWithSelectCallBack(w io.Writer, onSelected func(int, *TableRow[T]) bool) {
@@ -131,18 +140,18 @@ func (tr *TableRenderer[T]) render(w io.Writer, onSelected func(int, *TableRow[T
 
 	tr.renderTitle(w)
 
-	tr.ListRenderer.forEach(func(idx int) {
-		currentRow := tr.Table.Rows[idx]
-		currentRow.Selected = tr.ListRenderer.selected == idx
+	tr.listRenderer.forEach(func(idx int) {
+		currentRow := tr.table.Rows[idx]
+		currentRow.Selected = tr.listRenderer.selected == idx
 		if currentRow.Selected {
 			currentRow.Selected = onSelected(idx, currentRow)
 		}
 
 		var line string
 		for i, col := range currentRow.Cols {
-			proportion := tr.Table.ColProportions[i]
-			colSize := proportion * float64(tr.Table.Width)
-			colLine := withSpacePadding(col, int(math.Ceil(colSize)))
+			proportion := tr.table.ColProportions[i]
+			colSize := proportion * float64(tr.table.Width)
+			colLine := WithSpaces(col, int(math.Ceil(colSize)))
 			line += colLine
 		}
 
@@ -160,10 +169,10 @@ func (tr *TableRenderer[T]) render(w io.Writer, onSelected func(int, *TableRow[T
 
 func (tr *TableRenderer[T]) renderTitle(w io.Writer) {
 	var line string
-	for i, title := range tr.Table.Title.Titles {
-		proportion := tr.Table.ColProportions[i]
-		colSize := proportion * float64(tr.Table.Width)
-		colLine := withSpacePadding(title, int(math.Ceil(colSize)))
+	for i, title := range tr.table.Title.Titles {
+		proportion := tr.table.ColProportions[i]
+		colSize := proportion * float64(tr.table.Width)
+		colLine := WithSpaces(title, int(math.Ceil(colSize)))
 
 		line += colLine
 	}
@@ -182,6 +191,6 @@ func (t *Table[T]) addTableRow(cols []string, value T) {
 	t.Rows = append(t.Rows, tr)
 }
 
-func (t *Table[T]) Clear() {
+func (t *Table[T]) clear() {
 	t.Rows = make([]*TableRow[T], 0)
 }

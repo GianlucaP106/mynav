@@ -1,21 +1,20 @@
 package ui
 
 import (
-	"fmt"
 	"mynav/pkg/constants"
+	"mynav/pkg/tui"
 
 	"github.com/awesome-gocui/gocui"
-	"github.com/gookit/color"
 )
 
-type HelpDialog struct {
-	view           *View
-	tableRenderer  *TableRenderer[*KeyBindingInfo]
-	globalMappings []*KeyBindingInfo
-	mappings       []*KeyBindingInfo
+type helpDialog struct {
+	view           *tui.View
+	tableRenderer  *tui.TableRenderer[*tui.KeyBindingInfo]
+	globalMappings []*tui.KeyBindingInfo
+	mappings       []*tui.KeyBindingInfo
 }
 
-func NewHelpViewEditor(up func(), down func(), enter func(), exit func()) gocui.EditorFunc {
+func newHelpViewEditor(up func(), down func(), enter func(), exit func()) gocui.EditorFunc {
 	return gocui.EditorFunc(
 		func(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
 			switch {
@@ -33,18 +32,20 @@ func NewHelpViewEditor(up func(), down func(), enter func(), exit func()) gocui.
 		})
 }
 
-func OpenHelpView(mappings []*KeyBindingInfo, exit func()) *HelpDialog {
-	hv := &HelpDialog{}
+// TODO:
+func OpenHelpDialog(mappings []*tui.KeyBindingInfo, exit func()) *helpDialog {
+	hv := &helpDialog{}
 	hv.mappings = mappings
 
-	x, _ := ScreenSize()
-	hv.view = SetCenteredView(constants.HelpDialogName, (x*2)/3, 16, 0)
+	x, _ := tui.ScreenSize()
+	hv.view = tui.SetCenteredView(constants.HelpDialogName, (x*2)/3, 16, 0)
 	hv.view.Editable = true
+	hv.view.FrameColor = tui.OnFrameColor
+	hv.view.Title = tui.WithSurroundingSpaces("Cheatsheet")
+	tui.StyleView(hv.view)
 
-	StyleView(hv.view)
-
-	prevView := GetFocusedView()
-	hv.view.Editor = NewHelpViewEditor(func() {
+	prevView := tui.GetFocusedView()
+	hv.view.Editor = newHelpViewEditor(func() {
 		hv.tableRenderer.Up()
 		hv.render()
 	}, func() {
@@ -52,7 +53,7 @@ func OpenHelpView(mappings []*KeyBindingInfo, exit func()) *HelpDialog {
 		hv.render()
 	}, func() {
 	}, func() {
-		hv.Close()
+		hv.close()
 		if prevView != nil {
 			prevView.Focus()
 		}
@@ -60,7 +61,7 @@ func OpenHelpView(mappings []*KeyBindingInfo, exit func()) *HelpDialog {
 	})
 
 	sizeX, _ := hv.view.Size()
-	hv.tableRenderer = NewTableRenderer[*KeyBindingInfo]()
+	hv.tableRenderer = tui.NewTableRenderer[*tui.KeyBindingInfo]()
 	title := []string{
 		"Key",
 		"Action",
@@ -77,38 +78,35 @@ func OpenHelpView(mappings []*KeyBindingInfo, exit func()) *HelpDialog {
 	return hv
 }
 
-func (hv *HelpDialog) Close() {
+func (hv *helpDialog) close() {
 	hv.mappings = nil
 	hv.view.Delete()
 }
 
-func (hv *HelpDialog) refreshTable() {
+func (hv *helpDialog) refreshTable() {
 	rows := make([][]string, 0)
-	rowValues := make([]*KeyBindingInfo, 0)
+	rowValues := make([]*tui.KeyBindingInfo, 0)
 	for _, m := range hv.mappings {
 		rowValues = append(rowValues, m)
 		rows = append(rows, []string{
-			m.key,
-			m.action,
+			m.Key,
+			m.Action,
 		})
 	}
 
 	for _, gm := range hv.globalMappings {
 		rowValues = append(rowValues, gm)
 		rows = append(rows, []string{
-			gm.key,
-			gm.action,
+			gm.Key,
+			gm.Action,
 		})
 	}
 
 	hv.tableRenderer.FillTable(rows, rowValues)
 }
 
-func (hv *HelpDialog) render() error {
+func (hv *helpDialog) render() error {
 	hv.view.Clear()
-	sizeX, _ := hv.view.Size()
-	title := displayLine("Cheatsheet", Center, sizeX, color.New(color.White))
-	fmt.Fprintln(hv.view, title)
 	hv.tableRenderer.Render(hv.view)
 	return nil
 }
