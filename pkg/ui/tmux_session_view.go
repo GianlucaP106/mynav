@@ -3,6 +3,7 @@ package ui
 import (
 	"mynav/pkg/core"
 	"mynav/pkg/events"
+	"mynav/pkg/system"
 	"mynav/pkg/tui"
 	"strconv"
 
@@ -42,14 +43,14 @@ func (tv *tmuxSessionView) init() {
 	sizeX, sizeY := tv.view.Size()
 	tv.tableRenderer = tui.NewTableRenderer[*gotmux.Session]()
 	titles := []string{
-		"Workspace",
 		"Windows",
+		"Workspace",
 		"Session name",
 	}
 	proportions := []float64{
 		0.2,
-		0.2,
-		0.6,
+		0.3,
+		0.5,
 	}
 	tv.tableRenderer.InitTable(sizeX, sizeY, titles, proportions)
 
@@ -213,18 +214,20 @@ func (ts *tmuxSessionView) refresh() {
 	rows := make([][]string, 0)
 	for _, session := range sessions {
 		workspace := "external"
+		sessionName := session.Name
 		if !getApi().Configuration.Standalone {
 			w := getApi().Core.GetWorkspaceByTmuxSession(session)
 			if w != nil {
 				workspace = w.ShortPath()
+				sessionName = system.ShortenPath(sessionName, 20)
 			}
 		}
 
 		windows := strconv.Itoa(session.Windows)
 		rows = append(rows, []string{
-			workspace,
 			windows,
-			session.Name,
+			workspace,
+			sessionName,
 		})
 	}
 
