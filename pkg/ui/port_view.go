@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"mynav/pkg/constants"
 	"mynav/pkg/events"
 	"mynav/pkg/system"
 	"mynav/pkg/tui"
@@ -40,11 +39,11 @@ func (p *portView) getView() *tui.View {
 }
 
 func (p *portView) init() {
-	p.view = GetViewPosition(constants.PortViewName).Set()
+	p.view = getViewPosition(PortView).Set()
 
 	p.view.Title = tui.WithSurroundingSpaces("Open Ports")
 
-	tui.StyleView(p.view)
+	styleView(p.view)
 
 	sizeX, sizeY := p.view.Size()
 	p.tableRenderer = tui.NewTableRenderer[*port]()
@@ -62,12 +61,12 @@ func (p *portView) init() {
 			0.5,
 		})
 
-	events.AddEventListener(constants.PortChangeEventName, func(_ string) {
+	events.AddEventListener(events.PortChangeEvent, func(_ string) {
 		p.refresh()
 		renderView(p)
 	})
 
-	events.Emit(constants.PortChangeEventName)
+	events.Emit(events.PortChangeEvent)
 
 	p.view.KeyBinding().
 		Set('j', "Move down", func() {
@@ -170,6 +169,8 @@ func (p *portView) render() error {
 	p.view.Clear()
 
 	currentViewSelected := p.view.IsFocused()
+	p.view = getViewPosition(p.view.Name()).Set()
+
 	p.tableRenderer.RenderWithSelectCallBack(p.view, func(_ int, _ *tui.TableRow[*port]) bool {
 		return currentViewSelected
 	})

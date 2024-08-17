@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"mynav/pkg/constants"
 	"mynav/pkg/events"
 	"mynav/pkg/github"
 	"mynav/pkg/tui"
@@ -34,11 +33,11 @@ func (g *githubRepoView) Focus() {
 }
 
 func (g *githubRepoView) init() {
-	g.view = GetViewPosition(constants.GithubRepoViewName).Set()
+	g.view = getViewPosition(GithubRepoView).Set()
 
 	g.view.Title = tui.WithSurroundingSpaces("Repositories")
 
-	tui.StyleView(g.view)
+	styleView(g.view)
 
 	g.tableRenderer = tui.NewTableRenderer[*github.GithubRepository]()
 	sizeX, sizeY := g.view.Size()
@@ -56,7 +55,7 @@ func (g *githubRepoView) init() {
 		},
 	)
 
-	events.AddEventListener(constants.GithubReposChangesEventName, func(s string) {
+	events.AddEventListener(events.GithubReposChangesEvent, func(s string) {
 		g.refresh()
 		renderView(g)
 	})
@@ -106,8 +105,9 @@ func (g *githubRepoView) render() error {
 	}
 
 	g.view.Clear()
-
 	isFocused := g.view.IsFocused()
+	g.view = getViewPosition(g.view.Name()).Set()
+
 	g.tableRenderer.RenderWithSelectCallBack(g.view, func(_ int, _ *tui.TableRow[*github.GithubRepository]) bool {
 		return isFocused
 	})

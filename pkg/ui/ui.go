@@ -141,39 +141,39 @@ func (ui *UI) sealViews() {
 
 func (ui *UI) buildMainTab() *tui.Tab {
 	tab := ui.mainTabGroup.NewTab("main", getTopicsView().getView().Name())
-	tab.AddView(getHeaderView().view, tui.None)
-	tab.AddView(getTopicsView().view, tui.TopLeft)
-	tab.AddView(getWorkspacesView().view, tui.TopRight)
+	tab.AddView(getHeaderView().view, tui.NoPosition)
+	tab.AddView(getTopicsView().view, tui.TopLeftPosition)
+	tab.AddView(getWorkspacesView().view, tui.TopRightPosition)
 	tab.GenerateNavigationKeyBindings()
 	return tab
 }
 
 func (ui *UI) buildTmuxTab() *tui.Tab {
 	tab := ui.mainTabGroup.NewTab("tmux", getTmuxSessionView().getView().Name())
-	tab.AddView(getTmuxSessionView().view, tui.TopLeft)
-	tab.AddView(getTmuxWindowView().view, tui.TopRight)
-	tab.AddView(getTmuxPreviewView().view, tui.None)
-	tab.AddView(getTmuxPaneView().view, tui.None)
-	tab.AddView(getHeaderView().view, tui.None)
+	tab.AddView(getTmuxSessionView().view, tui.TopLeftPosition)
+	tab.AddView(getTmuxWindowView().view, tui.TopRightPosition)
+	tab.AddView(getTmuxPreviewView().view, tui.NoPosition)
+	tab.AddView(getTmuxPaneView().view, tui.NoPosition)
+	tab.AddView(getHeaderView().view, tui.NoPosition)
 	tab.GenerateNavigationKeyBindings()
 	return tab
 }
 
 func (ui *UI) buildSystemTab() *tui.Tab {
 	tab := ui.mainTabGroup.NewTab("system", getPortView().getView().Name())
-	tab.AddView(getPortView().view, tui.TopRight)
-	tab.AddView(getPsView().view, tui.TopLeft)
-	tab.AddView(getHeaderView().view, tui.None)
+	tab.AddView(getPortView().view, tui.TopRightPosition)
+	tab.AddView(getPsView().view, tui.TopLeftPosition)
+	tab.AddView(getHeaderView().view, tui.NoPosition)
 	tab.GenerateNavigationKeyBindings()
 	return tab
 }
 
 func (ui *UI) buildGithubTab() *tui.Tab {
 	tab := ui.mainTabGroup.NewTab("github", getGithubProfileView().getView().Name())
-	tab.AddView(getGithubProfileView().view, tui.TopLeft)
-	tab.AddView(getGithubRepoView().view, tui.TopRight)
-	tab.AddView(getGithubPrView().view, tui.BottomLeft)
-	tab.AddView(getHeaderView().view, tui.None)
+	tab.AddView(getGithubProfileView().view, tui.TopLeftPosition)
+	tab.AddView(getGithubRepoView().view, tui.TopRightPosition)
+	tab.AddView(getGithubPrView().view, tui.BottomLeftPosition)
+	tab.AddView(getHeaderView().view, tui.NoPosition)
 	tab.GenerateNavigationKeyBindings()
 	return tab
 }

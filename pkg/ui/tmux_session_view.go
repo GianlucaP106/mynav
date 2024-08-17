@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"mynav/pkg/constants"
 	"mynav/pkg/core"
 	"mynav/pkg/events"
 	"mynav/pkg/tui"
@@ -35,10 +34,10 @@ func (tv *tmuxSessionView) Focus() {
 }
 
 func (tv *tmuxSessionView) init() {
-	tv.view = GetViewPosition(constants.TmuxSessionViewName).Set()
+	tv.view = getViewPosition(TmuxSessionView).Set()
 
 	tv.view.Title = tui.WithSurroundingSpaces("Tmux Sessions")
-	tui.StyleView(tv.view)
+	styleView(tv.view)
 
 	sizeX, sizeY := tv.view.Size()
 	tv.tableRenderer = tui.NewTableRenderer[*gotmux.Session]()
@@ -54,10 +53,10 @@ func (tv *tmuxSessionView) init() {
 	}
 	tv.tableRenderer.InitTable(sizeX, sizeY, titles, proportions)
 
-	events.AddEventListener(constants.TmuxSessionChangeEventName, func(_ string) {
+	events.AddEventListener(events.TmuxSessionChangeEvent, func(_ string) {
 		tv.refresh()
 		renderView(tv)
-		events.Emit(constants.TmuxWindowChangeEventName)
+		events.Emit(events.TmuxWindowChangeEvent)
 	})
 
 	tv.refresh()
@@ -93,7 +92,7 @@ func (tv *tmuxSessionView) init() {
 						openToastDialogError(err.Error())
 						return
 					}
-					events.Emit(constants.WorkspaceChangeEventName)
+					events.Emit(events.WorkspaceChangeEvent)
 				}
 			}, "Are you sure you want to delete this session?")
 		}).
@@ -127,11 +126,11 @@ func (tv *tmuxSessionView) init() {
 		}).
 		Set('j', "Move down", func() {
 			tv.tableRenderer.Down()
-			events.Emit(constants.TmuxWindowChangeEventName)
+			events.Emit(events.TmuxWindowChangeEvent)
 		}).
 		Set('k', "Move up", func() {
 			tv.tableRenderer.Up()
-			events.Emit(constants.TmuxWindowChangeEventName)
+			events.Emit(events.TmuxWindowChangeEvent)
 		}).
 		Set('c', "Open choose tree in session", func() {
 			// TODO: move this flow in core
@@ -234,8 +233,8 @@ func (ts *tmuxSessionView) refresh() {
 
 func (tv *tmuxSessionView) render() error {
 	isViewFocused := tv.view.IsFocused()
-
 	tv.view.Clear()
+	tv.view = getViewPosition(tv.view.Name()).Set()
 	tv.tableRenderer.RenderWithSelectCallBack(tv.view, func(_ int, _ *tui.TableRow[*gotmux.Session]) bool {
 		return isViewFocused
 	})

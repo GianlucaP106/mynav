@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"mynav/pkg/constants"
 	"mynav/pkg/core"
 	"mynav/pkg/tui"
 	"strconv"
@@ -19,11 +18,11 @@ func openWorkspaceInfoDialog(w *core.Workspace, exit func()) *workspaceInfoDialo
 	wd := &workspaceInfoDialog{}
 	wd.workspace = w
 	content := wd.getWorkspaceInfoContent(wd.workspace)
-	wd.view = tui.SetCenteredView(constants.WorkspaceInfoDialogName, 100, len(content), 0)
+	wd.view = tui.SetCenteredView(WorkspaceInfoDialog, 100, len(content), 0)
 
 	wd.view.Title = tui.WithSurroundingSpaces(wd.workspace.Name)
-	wd.view.FrameColor = tui.OnFrameColor
-	tui.StyleView(wd.view)
+	wd.view.FrameColor = onFrameColor
+	styleView(wd.view)
 	wd.view.Editable = true
 
 	prevView := tui.GetFocusedView()

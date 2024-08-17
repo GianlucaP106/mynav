@@ -4,7 +4,6 @@ import (
 	"math"
 	"strings"
 
-	"github.com/awesome-gocui/gocui"
 	"github.com/gookit/color"
 )
 
@@ -18,16 +17,6 @@ const (
 	LeftAlign Alignment = iota
 	CenterAlign
 )
-
-const (
-	OffFrameColor = gocui.AttrDim | gocui.ColorWhite
-	OnFrameColor  = gocui.ColorWhite
-)
-
-func StyleView(v *View) {
-	v.FrameRunes = ThickFrame
-	v.TitleColor = gocui.AttrBold | gocui.ColorYellow
-}
 
 func DisplayColored(content string, alignment Alignment, maxWidth int, color color.Style) string {
 	var line string

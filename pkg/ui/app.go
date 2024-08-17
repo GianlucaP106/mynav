@@ -63,9 +63,9 @@ func focusView(viewName string) {
 
 	for _, v := range views {
 		if v.Name() == viewName {
-			v.FrameColor = tui.OnFrameColor
+			v.FrameColor = onFrameColor
 		} else {
-			v.FrameColor = tui.OffFrameColor
+			v.FrameColor = offFrameColor
 		}
 	}
 }

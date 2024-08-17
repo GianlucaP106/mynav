@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"mynav/pkg/constants"
 	"mynav/pkg/tui"
 )
 
@@ -15,12 +14,12 @@ func openConfirmationDialog(onConfirm func(bool), title string) *confirmationDia
 	cd := &confirmationDialog{}
 	cd.title = title
 	prevView := tui.GetFocusedView()
-	cd.view = tui.SetCenteredView(constants.ConfirmationDialogName, len(title)+5, 3, 0)
+	cd.view = tui.SetCenteredView(ConfirmationDialog, len(title)+5, 3, 0)
 	cd.view.Title = tui.WithSurroundingSpaces("Confirm")
 	cd.view.Wrap = true
 	cd.view.Editable = true
-	cd.view.FrameColor = tui.OnFrameColor
-	tui.StyleView(cd.view)
+	cd.view.FrameColor = onFrameColor
+	styleView(cd.view)
 
 	cd.view.Editor = tui.NewConfirmationEditor(func() {
 		cd.close()

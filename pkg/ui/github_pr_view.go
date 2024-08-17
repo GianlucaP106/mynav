@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"mynav/pkg/constants"
 	"mynav/pkg/events"
 	"mynav/pkg/github"
 	"mynav/pkg/system"
@@ -35,11 +34,11 @@ func (g *githubPrView) Focus() {
 }
 
 func (g *githubPrView) init() {
-	g.view = GetViewPosition(constants.GithubPrViewName).Set()
+	g.view = getViewPosition(GithubPrView).Set()
 
 	g.view.Title = tui.WithSurroundingSpaces("Pull Requests")
 
-	tui.StyleView(g.view)
+	styleView(g.view)
 
 	sizeX, sizeY := g.view.Size()
 	g.tableRenderer = tui.NewTableRenderer[*github.GithubPullRequest]()
@@ -57,7 +56,7 @@ func (g *githubPrView) init() {
 			0.40,
 		})
 
-	events.AddEventListener(constants.GithubPrsChangesEventName, func(_ string) {
+	events.AddEventListener(events.GithubPrsChangesEvent, func(_ string) {
 		g.refresh()
 		renderView(g)
 	})
@@ -80,10 +79,10 @@ func (g *githubPrView) init() {
 		Set('?', "Toggle cheatsheet", func() {
 			OpenHelpDialog(g.view.GetKeybindings(), func() {})
 		}).
-		Set(gocui.KeyCtrlL, "Focus "+constants.GithubRepoViewName, func() {
+		Set(gocui.KeyCtrlL, "Focus "+GithubRepoView, func() {
 			getGithubRepoView().Focus()
 		}).
-		Set(gocui.KeyArrowRight, "Focus "+constants.GithubRepoViewName, func() {
+		Set(gocui.KeyArrowRight, "Focus "+GithubRepoView, func() {
 			getGithubRepoView().Focus()
 		})
 }
@@ -126,6 +125,8 @@ func (g *githubPrView) render() error {
 	}
 
 	isFocused := g.view.IsFocused()
+	g.view = getViewPosition(g.view.Name()).Set()
+
 	g.tableRenderer.RenderWithSelectCallBack(g.view, func(_ int, _ *tui.TableRow[*github.GithubPullRequest]) bool {
 		return isFocused
 	})

@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"mynav/pkg/constants"
 	"mynav/pkg/core"
 	"mynav/pkg/events"
 	"mynav/pkg/persistence"
@@ -38,10 +37,10 @@ func (tv *topicsView) Focus() {
 }
 
 func (tv *topicsView) init() {
-	tv.view = GetViewPosition(constants.TopicViewName).Set()
+	tv.view = getViewPosition(TopicView).Set()
 
 	tv.view.Title = tui.WithSurroundingSpaces("Topics")
-	tui.StyleView(tv.view)
+	styleView(tv.view)
 
 	sizeX, sizeY := tv.view.Size()
 	tv.tableRenderer = tui.NewTableRenderer[*core.Topic]()
@@ -55,7 +54,7 @@ func (tv *topicsView) init() {
 	}
 	tv.tableRenderer.InitTable(sizeX, sizeY, titles, colProportions)
 
-	events.AddEventListener(constants.TopicChangeEventName, func(_ string) {
+	events.AddEventListener(events.TopicChangeEvent, func(_ string) {
 		tv.refresh()
 		wv := getWorkspacesView()
 		wv.refresh()
@@ -78,11 +77,11 @@ func (tv *topicsView) init() {
 	tv.view.KeyBinding().
 		Set('j', "Move down", func() {
 			tv.tableRenderer.Down()
-			events.Emit(constants.WorkspaceChangeEventName)
+			events.Emit(events.WorkspaceChangeEvent)
 		}).
 		Set('k', "Move up", func() {
 			tv.tableRenderer.Up()
-			events.Emit(constants.WorkspaceChangeEventName)
+			events.Emit(events.WorkspaceChangeEvent)
 		}).
 		Set(gocui.KeyEnter, "Open topic", moveRight).
 		Set('/', "Search by name", func() {
@@ -221,8 +220,9 @@ func (tv *topicsView) selectTopicByName(name string) {
 }
 
 func (tv *topicsView) render() error {
-	tv.view.Clear()
 	currentViewSelected := tv.view.IsFocused()
+	tv.view.Clear()
+	tv.view = getViewPosition(tv.view.Name()).Set()
 
 	tv.tableRenderer.RenderWithSelectCallBack(tv.view, func(_ int, _ *tui.TableRow[*core.Topic]) bool {
 		return currentViewSelected

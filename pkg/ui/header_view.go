@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"mynav/pkg/constants"
 	"mynav/pkg/tui"
 
 	"github.com/gookit/color"
@@ -27,12 +26,13 @@ func (hv *headerView) getView() *tui.View {
 }
 
 func (hv *headerView) init() {
-	hv.view = GetViewPosition(constants.HeaderViewName).Set()
+	hv.view = getViewPosition(HeaderView).Set()
 	hv.view.Frame = false
 }
 
 func (hv *headerView) render() error {
 	hv.view.Clear()
+	hv.view = getViewPosition(hv.view.Name()).Set()
 	screenX, screenY := tui.ScreenSize()
 	if screenY < 30 || screenX < 50 {
 		hv.view.Clear()

@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"mynav/pkg/constants"
 	"mynav/pkg/tui"
 )
 
@@ -32,12 +31,12 @@ func openEditorDialogWithDefaultValue(onEnter func(string), onEsc func(), title 
 		height = 7
 	}
 
-	ed.view = tui.SetCenteredView(constants.EditorDialogName, 80, height, 0)
+	ed.view = tui.SetCenteredView(EditorDialog, 80, height, 0)
 	ed.view.Editable = true
 	ed.view.Title = tui.WithSurroundingSpaces(title)
 	ed.view.Wrap = true
-	ed.view.FrameColor = tui.OnFrameColor
-	tui.StyleView(ed.view)
+	ed.view.FrameColor = onFrameColor
+	styleView(ed.view)
 	tui.ToggleCursor(true)
 
 	if defaultValue != "" {

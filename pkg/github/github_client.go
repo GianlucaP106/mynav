@@ -2,7 +2,6 @@ package github
 
 import (
 	"context"
-	"mynav/pkg/constants"
 	"mynav/pkg/events"
 	"mynav/pkg/tasks"
 	"sync"
@@ -39,7 +38,7 @@ func (g *GithubClient) AuthenticateWithDevice() *GithubDevicePreAuthentication {
 		g.mu.Lock()
 		defer g.mu.Unlock()
 		g.client = client
-		events.Emit(constants.GithubDeviceAuthenticatedEventName)
+		events.Emit(events.GithubDeviceAuthenticatedEvent)
 	})
 
 	return gda

@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"mynav/pkg/constants"
 	"mynav/pkg/core"
 	"mynav/pkg/events"
 	"mynav/pkg/github"
@@ -37,10 +36,10 @@ func (wv *workspacesView) Focus() {
 }
 
 func (wv *workspacesView) init() {
-	wv.view = GetViewPosition(constants.WorkspacesViewName).Set()
+	wv.view = getViewPosition(WorkspacesView).Set()
 
 	wv.view.Title = tui.WithSurroundingSpaces("Workspaces")
-	tui.StyleView(wv.getView())
+	styleView(wv.getView())
 
 	sizeX, sizeY := wv.view.Size()
 
@@ -61,7 +60,7 @@ func (wv *workspacesView) init() {
 	wv.tableRenderer = tui.NewTableRenderer[*core.Workspace]()
 	wv.tableRenderer.InitTable(sizeX, sizeY, titles, proportions)
 
-	events.AddEventListener(constants.WorkspaceChangeEventName, func(_ string) {
+	events.AddEventListener(events.WorkspaceChangeEvent, func(_ string) {
 		wv.refresh()
 		renderView(wv)
 	})
@@ -363,9 +362,9 @@ func (wv *workspacesView) getSelectedWorkspace() *core.Workspace {
 }
 
 func (wv *workspacesView) render() error {
-	wv.view.Clear()
-
 	isFocused := wv.view.IsFocused()
+	wv.view.Clear()
+	wv.view = getViewPosition(wv.view.Name()).Set()
 
 	wv.tableRenderer.RenderWithSelectCallBack(wv.view, func(_ int, _ *tui.TableRow[*core.Workspace]) bool {
 		return isFocused

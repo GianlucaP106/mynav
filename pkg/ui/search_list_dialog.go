@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"mynav/pkg/constants"
 	"mynav/pkg/tui"
 
 	"github.com/awesome-gocui/gocui"
@@ -28,7 +27,7 @@ type searchDialogConfig[T any] struct {
 func openSearchListDialog[T any](params searchDialogConfig[T]) *searchListDialog[T] {
 	s := &searchListDialog[T]{}
 
-	s.searchView = tui.SetCenteredView(constants.SearchListDialog1ViewName, 80, 3, -7)
+	s.searchView = tui.SetCenteredView(SearchListDialog1View, 80, 3, -7)
 	s.searchView.Title = params.searchViewTitle
 	s.searchView.Subtitle = tui.WithSurroundingSpaces("<Tab> to toggle focus")
 	s.searchView.Editable = true
@@ -40,12 +39,12 @@ func openSearchListDialog[T any](params searchDialogConfig[T]) *searchListDialog
 	}, func() {
 	})
 
-	tui.StyleView(s.searchView)
+	styleView(s.searchView)
 
-	s.tableView = tui.SetCenteredView(constants.SearchListDialog2ViewName, 80, 10, 0)
+	s.tableView = tui.SetCenteredView(SearchListDialog2View, 80, 10, 0)
 	s.tableView.Title = params.tableViewTitle
 	tableViewX, tableViewY := s.tableView.Size()
-	tui.StyleView(s.tableView)
+	styleView(s.tableView)
 
 	s.tableRenderer = tui.NewTableRenderer[T]()
 	s.tableRenderer.InitTable(tableViewX, tableViewY, params.tableTitles, params.tableProportions)
@@ -110,15 +109,15 @@ func (s *searchListDialog[T]) renderTable() {
 }
 
 func (s *searchListDialog[T]) focusSearch() {
-	s.searchView.FrameColor = tui.OnFrameColor
-	s.tableView.FrameColor = tui.OffFrameColor
+	s.searchView.FrameColor = onFrameColor
+	s.tableView.FrameColor = offFrameColor
 	tui.ToggleCursor(true)
 	s.searchView.Focus()
 }
 
 func (s *searchListDialog[T]) focusList() {
-	s.searchView.FrameColor = tui.OffFrameColor
-	s.tableView.FrameColor = tui.OnFrameColor
+	s.searchView.FrameColor = offFrameColor
+	s.tableView.FrameColor = onFrameColor
 	tui.ToggleCursor(false)
 	s.tableView.Focus()
 }
