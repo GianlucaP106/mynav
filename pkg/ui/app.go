@@ -54,7 +54,7 @@ func renderView(v viewable) {
 }
 
 func focusView(viewName string) {
-	tui.SetFocusView(viewName)
+	tui.GetView(viewName).Focus()
 
 	views := make([]*tui.View, 0)
 	for _, v := range _ui.views {

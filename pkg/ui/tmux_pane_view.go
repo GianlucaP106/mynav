@@ -29,7 +29,7 @@ func (t *tmuxPaneView) getView() *tui.View {
 	return t.view
 }
 
-func (t *tmuxPaneView) Focus() {
+func (t *tmuxPaneView) focus() {
 	focusView(t.view.Name())
 }
 
@@ -86,13 +86,13 @@ func (t *tmuxPaneView) init() {
 			}, "Are you sure you want to kill this pane?")
 		}).
 		Set(gocui.KeyEsc, "Focus window view", func() {
-			getTmuxWindowView().Focus()
+			getTmuxWindowView().focus()
 		}).
 		Set(gocui.KeyCtrlH, "Focus window view", func() {
-			getTmuxWindowView().Focus()
+			getTmuxWindowView().focus()
 		}).
 		Set(gocui.KeyArrowLeft, "Focus window view", func() {
-			getTmuxWindowView().Focus()
+			getTmuxWindowView().focus()
 		})
 }
 

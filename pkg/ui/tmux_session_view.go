@@ -79,7 +79,7 @@ func (tv *tmuxSessionView) init() {
 			})
 		}).
 		Set(gocui.KeyEnter, "Focus window view", func() {
-			getTmuxWindowView().Focus()
+			getTmuxWindowView().focus()
 		}).
 		Set('D', "Delete session", func() {
 			session := tv.getSelectedSession()

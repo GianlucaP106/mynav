@@ -31,7 +31,7 @@ func (t *tmuxWindowView) getView() *tui.View {
 	return t.view
 }
 
-func (t *tmuxWindowView) Focus() {
+func (t *tmuxWindowView) focus() {
 	focusView(t.getView().Name())
 }
 
@@ -117,13 +117,13 @@ func (t *tmuxWindowView) init() {
 			getTmuxSessionView().Focus()
 		}).
 		Set(gocui.KeyEnter, "Focus Pane view", func() {
-			getTmuxPaneView().Focus()
+			getTmuxPaneView().focus()
 		}).
 		Set(gocui.KeyCtrlL, "Focus Pane view", func() {
-			getTmuxPaneView().Focus()
+			getTmuxPaneView().focus()
 		}).
 		Set(gocui.KeyArrowRight, "Focus Pane view", func() {
-			getTmuxPaneView().Focus()
+			getTmuxPaneView().focus()
 		}).
 		Set('?', "Toggle cheatsheet", func() {
 			OpenHelpDialog(t.view.GetKeybindings(), func() {})
