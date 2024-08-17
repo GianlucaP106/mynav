@@ -6,40 +6,41 @@ import (
 	"mynav/pkg/events"
 	"mynav/pkg/github"
 	"mynav/pkg/system"
+	"mynav/pkg/tui"
 	"strconv"
 
 	"github.com/awesome-gocui/gocui"
 )
 
-type WorkspacesView struct {
-	view          *View
-	tableRenderer *TableRenderer[*core.Workspace]
+type workspacesView struct {
+	view          *tui.View
+	tableRenderer *tui.TableRenderer[*core.Workspace]
 	search        string
 }
 
-var _ Viewable = new(WorkspacesView)
+var _ viewable = new(workspacesView)
 
-func NewWorkspcacesView() *WorkspacesView {
-	return &WorkspacesView{}
+func newWorkspcacesView() *workspacesView {
+	return &workspacesView{}
 }
 
-func GetWorkspacesView() *WorkspacesView {
-	return GetViewable[*WorkspacesView]()
+func getWorkspacesView() *workspacesView {
+	return getViewable[*workspacesView]()
 }
 
-func (wv *WorkspacesView) View() *View {
+func (wv *workspacesView) getView() *tui.View {
 	return wv.view
 }
 
-func (wv *WorkspacesView) Focus() {
-	FocusView(wv.View().Name())
+func (wv *workspacesView) Focus() {
+	focusView(wv.getView().Name())
 }
 
-func (wv *WorkspacesView) Init() {
+func (wv *workspacesView) init() {
 	wv.view = GetViewPosition(constants.WorkspacesViewName).Set()
 
-	wv.view.Title = withSurroundingSpaces("Workspaces")
-	StyleView(wv.View())
+	wv.view.Title = tui.WithSurroundingSpaces("Workspaces")
+	tui.StyleView(wv.getView())
 
 	sizeX, sizeY := wv.view.Size()
 
@@ -57,28 +58,28 @@ func (wv *WorkspacesView) Init() {
 		0.2,
 		0.2,
 	}
-	wv.tableRenderer = NewTableRenderer[*core.Workspace]()
+	wv.tableRenderer = tui.NewTableRenderer[*core.Workspace]()
 	wv.tableRenderer.InitTable(sizeX, sizeY, titles, proportions)
 
 	events.AddEventListener(constants.WorkspaceChangeEventName, func(_ string) {
 		wv.refresh()
-		RenderView(wv)
+		renderView(wv)
 	})
 
 	wv.refresh()
 
-	if selectedWorkspace := Api().Core.GetSelectedWorkspace(); selectedWorkspace != nil {
+	if selectedWorkspace := getApi().Core.GetSelectedWorkspace(); selectedWorkspace != nil {
 		wv.selectWorkspaceByShortPath(selectedWorkspace.ShortPath())
 	}
 
 	wv.view.KeyBinding().
-		set('j', "Move down", func() {
+		Set('j', "Move down", func() {
 			wv.tableRenderer.Down()
 		}).
-		set('k', "Move up", func() {
+		Set('k', "Move up", func() {
 			wv.tableRenderer.Up()
 		}).
-		set(gocui.KeyEsc, "Escape search / Go back", func() {
+		Set(gocui.KeyEsc, "Escape search / Go back", func() {
 			if wv.search != "" {
 				wv.search = ""
 				wv.view.Subtitle = ""
@@ -86,28 +87,28 @@ func (wv *WorkspacesView) Init() {
 				return
 			}
 
-			GetTopicsView().Focus()
+			getTopicsView().Focus()
 		}).
-		set('s', "See workspace information", func() {
+		Set('s', "See workspace information", func() {
 			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
 				return
 			}
-			OpenWorkspaceInfoDialog(curWorkspace, func() {})
+			openWorkspaceInfoDialog(curWorkspace, func() {})
 		}).
-		set('g', "Clone git repo", func() {
+		Set('g', "Clone git repo", func() {
 			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
 				return
 			}
 
-			OpenEditorDialog(func(s string) {
-				if err := Api().Core.CloneRepo(s, curWorkspace); err != nil {
-					OpenToastDialogError(err.Error())
+			openEditorDialog(func(s string) {
+				if err := getApi().Core.CloneRepo(s, curWorkspace); err != nil {
+					openToastDialogError(err.Error())
 				}
-			}, func() {}, "Git repo URL", Small)
+			}, func() {}, "Git repo URL", smallEditorSize)
 		}).
-		set('G', "Open browser to git repo", func() {
+		Set('G', "Open browser to git repo", func() {
 			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
 				return
@@ -118,63 +119,63 @@ func (wv *WorkspacesView) Init() {
 			}
 
 			if err := system.OpenBrowser(*curWorkspace.GitRemote); err != nil {
-				OpenToastDialogError(err.Error())
+				openToastDialogError(err.Error())
 			}
 		}).
-		set('/', "Search by name", func() {
-			OpenEditorDialog(func(s string) {
+		Set('/', "Search by name", func() {
+			openEditorDialog(func(s string) {
 				if s != "" {
 					wv.search = s
-					wv.view.Subtitle = withSurroundingSpaces("Searching: " + wv.search)
+					wv.view.Subtitle = tui.WithSurroundingSpaces("Searching: " + wv.search)
 					wv.refresh()
 				}
-			}, func() {}, "Search", Small)
+			}, func() {}, "Search", smallEditorSize)
 		}).
-		set(gocui.KeyEnter, "Open in tmux/open in neovim", func() {
+		Set(gocui.KeyEnter, "Open in tmux/open in neovim", func() {
 			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
 				return
 			}
 
-			RunAction(func() {
+			tui.RunAction(func() {
 				if core.IsTmuxSession() {
-					Api().Core.OpenNeovimInWorkspace(curWorkspace)
+					getApi().Core.OpenNeovimInWorkspace(curWorkspace)
 				} else {
-					Api().Core.CreateOrAttachTmuxSession(curWorkspace)
+					getApi().Core.CreateOrAttachTmuxSession(curWorkspace)
 				}
 			})
 		}).
-		set('v', "Open in neovim", func() {
+		Set('v', "Open in neovim", func() {
 			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
 				return
 			}
 
-			RunAction(func() {
-				Api().Core.OpenNeovimInWorkspace(curWorkspace)
+			tui.RunAction(func() {
+				getApi().Core.OpenNeovimInWorkspace(curWorkspace)
 			})
 		}).
-		set('t', "Open in terminal", func() {
+		Set('t', "Open in terminal", func() {
 			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
 				return
 			}
 
-			RunAction(func() {
-				Api().Core.OpenTerminalInWorkspace(curWorkspace)
+			tui.RunAction(func() {
+				getApi().Core.OpenTerminalInWorkspace(curWorkspace)
 			})
 		}).
-		set('m', "Move workspace to another topic", func() {
+		Set('m', "Move workspace to another topic", func() {
 			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
 				return
 			}
 
-			sd := new(*SearchListDialog[*core.Topic])
-			*sd = OpenSearchListDialog(SearchDialogConfig[*core.Topic]{
+			sd := new(*searchListDialog[*core.Topic])
+			*sd = openSearchListDialog(searchDialogConfig[*core.Topic]{
 				onSearch: func(s string) ([][]string, []*core.Topic) {
 					rows := make([][]string, 0)
-					topics := Api().Core.GetTopics().FilterByNameContaining(s)
+					topics := getApi().Core.GetTopics().FilterByNameContaining(s)
 					for _, t := range topics {
 						rows = append(rows, []string{
 							t.Name,
@@ -185,7 +186,7 @@ func (wv *WorkspacesView) Init() {
 				},
 				initial: func() ([][]string, []*core.Topic) {
 					rows := make([][]string, 0)
-					topics := Api().Core.GetTopics()
+					topics := getApi().Core.GetTopics()
 					for _, t := range topics {
 						rows = append(rows, []string{
 							t.Name,
@@ -195,16 +196,16 @@ func (wv *WorkspacesView) Init() {
 					return rows, topics
 				},
 				onSelect: func(a *core.Topic) {
-					if err := Api().Core.MoveWorkspace(curWorkspace, a); err != nil {
-						OpenToastDialogError(err.Error())
+					if err := getApi().Core.MoveWorkspace(curWorkspace, a); err != nil {
+						openToastDialogError(err.Error())
 						return
 					}
 
 					if *sd != nil {
-						(*sd).Close()
+						(*sd).close()
 					}
 
-					GetTopicsView().tableRenderer.SelectRow(0)
+					getTopicsView().tableRenderer.SelectRow(0)
 
 					wv.Focus()
 				},
@@ -220,95 +221,95 @@ func (wv *WorkspacesView) Init() {
 				},
 			})
 		}).
-		set('D', "Delete a workspace", func() {
-			if Api().Core.GetWorkspacesByTopicCount(GetTopicsView().getSelectedTopic()) <= 0 {
+		Set('D', "Delete a workspace", func() {
+			if getApi().Core.GetWorkspacesByTopicCount(getTopicsView().getSelectedTopic()) <= 0 {
 				return
 			}
 
-			OpenConfirmationDialog(func(b bool) {
+			openConfirmationDialog(func(b bool) {
 				if b {
 					curWorkspace := wv.getSelectedWorkspace()
-					Api().Core.DeleteWorkspace(curWorkspace)
+					getApi().Core.DeleteWorkspace(curWorkspace)
 
 					// HACK: same as below
-					GetTopicsView().tableRenderer.SelectRow(0)
+					getTopicsView().tableRenderer.SelectRow(0)
 				}
 			}, "Are you sure you want to delete this workspace?")
 		}).
-		set('r', "Rename workspace", func() {
+		Set('r', "Rename workspace", func() {
 			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
 				return
 			}
 
-			OpenEditorDialogWithDefaultValue(func(s string) {
-				if err := Api().Core.RenameWorkspace(curWorkspace, s); err != nil {
-					OpenToastDialogError(err.Error())
+			openEditorDialogWithDefaultValue(func(s string) {
+				if err := getApi().Core.RenameWorkspace(curWorkspace, s); err != nil {
+					openToastDialogError(err.Error())
 					return
 				}
-			}, func() {}, "New workspace name", Small, curWorkspace.Name)
+			}, func() {}, "New workspace name", smallEditorSize, curWorkspace.Name)
 		}).
-		set('e', "Add/change description", func() {
+		Set('e', "Add/change description", func() {
 			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
 				return
 			}
 
-			OpenEditorDialog(func(desc string) {
+			openEditorDialog(func(desc string) {
 				if desc != "" {
-					Api().Core.SetDescription(desc, curWorkspace)
+					getApi().Core.SetDescription(desc, curWorkspace)
 				}
-			}, func() {}, "Description", Large)
+			}, func() {}, "Description", largeEditorSize)
 		}).
-		set('a', "Create a workspace", func() {
-			curTopic := GetTopicsView().getSelectedTopic()
+		Set('a', "Create a workspace", func() {
+			curTopic := getTopicsView().getSelectedTopic()
 			if curTopic == nil {
-				OpenToastDialog("You must create a topic first", false, "Note", func() {})
+				openToastDialog("You must create a topic first", false, "Note", func() {})
 				return
 			}
 
-			OpenEditorDialog(func(name string) {
-				if _, err := Api().Core.CreateWorkspace(name, curTopic); err != nil {
-					OpenToastDialogError(err.Error())
+			openEditorDialog(func(name string) {
+				if _, err := getApi().Core.CreateWorkspace(name, curTopic); err != nil {
+					openToastDialogError(err.Error())
 					return
 				}
 
 				// HACK: when there a is a new workspace
 				// This will result in the workspace and the corresponding topic going to the top
 				// because we are sorting by modifed time
-				GetTopicsView().tableRenderer.SelectRow(0)
+				getTopicsView().tableRenderer.SelectRow(0)
 				wv.tableRenderer.SelectRow(0)
-			}, func() {}, "Workspace name ", Small)
+			}, func() {}, "Workspace name ", smallEditorSize)
 		}).
-		set('X', "Kill tmux session", func() {
+		Set('X', "Kill tmux session", func() {
 			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
 				return
 			}
 
-			if Api().Tmux.GetTmuxSessionByName(curWorkspace.Path) != nil {
-				OpenConfirmationDialog(func(b bool) {
+			if getApi().Tmux.GetTmuxSessionByName(curWorkspace.Path) != nil {
+				openConfirmationDialog(func(b bool) {
 					if b {
-						Api().Core.DeleteWorkspaceTmuxSession(curWorkspace)
+						getApi().Core.DeleteWorkspaceTmuxSession(curWorkspace)
 					}
 				}, "Are you sure you want to delete the tmux session?")
 			}
 		}).
-		set('?', "Toggle cheatsheet", func() {
-			OpenHelpView(wv.view.keybindingInfo.toList(), func() {})
+		Set('?', "Toggle cheatsheet", func() {
+			OpenHelpDialog(wv.view.GetKeybindings(), func() {})
 		})
 }
 
-func (wv *WorkspacesView) selectWorkspaceByShortPath(shortPath string) {
+func (wv *workspacesView) selectWorkspaceByShortPath(shortPath string) {
 	wv.tableRenderer.SelectRowByValue(func(w *core.Workspace) bool {
 		return w.ShortPath() == shortPath
 	})
 }
 
-func (wv *WorkspacesView) refresh() {
+func (wv *workspacesView) refresh() {
 	var workspaces core.Workspaces
-	if selectedTopic := GetTopicsView().getSelectedTopic(); selectedTopic != nil {
-		workspaces = Api().Core.GetWorkspaces().FilterByTopic(selectedTopic)
+	if selectedTopic := getTopicsView().getSelectedTopic(); selectedTopic != nil {
+		workspaces = getApi().Core.GetWorkspaces().FilterByTopic(selectedTopic)
 	} else {
 		workspaces = make(core.Workspaces, 0)
 	}
@@ -321,7 +322,7 @@ func (wv *WorkspacesView) refresh() {
 	rowValues := make([]*core.Workspace, 0)
 	for _, w := range workspaces {
 		tmux := func() string {
-			if tm := Api().Tmux.GetTmuxSessionByName(w.Path); tm != nil {
+			if tm := getApi().Tmux.GetTmuxSessionByName(w.Path); tm != nil {
 				numWindows := strconv.Itoa(tm.Windows)
 				return numWindows + " - tmux"
 			}
@@ -331,7 +332,7 @@ func (wv *WorkspacesView) refresh() {
 
 		remote, err := w.GetGitRemote()
 		if err != nil {
-			OpenToastDialogError(err.Error())
+			openToastDialogError(err.Error())
 			return
 		}
 
@@ -352,7 +353,7 @@ func (wv *WorkspacesView) refresh() {
 	wv.tableRenderer.FillTable(rows, rowValues)
 }
 
-func (wv *WorkspacesView) getSelectedWorkspace() *core.Workspace {
+func (wv *workspacesView) getSelectedWorkspace() *core.Workspace {
 	_, w := wv.tableRenderer.GetSelectedRow()
 	if w != nil {
 		return *w
@@ -361,12 +362,12 @@ func (wv *WorkspacesView) getSelectedWorkspace() *core.Workspace {
 	return nil
 }
 
-func (wv *WorkspacesView) Render() error {
+func (wv *workspacesView) render() error {
 	wv.view.Clear()
 
 	isFocused := wv.view.IsFocused()
 
-	wv.tableRenderer.RenderWithSelectCallBack(wv.view, func(_ int, _ *TableRow[*core.Workspace]) bool {
+	wv.tableRenderer.RenderWithSelectCallBack(wv.view, func(_ int, _ *tui.TableRow[*core.Workspace]) bool {
 		return isFocused
 	})
 

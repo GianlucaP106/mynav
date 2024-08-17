@@ -5,41 +5,42 @@ import (
 	"mynav/pkg/constants"
 	"mynav/pkg/events"
 	"mynav/pkg/github"
+	"mynav/pkg/tui"
 
 	"github.com/awesome-gocui/gocui"
 )
 
-type GithubRepoView struct {
-	view          *View
-	tableRenderer *TableRenderer[*github.GithubRepository]
+type githubRepoView struct {
+	view          *tui.View
+	tableRenderer *tui.TableRenderer[*github.GithubRepository]
 }
 
-var _ Viewable = new(GithubRepoView)
+var _ viewable = new(githubRepoView)
 
-func NewGithubRepoView() *GithubRepoView {
-	return &GithubRepoView{}
+func newGithubRepoView() *githubRepoView {
+	return &githubRepoView{}
 }
 
-func GetGithubRepoView() *GithubRepoView {
-	return GetViewable[*GithubRepoView]()
+func getGithubRepoView() *githubRepoView {
+	return getViewable[*githubRepoView]()
 }
 
-func (g *GithubRepoView) View() *View {
+func (g *githubRepoView) getView() *tui.View {
 	return g.view
 }
 
-func (g *GithubRepoView) Focus() {
-	FocusView(g.View().Name())
+func (g *githubRepoView) Focus() {
+	focusView(g.getView().Name())
 }
 
-func (g *GithubRepoView) Init() {
+func (g *githubRepoView) init() {
 	g.view = GetViewPosition(constants.GithubRepoViewName).Set()
 
-	g.view.Title = withSurroundingSpaces("Repositories")
+	g.view.Title = tui.WithSurroundingSpaces("Repositories")
 
-	StyleView(g.view)
+	tui.StyleView(g.view)
 
-	g.tableRenderer = NewTableRenderer[*github.GithubRepository]()
+	g.tableRenderer = tui.NewTableRenderer[*github.GithubRepository]()
 	sizeX, sizeY := g.view.Size()
 
 	g.tableRenderer.InitTable(
@@ -57,33 +58,33 @@ func (g *GithubRepoView) Init() {
 
 	events.AddEventListener(constants.GithubReposChangesEventName, func(s string) {
 		g.refresh()
-		RenderView(g)
+		renderView(g)
 	})
 
 	moveRight := func() {
-		GetGithubPrView().Focus()
+		getGithubPrView().Focus()
 	}
 
 	g.view.KeyBinding().
-		set('j', "Move down", func() {
+		Set('j', "Move down", func() {
 			g.tableRenderer.Down()
 		}).
-		set('k', "Move up", func() {
+		Set('k', "Move up", func() {
 			g.tableRenderer.Up()
 		}).
-		set(gocui.KeyArrowRight, "Focus PR View", moveRight).
-		set(gocui.KeyCtrlL, "Focus PR View", moveRight).
-		set('?', "Toggle cheatsheet", func() {
-			OpenHelpView(g.view.keybindingInfo.toList(), func() {})
+		Set(gocui.KeyArrowRight, "Focus PR View", moveRight).
+		Set(gocui.KeyCtrlL, "Focus PR View", moveRight).
+		Set('?', "Toggle cheatsheet", func() {
+			OpenHelpDialog(g.view.GetKeybindings(), func() {})
 		})
 }
 
-func (g *GithubRepoView) refresh() {
-	if !Api().Github.IsAuthenticated() {
+func (g *githubRepoView) refresh() {
+	if !getApi().Github.IsAuthenticated() {
 		return
 	}
 
-	repos := Api().Github.GetUserRepos()
+	repos := getApi().Github.GetUserRepos()
 
 	rows := make([][]string, 0)
 	rowValues := make([]*github.GithubRepository, 0)
@@ -97,8 +98,8 @@ func (g *GithubRepoView) refresh() {
 	g.tableRenderer.FillTable(rows, rowValues)
 }
 
-func (g *GithubRepoView) Render() error {
-	if !Api().Github.IsAuthenticated() {
+func (g *githubRepoView) render() error {
+	if !getApi().Github.IsAuthenticated() {
 		g.view.Clear()
 		fmt.Fprintln(g.view, "Not authenticated")
 		return nil
@@ -107,11 +108,11 @@ func (g *GithubRepoView) Render() error {
 	g.view.Clear()
 
 	isFocused := g.view.IsFocused()
-	g.tableRenderer.render(g.view, func(_ int, _ *TableRow[*github.GithubRepository]) bool {
+	g.tableRenderer.RenderWithSelectCallBack(g.view, func(_ int, _ *tui.TableRow[*github.GithubRepository]) bool {
 		return isFocused
 	})
 
-	if Api().Github.IsLoading() {
+	if getApi().Github.IsLoading() {
 		fmt.Fprintln(g.view, "Loading...")
 	} else if g.tableRenderer.GetTableSize() == 0 {
 		fmt.Fprintln(g.view, "No repos to display")

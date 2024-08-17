@@ -2,17 +2,18 @@ package ui
 
 import (
 	"mynav/pkg/constants"
+	"mynav/pkg/tui"
 
 	"github.com/awesome-gocui/gocui"
 )
 
-type SearchListDialog[T any] struct {
-	searchView    *View
-	tableView     *View
-	tableRenderer *TableRenderer[T]
+type searchListDialog[T any] struct {
+	searchView    *tui.View
+	tableView     *tui.View
+	tableRenderer *tui.TableRenderer[T]
 }
 
-type SearchDialogConfig[T any] struct {
+type searchDialogConfig[T any] struct {
 	onSearch            func(s string) ([][]string, []T)
 	onSelect            func(a T)
 	initial             func() ([][]string, []T)
@@ -24,13 +25,14 @@ type SearchDialogConfig[T any] struct {
 	focusList           bool
 }
 
-func OpenSearchListDialog[T any](params SearchDialogConfig[T]) *SearchListDialog[T] {
-	s := &SearchListDialog[T]{}
+func openSearchListDialog[T any](params searchDialogConfig[T]) *searchListDialog[T] {
+	s := &searchListDialog[T]{}
 
-	s.searchView = SetCenteredView(constants.SearchListDialog1ViewName, 80, 3, -7)
+	s.searchView = tui.SetCenteredView(constants.SearchListDialog1ViewName, 80, 3, -7)
 	s.searchView.Title = params.searchViewTitle
+	s.searchView.Subtitle = tui.WithSurroundingSpaces("<Tab> to toggle focus")
 	s.searchView.Editable = true
-	s.searchView.Editor = NewSimpleEditor(func(item string) {
+	s.searchView.Editor = tui.NewSimpleEditor(func(item string) {
 		rows, rowValues := params.onSearch(item)
 		s.tableRenderer.FillTable(rows, rowValues)
 		s.renderTable()
@@ -38,14 +40,14 @@ func OpenSearchListDialog[T any](params SearchDialogConfig[T]) *SearchListDialog
 	}, func() {
 	})
 
-	StyleView(s.searchView)
-	StyleView(s.tableView)
+	tui.StyleView(s.searchView)
 
-	s.tableView = SetCenteredView(constants.SearchListDialog2ViewName, 80, 10, 0)
+	s.tableView = tui.SetCenteredView(constants.SearchListDialog2ViewName, 80, 10, 0)
 	s.tableView.Title = params.tableViewTitle
 	tableViewX, tableViewY := s.tableView.Size()
+	tui.StyleView(s.tableView)
 
-	s.tableRenderer = NewTableRenderer[T]()
+	s.tableRenderer = tui.NewTableRenderer[T]()
 	s.tableRenderer.InitTable(tableViewX, tableViewY, params.tableTitles, params.tableProportions)
 
 	if params.initial != nil {
@@ -53,43 +55,43 @@ func OpenSearchListDialog[T any](params SearchDialogConfig[T]) *SearchListDialog
 		s.tableRenderer.FillTable(rows, rowValues)
 	}
 
-	prevView := GetFocusedView()
+	prevView := tui.GetFocusedView()
 
 	s.searchView.KeyBinding().
-		set(gocui.KeyEsc, "Close dialog", func() {
-			s.Close()
+		Set(gocui.KeyEsc, "Close dialog", func() {
+			s.close()
 			if prevView != nil {
 				prevView.Focus()
 			}
 		}).
-		set(gocui.KeyTab, "Toggle focus", func() {
+		Set(gocui.KeyTab, "Toggle focus", func() {
 			s.focusList()
 		}).
-		set('?', "Toggle cheatsheet", func() {
-			OpenHelpView(s.searchView.keybindingInfo.toList(), func() {})
+		Set('?', "Toggle cheatsheet", func() {
+			OpenHelpDialog(s.searchView.GetKeybindings(), func() {})
 		})
 
 	s.tableView.KeyBinding().
-		set(gocui.KeyEsc, "Close dialog", func() {
+		Set(gocui.KeyEsc, "Close dialog", func() {
 			s.focusSearch()
 		}).
-		set(gocui.KeyTab, "Toggle focus", func() {
+		Set(gocui.KeyTab, "Toggle focus", func() {
 			s.focusSearch()
 		}).
-		set(gocui.KeyEnter, params.onSelectDescription, func() {
+		Set(gocui.KeyEnter, params.onSelectDescription, func() {
 			_, v := s.tableRenderer.GetSelectedRow()
 			params.onSelect(*v)
 		}).
-		set('j', "Move down", func() {
+		Set('j', "Move down", func() {
 			s.tableRenderer.Down()
 			s.renderTable()
 		}).
-		set('k', "Move up", func() {
+		Set('k', "Move up", func() {
 			s.tableRenderer.Up()
 			s.renderTable()
 		}).
-		set('?', "Toggle cheatsheet", func() {
-			OpenHelpView(s.tableView.keybindingInfo.toList(), func() {})
+		Set('?', "Toggle cheatsheet", func() {
+			OpenHelpDialog(s.tableView.GetKeybindings(), func() {})
 		})
 
 	if params.focusList {
@@ -102,27 +104,27 @@ func OpenSearchListDialog[T any](params SearchDialogConfig[T]) *SearchListDialog
 	return s
 }
 
-func (s *SearchListDialog[T]) renderTable() {
+func (s *searchListDialog[T]) renderTable() {
 	s.tableView.Clear()
 	s.tableRenderer.Render(s.tableView)
 }
 
-func (s *SearchListDialog[T]) focusSearch() {
-	s.searchView.FrameColor = gocui.ColorGreen
-	s.tableView.FrameColor = gocui.ColorBlue
-	ToggleCursor(true)
+func (s *searchListDialog[T]) focusSearch() {
+	s.searchView.FrameColor = tui.OnFrameColor
+	s.tableView.FrameColor = tui.OffFrameColor
+	tui.ToggleCursor(true)
 	s.searchView.Focus()
 }
 
-func (s *SearchListDialog[T]) focusList() {
-	s.searchView.FrameColor = gocui.ColorBlue
-	s.tableView.FrameColor = gocui.ColorGreen
-	ToggleCursor(false)
+func (s *searchListDialog[T]) focusList() {
+	s.searchView.FrameColor = tui.OffFrameColor
+	s.tableView.FrameColor = tui.OnFrameColor
+	tui.ToggleCursor(false)
 	s.tableView.Focus()
 }
 
-func (s *SearchListDialog[T]) Close() {
-	ToggleCursor(false)
+func (s *searchListDialog[T]) close() {
+	tui.ToggleCursor(false)
 	s.searchView.Delete()
 	s.tableView.Delete()
 }

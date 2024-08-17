@@ -127,6 +127,26 @@ func (tc *TmuxController) GetTmuxStats() (sessionCount int, windowCount int) {
 	return
 }
 
+func (tc *TmuxController) KillTmuxWindow(w *gotmux.Window) error {
+	err := w.Kill()
+	if err != nil {
+		return err
+	}
+
+	events.Emit(constants.TmuxSessionChangeEventName)
+	return nil
+}
+
+func (tc *TmuxController) KillTmuxPane(pane *gotmux.Pane) error {
+	err := pane.Kill()
+	if err != nil {
+		return err
+	}
+
+	events.Emit(constants.TmuxSessionChangeEventName)
+	return nil
+}
+
 func (t *TmuxController) GetTmuxSessionChildProcesses(session *gotmux.Session) []*process.Process {
 	windows, err := session.ListWindows()
 	out := make([]*process.Process, 0)

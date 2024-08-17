@@ -2,23 +2,23 @@ package ui
 
 import (
 	"fmt"
+	"mynav/pkg/constants"
+	"mynav/pkg/tui"
 
 	"github.com/awesome-gocui/gocui"
 )
 
-type ToastDialog struct {
-	view *View
+type toastDialog struct {
+	view *tui.View
 }
 
-const ToastDialogName = "ToastDialogView"
+func openToastDialog(message string, error bool, title string, exit func()) *toastDialog {
+	td := &toastDialog{}
 
-func OpenToastDialog(message string, error bool, title string, exit func()) *ToastDialog {
-	td := &ToastDialog{}
-
-	td.view = SetCenteredView(ToastDialogName, max(len(message), len(title))+5, 3, 0)
-	td.view.Title = withSurroundingSpaces(title)
+	td.view = tui.SetCenteredView(constants.ToastDialogName, max(len(message), len(title))+5, 3, 0)
+	td.view.Title = tui.WithSurroundingSpaces(title)
 	td.view.Editable = true
-	StyleView(td.view)
+	tui.StyleView(td.view)
 	if error {
 		td.view.FrameColor = gocui.ColorRed
 	} else {
@@ -32,9 +32,9 @@ func OpenToastDialog(message string, error bool, title string, exit func()) *Toa
 		gocui.KeyEsc,
 	}
 
-	prevView := GetFocusedView()
-	td.view.Editor = NewSingleActionEditor(keys, func() {
-		td.Close()
+	prevView := tui.GetFocusedView()
+	td.view.Editor = tui.NewSingleActionEditor(keys, func() {
+		td.close()
 		if prevView != nil {
 			prevView.Focus()
 		}
@@ -42,17 +42,17 @@ func OpenToastDialog(message string, error bool, title string, exit func()) *Toa
 	})
 
 	sizeX, _ := td.view.Size()
-	fmt.Fprintln(td.view, displayWhiteText(message, Left, sizeX))
+	fmt.Fprintln(td.view, tui.DisplayWhite(message, tui.LeftAlign, sizeX))
 
 	td.view.Focus()
 
 	return td
 }
 
-func OpenToastDialogError(message string) *ToastDialog {
-	return OpenToastDialog(message, true, "Error", func() {})
+func openToastDialogError(message string) *toastDialog {
+	return openToastDialog(message, true, "Error", func() {})
 }
 
-func (td *ToastDialog) Close() {
+func (td *toastDialog) close() {
 	td.view.Delete()
 }

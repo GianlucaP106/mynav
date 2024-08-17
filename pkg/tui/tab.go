@@ -1,13 +1,15 @@
-package ui
+package tui
 
 import "github.com/awesome-gocui/gocui"
 
 type TabGroup struct {
-	Tabs     []*Tab
-	Selected int
+	focusView func(string)
+	Tabs      []*Tab
+	Selected  int
 }
 
 type Tab struct {
+	focusView   func(string)
 	Frame       *View
 	DefaultView string
 	LastView    string
@@ -29,17 +31,18 @@ const (
 	BottomRight
 )
 
-func NewTabGroup(tabs ...*Tab) *TabGroup {
+func NewTabGroup(focus func(string), tabs ...*Tab) *TabGroup {
 	tg := &TabGroup{
-		Tabs: make([]*Tab, 0),
+		Tabs:      make([]*Tab, 0),
+		focusView: focus,
 	}
 	tg.Tabs = append(tg.Tabs, tabs...)
 	tg.Selected = 0
 	return tg
 }
 
-func (t *TabGroup) AddTab(tab *Tab) {
-	t.Tabs = append(t.Tabs, tab)
+func (tg *TabGroup) AddTab(t *Tab) {
+	tg.Tabs = append(tg.Tabs, t)
 }
 
 func (tg *TabGroup) GetTab(name string) *Tab {
@@ -108,15 +111,17 @@ func (tg *TabGroup) FocusTab(tabName string) {
 	}
 }
 
-func NewTab(name string, defaultView string) *Tab {
+func (tg *TabGroup) NewTab(name string, defaultView string) *Tab {
 	t := &Tab{
 		Views:       make([]*ViewSlot, 0),
 		DefaultView: defaultView,
 		LastView:    defaultView,
+		focusView:   tg.focusView,
 	}
 	x, y := ScreenSize()
 	t.Frame = SetCenteredView(name, x, y, 0)
 	t.Frame.Frame = false
+	tg.Tabs = append(tg.Tabs, t)
 	return t
 }
 
@@ -130,8 +135,8 @@ func (t *Tab) GetTabView(view string) *View {
 	return nil
 }
 
-func (t *Tab) AddView(v Viewable, position ViewSlotPosition) {
-	t.Views = append(t.Views, NewViewSlot(v.View(), position))
+func (t *Tab) AddView(v *View, position ViewSlotPosition) {
+	t.Views = append(t.Views, NewViewSlot(v, position))
 }
 
 func (t *Tab) SendToFront() {
@@ -140,7 +145,7 @@ func (t *Tab) SendToFront() {
 		v.View.SendToFront()
 	}
 
-	FocusView(t.LastView)
+	t.focusView(t.LastView)
 }
 
 func (t *Tab) SendToBack() {
@@ -238,8 +243,8 @@ func (t *Tab) GenerateNavigationKeyBindings() {
 
 			viewName := targetSlot.View.Name()
 			for _, key := range relation.keys {
-				kbb.set(key, "Focus "+viewName, func() {
-					FocusView(viewName)
+				kbb.Set(key, "Focus "+viewName, func() {
+					t.focusView(viewName)
 				})
 			}
 		}

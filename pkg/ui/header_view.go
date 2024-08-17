@@ -3,44 +3,45 @@ package ui
 import (
 	"fmt"
 	"mynav/pkg/constants"
+	"mynav/pkg/tui"
 
 	"github.com/gookit/color"
 )
 
-type HeaderView struct {
-	view *View
+type headerView struct {
+	view *tui.View
 }
 
-var _ Viewable = new(HeaderView)
+var _ viewable = new(headerView)
 
-func NewHeaderView() *HeaderView {
-	return &HeaderView{}
+func newHeaderView() *headerView {
+	return &headerView{}
 }
 
-func GetHeaderView() *HeaderView {
-	return GetViewable[*HeaderView]()
+func getHeaderView() *headerView {
+	return getViewable[*headerView]()
 }
 
-func (hv *HeaderView) View() *View {
+func (hv *headerView) getView() *tui.View {
 	return hv.view
 }
 
-func (hv *HeaderView) Init() {
+func (hv *headerView) init() {
 	hv.view = GetViewPosition(constants.HeaderViewName).Set()
 	hv.view.Frame = false
 }
 
-func (hv *HeaderView) Render() error {
+func (hv *headerView) render() error {
 	hv.view.Clear()
-	screenX, screenY := ScreenSize()
+	screenX, screenY := tui.ScreenSize()
 	if screenY < 30 || screenX < 50 {
 		hv.view.Clear()
 		return nil
 	}
 
-	selectedTabName := GetMainTabGroup().GetSelectedTab().Frame.Name()
+	selectedTabName := getMainTabGroup().GetSelectedTab().Frame.Name()
 	isMainTab := selectedTabName == "main"
-	sep := withSurroundingSpaces("- ")
+	sep := tui.WithSurroundingSpaces("- ")
 	line := ""
 	line += "Tab: " + selectedTabName
 	if isMainTab {
@@ -48,7 +49,7 @@ func (hv *HeaderView) Render() error {
 	}
 
 	if isMainTab {
-		if w := Api().Core.GetSelectedWorkspace(); w != nil {
+		if w := getApi().Core.GetSelectedWorkspace(); w != nil {
 			line += "Last workspace: " + w.ShortPath()
 		}
 	}
@@ -56,7 +57,7 @@ func (hv *HeaderView) Render() error {
 	sizeX, _ := hv.view.Size()
 	s := color.New(color.Yellow, color.Bold)
 	line = s.Sprint(line)
-	line = display(line, Left, sizeX)
+	line = tui.Display(line, tui.LeftAlign, sizeX)
 	fmt.Fprintln(hv.view, line)
 
 	return nil
