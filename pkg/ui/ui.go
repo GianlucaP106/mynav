@@ -24,8 +24,11 @@ func (ui *UI) InitUI() *UI {
 		newHeaderView(),
 		newTopicsView(),
 		newWorkspcacesView(),
-		newPortView(),
-		newPsView(),
+
+		// NOTE: not using these views for the moment - https://github.com/GianlucaP106/mynav/issues/287
+		// newPortView(),
+		// newPsView(),
+
 		newTmuxSessionView(),
 		newTmuxWindowView(),
 		newTmuxPaneView(),
@@ -40,7 +43,6 @@ func (ui *UI) InitUI() *UI {
 	ui.mainTabGroup = tui.NewTabGroup(focusView)
 	ui.buildMainTab()
 	ui.buildTmuxTab()
-	ui.buildSystemTab()
 	ui.buildGithubTab()
 
 	ui.mainTabGroup.FocusTabByIndex(0)
@@ -70,8 +72,11 @@ func (ui *UI) initStandaloneUI() {
 		newTmuxWindowView(),
 		newTmuxPaneView(),
 		newTmuxPreviewView(),
-		newPortView(),
-		newPsView(),
+
+		// NOTE: not using these views for the moment - https://github.com/GianlucaP106/mynav/issues/287
+		// newPortView(),
+		// newPsView(),
+
 		newGithubPrView(),
 		newGithubProfileView(),
 		newGithubRepoView(),
@@ -81,7 +86,6 @@ func (ui *UI) initStandaloneUI() {
 
 	ui.mainTabGroup = tui.NewTabGroup(focusView)
 	ui.buildTmuxTab()
-	ui.buildSystemTab()
 	ui.buildGithubTab()
 	ui.mainTabGroup.FocusTabByIndex(0)
 
