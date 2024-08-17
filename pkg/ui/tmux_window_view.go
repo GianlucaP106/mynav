@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"mynav/pkg/constants"
 	"mynav/pkg/core"
 	"mynav/pkg/events"
 	"mynav/pkg/system"
@@ -46,10 +45,10 @@ func (t *tmuxWindowView) getSelectedWindow() *gotmux.Window {
 }
 
 func (t *tmuxWindowView) init() {
-	t.view = GetViewPosition(constants.TmuxWindowViewName).Set()
+	t.view = getViewPosition(TmuxWindowView).Set()
 
 	t.view.Title = tui.WithSurroundingSpaces("Tmux Windows")
-	tui.StyleView(t.view)
+	styleView(t.view)
 
 	sizeX, sizeY := t.view.Size()
 	t.tableRenderer = tui.NewTableRenderer[*gotmux.Window]()
@@ -65,10 +64,10 @@ func (t *tmuxWindowView) init() {
 		0.25,
 	})
 
-	events.AddEventListener(constants.TmuxWindowChangeEventName, func(s string) {
+	events.AddEventListener(events.TmuxWindowChangeEvent, func(s string) {
 		t.refresh()
 		renderView(t)
-		events.Emit(constants.TmuxPaneChangeEventName)
+		events.Emit(events.TmuxPaneChangeEvent)
 	})
 
 	t.refresh()
@@ -76,11 +75,11 @@ func (t *tmuxWindowView) init() {
 	t.view.KeyBinding().
 		Set('j', "Move down", func() {
 			t.tableRenderer.Down()
-			events.Emit(constants.TmuxPaneChangeEventName)
+			events.Emit(events.TmuxPaneChangeEvent)
 		}).
 		Set('k', "Move up", func() {
 			t.tableRenderer.Up()
-			events.Emit(constants.TmuxPaneChangeEventName)
+			events.Emit(events.TmuxPaneChangeEvent)
 		}).
 		Set('o', "Open tmux session", func() {
 			if core.IsTmuxSession() {
@@ -167,6 +166,7 @@ func (t *tmuxWindowView) refresh() {
 func (t *tmuxWindowView) render() error {
 	isFocused := t.view.IsFocused()
 	t.view.Clear()
+	t.view = getViewPosition(t.view.Name()).Set()
 	t.tableRenderer.RenderWithSelectCallBack(t.view, func(i int, tr *tui.TableRow[*gotmux.Window]) bool {
 		return isFocused
 	})

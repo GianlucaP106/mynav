@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"mynav/pkg/constants"
 	"mynav/pkg/persistence"
 	"mynav/pkg/tasks"
 	"mynav/pkg/tui"
@@ -32,11 +31,11 @@ func getPsView() *psView {
 }
 
 func (p *psView) init() {
-	p.view = GetViewPosition(constants.PsViewName).Set()
+	p.view = getViewPosition(PsView).Set()
 
 	p.view.Title = tui.WithSurroundingSpaces("Processes")
 
-	tui.StyleView(p.view)
+	styleView(p.view)
 
 	p.tableRenderer = tui.NewTableRenderer[*process.Process]()
 
@@ -90,8 +89,9 @@ func (p *psView) getView() *tui.View {
 
 func (p *psView) render() error {
 	p.view.Clear()
-
 	isFocused := p.view.IsFocused()
+	p.view = getViewPosition(p.view.Name()).Set()
+
 	p.tableRenderer.RenderWithSelectCallBack(p.view, func(i int, tr *tui.TableRow[*process.Process]) bool {
 		return isFocused
 	})

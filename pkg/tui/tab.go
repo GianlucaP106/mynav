@@ -24,11 +24,11 @@ type ViewSlot struct {
 type ViewSlotPosition = uint
 
 const (
-	None ViewSlotPosition = iota
-	TopLeft
-	TopRight
-	BottomLeft
-	BottomRight
+	NoPosition ViewSlotPosition = iota
+	TopLeftPosition
+	TopRightPosition
+	BottomLeftPosition
+	BottomRightPosition
 )
 
 func NewTabGroup(focus func(string), tabs ...*Tab) *TabGroup {
@@ -178,53 +178,53 @@ func (t *Tab) GenerateNavigationKeyBindings() {
 
 		return nil
 	}
-	views[TopLeft] = findView(TopLeft)
-	views[BottomLeft] = findView(BottomLeft)
-	views[TopRight] = findView(TopRight)
-	views[BottomRight] = findView(BottomRight)
+	views[TopLeftPosition] = findView(TopLeftPosition)
+	views[BottomLeftPosition] = findView(BottomLeftPosition)
+	views[TopRightPosition] = findView(TopRightPosition)
+	views[BottomRightPosition] = findView(BottomRightPosition)
 
 	relationMap := make(map[ViewSlotPosition][]*SlotPositionRelation)
-	relationMap[TopLeft] = []*SlotPositionRelation{
+	relationMap[TopLeftPosition] = []*SlotPositionRelation{
 		{
 			keys:           []gocui.Key{gocui.KeyArrowDown, gocui.KeyCtrlJ},
-			targetPosition: BottomLeft,
+			targetPosition: BottomLeftPosition,
 		},
 		{
 			keys:           []gocui.Key{gocui.KeyArrowRight, gocui.KeyCtrlL},
-			targetPosition: TopRight,
+			targetPosition: TopRightPosition,
 		},
 	}
 
-	relationMap[BottomLeft] = []*SlotPositionRelation{
+	relationMap[BottomLeftPosition] = []*SlotPositionRelation{
 		{
 			keys:           []gocui.Key{gocui.KeyArrowUp, gocui.KeyCtrlK},
-			targetPosition: TopLeft,
+			targetPosition: TopLeftPosition,
 		},
 		{
 			keys:           []gocui.Key{gocui.KeyArrowRight, gocui.KeyCtrlL},
-			targetPosition: BottomRight,
+			targetPosition: BottomRightPosition,
 		},
 	}
 
-	relationMap[BottomRight] = []*SlotPositionRelation{
+	relationMap[BottomRightPosition] = []*SlotPositionRelation{
 		{
 			keys:           []gocui.Key{gocui.KeyArrowUp, gocui.KeyCtrlK},
-			targetPosition: TopRight,
+			targetPosition: TopRightPosition,
 		},
 		{
 			keys:           []gocui.Key{gocui.KeyArrowLeft, gocui.KeyCtrlH},
-			targetPosition: BottomLeft,
+			targetPosition: BottomLeftPosition,
 		},
 	}
 
-	relationMap[TopRight] = []*SlotPositionRelation{
+	relationMap[TopRightPosition] = []*SlotPositionRelation{
 		{
 			keys:           []gocui.Key{gocui.KeyArrowDown, gocui.KeyCtrlJ},
-			targetPosition: BottomRight,
+			targetPosition: BottomRightPosition,
 		},
 		{
 			keys:           []gocui.Key{gocui.KeyArrowLeft, gocui.KeyCtrlH},
-			targetPosition: TopLeft,
+			targetPosition: TopLeftPosition,
 		},
 	}
 

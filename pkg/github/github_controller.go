@@ -1,7 +1,6 @@
 package github
 
 import (
-	"mynav/pkg/constants"
 	"mynav/pkg/events"
 	"mynav/pkg/persistence"
 	"mynav/pkg/tasks"
@@ -78,7 +77,7 @@ func (g *GithubController) LoadUserPullRequests() {
 		return gpr.GetURL()
 	})
 
-	events.Emit(constants.GithubPrsChangesEventName)
+	events.Emit(events.GithubPrsChangesEvent)
 }
 
 func (g *GithubController) LoadUserRepos() {
@@ -91,7 +90,7 @@ func (g *GithubController) LoadUserRepos() {
 		return gr.GetURL()
 	})
 
-	events.Emit(constants.GithubReposChangesEventName)
+	events.Emit(events.GithubReposChangesEvent)
 }
 
 func (g *GithubController) LoadProfile() {

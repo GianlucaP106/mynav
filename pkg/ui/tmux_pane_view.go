@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"mynav/pkg/constants"
 	"mynav/pkg/events"
 	"mynav/pkg/system"
 	"mynav/pkg/tui"
@@ -35,10 +34,10 @@ func (t *tmuxPaneView) Focus() {
 }
 
 func (t *tmuxPaneView) init() {
-	t.view = GetViewPosition(constants.TmuxPaneViewName).Set()
+	t.view = getViewPosition(TmuxPaneView).Set()
 
 	t.view.Title = tui.WithSurroundingSpaces("Tmux Panes")
-	tui.StyleView(t.view)
+	styleView(t.view)
 
 	sizeX, sizeY := t.view.Size()
 	t.tableRenderer = tui.NewTableRenderer[*gotmux.Pane]()
@@ -52,10 +51,10 @@ func (t *tmuxPaneView) init() {
 		0.50,
 	})
 
-	events.AddEventListener(constants.TmuxPaneChangeEventName, func(s string) {
+	events.AddEventListener(events.TmuxPaneChangeEvent, func(s string) {
 		t.refresh()
 		renderView(t)
-		events.Emit(constants.TmuxPreviewChangeEventName)
+		events.Emit(events.TmuxPreviewChangeEvent)
 	})
 
 	t.refresh()
@@ -63,11 +62,11 @@ func (t *tmuxPaneView) init() {
 	t.view.KeyBinding().
 		Set('j', "Move down", func() {
 			t.tableRenderer.Down()
-			events.Emit(constants.TmuxPreviewChangeEventName)
+			events.Emit(events.TmuxPreviewChangeEvent)
 		}).
 		Set('k', "Move up", func() {
 			t.tableRenderer.Up()
-			events.Emit(constants.TmuxPreviewChangeEventName)
+			events.Emit(events.TmuxPreviewChangeEvent)
 		}).
 		Set('X', "Kill this pane", func() {
 			pane := t.getSelectedPane()
@@ -133,6 +132,7 @@ func (t *tmuxPaneView) getSelectedPane() *gotmux.Pane {
 func (t *tmuxPaneView) render() error {
 	isFocused := t.view.IsFocused()
 	t.view.Clear()
+	t.view = getViewPosition(t.view.Name()).Set()
 	t.tableRenderer.RenderWithSelectCallBack(t.view, func(i int, tr *tui.TableRow[*gotmux.Pane]) bool {
 		return isFocused
 	})

@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"mynav/pkg/constants"
 	"mynav/pkg/tui"
 
 	"github.com/awesome-gocui/gocui"
@@ -15,10 +14,10 @@ type toastDialog struct {
 func openToastDialog(message string, error bool, title string, exit func()) *toastDialog {
 	td := &toastDialog{}
 
-	td.view = tui.SetCenteredView(constants.ToastDialogName, max(len(message), len(title))+5, 3, 0)
+	td.view = tui.SetCenteredView(ToastDialog, max(len(message), len(title))+5, 3, 0)
 	td.view.Title = tui.WithSurroundingSpaces(title)
 	td.view.Editable = true
-	tui.StyleView(td.view)
+	styleView(td.view)
 	if error {
 		td.view.FrameColor = gocui.ColorRed
 	} else {

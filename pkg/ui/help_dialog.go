@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"mynav/pkg/constants"
 	"mynav/pkg/tui"
 
 	"github.com/awesome-gocui/gocui"
@@ -38,11 +37,11 @@ func OpenHelpDialog(mappings []*tui.KeyBindingInfo, exit func()) *helpDialog {
 	hv.mappings = mappings
 
 	x, _ := tui.ScreenSize()
-	hv.view = tui.SetCenteredView(constants.HelpDialogName, (x*2)/3, 16, 0)
+	hv.view = tui.SetCenteredView(HelpDialog, (x*2)/3, 16, 0)
 	hv.view.Editable = true
-	hv.view.FrameColor = tui.OnFrameColor
+	hv.view.FrameColor = onFrameColor
 	hv.view.Title = tui.WithSurroundingSpaces("Cheatsheet")
-	tui.StyleView(hv.view)
+	styleView(hv.view)
 
 	prevView := tui.GetFocusedView()
 	hv.view.Editor = newHelpViewEditor(func() {

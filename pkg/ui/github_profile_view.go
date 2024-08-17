@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"mynav/pkg/constants"
 	"mynav/pkg/events"
 	"mynav/pkg/system"
 	"mynav/pkg/tui"
@@ -24,11 +23,11 @@ func getGithubProfileView() *githubProfileView {
 }
 
 func (g *githubProfileView) init() {
-	g.view = GetViewPosition(constants.GithubProfileViewName).Set()
+	g.view = getViewPosition(GithubProfileView).Set()
 
 	g.view.Title = tui.WithSurroundingSpaces("Profile")
 
-	tui.StyleView(g.view)
+	styleView(g.view)
 
 	g.view.KeyBinding().
 		Set('L', "Login with device code and browser", func() {
@@ -38,7 +37,7 @@ func (g *githubProfileView) init() {
 
 			tdMu := &sync.Mutex{}
 			td := new(*toastDialog)
-			events.AddEventListener(constants.GithubDeviceAuthenticatedEventName, func(listenerId string) {
+			events.AddEventListener(events.GithubDeviceAuthenticatedEvent, func(listenerId string) {
 				tdMu.Lock()
 				defer tdMu.Unlock()
 
@@ -50,7 +49,7 @@ func (g *githubProfileView) init() {
 				}
 
 				getApi().Github.LoadData()
-				events.RemoveEventListener(constants.GithubDeviceAuthenticatedEventName, listenerId)
+				events.RemoveEventListener(events.GithubDeviceAuthenticatedEvent, listenerId)
 			})
 
 			deviceAuth := getApi().Github.InitWithDeviceAuth()
@@ -91,6 +90,7 @@ func (g *githubProfileView) init() {
 
 func (g *githubProfileView) render() error {
 	g.view.Clear()
+	g.view = getViewPosition(g.view.Name()).Set()
 	if !getApi().Github.IsAuthenticated() {
 		fmt.Fprintln(g.view, "Not authenticated")
 		fmt.Fprintln(g.view, "Press:")

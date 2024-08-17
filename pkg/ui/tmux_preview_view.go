@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"mynav/pkg/constants"
 	"mynav/pkg/events"
 	"mynav/pkg/persistence"
 	"mynav/pkg/tui"
@@ -32,15 +31,15 @@ func (t *tmuxPreviewView) getView() *tui.View {
 }
 
 func (t *tmuxPreviewView) init() {
-	t.view = GetViewPosition(constants.TmuxPreviewViewName).Set()
+	t.view = getViewPosition(TmuxPreviewView).Set()
 
 	t.view.Title = tui.WithSurroundingSpaces("Tmux Preview")
-	tui.StyleView(t.view)
+	styleView(t.view)
 	t.view.Wrap = false
 
 	t.content = persistence.NewValue("")
 
-	events.AddEventListener(constants.TmuxPreviewChangeEventName, func(s string) {
+	events.AddEventListener(events.TmuxPreviewChangeEvent, func(s string) {
 		t.refresh()
 		renderView(t)
 	})
@@ -65,6 +64,7 @@ func (t *tmuxPreviewView) refresh() {
 
 func (t *tmuxPreviewView) render() error {
 	t.view.Clear()
+	t.view = getViewPosition(t.view.Name()).Set()
 	fmt.Fprintln(t.view, t.content.Get())
 	return nil
 }
