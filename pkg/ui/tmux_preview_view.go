@@ -64,7 +64,7 @@ func (t *tmuxPreviewView) refresh() {
 
 func (t *tmuxPreviewView) render() error {
 	t.view.Clear()
-	t.view = getViewPosition(t.view.Name()).Set()
+	t.view.Resize(getViewPosition(t.view.Name()))
 	fmt.Fprintln(t.view, t.content.Get())
 	return nil
 }

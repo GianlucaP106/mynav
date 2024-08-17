@@ -125,7 +125,7 @@ func (g *githubPrView) render() error {
 	}
 
 	isFocused := g.view.IsFocused()
-	g.view = getViewPosition(g.view.Name()).Set()
+	g.view.Resize(getViewPosition(g.view.Name()))
 
 	g.tableRenderer.RenderWithSelectCallBack(g.view, func(_ int, _ *tui.TableRow[*github.GithubPullRequest]) bool {
 		return isFocused

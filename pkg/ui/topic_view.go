@@ -222,7 +222,7 @@ func (tv *topicsView) selectTopicByName(name string) {
 func (tv *topicsView) render() error {
 	currentViewSelected := tv.view.IsFocused()
 	tv.view.Clear()
-	tv.view = getViewPosition(tv.view.Name()).Set()
+	tv.view.Resize(getViewPosition(tv.view.Name()))
 
 	tv.tableRenderer.RenderWithSelectCallBack(tv.view, func(_ int, _ *tui.TableRow[*core.Topic]) bool {
 		return currentViewSelected

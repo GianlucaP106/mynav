@@ -169,7 +169,7 @@ func (p *portView) render() error {
 	p.view.Clear()
 
 	currentViewSelected := p.view.IsFocused()
-	p.view = getViewPosition(p.view.Name()).Set()
+	p.view.Resize(getViewPosition(p.view.Name()))
 
 	p.tableRenderer.RenderWithSelectCallBack(p.view, func(_ int, _ *tui.TableRow[*port]) bool {
 		return currentViewSelected

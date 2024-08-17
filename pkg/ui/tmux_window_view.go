@@ -167,6 +167,7 @@ func (t *tmuxWindowView) render() error {
 	isFocused := t.view.IsFocused()
 	t.view.Clear()
 	t.view = getViewPosition(t.view.Name()).Set()
+	t.view.Resize(getViewPosition(t.view.Name()))
 	t.tableRenderer.RenderWithSelectCallBack(t.view, func(i int, tr *tui.TableRow[*gotmux.Window]) bool {
 		return isFocused
 	})

@@ -91,6 +91,7 @@ func (g *githubProfileView) init() {
 func (g *githubProfileView) render() error {
 	g.view.Clear()
 	g.view = getViewPosition(g.view.Name()).Set()
+	g.view.Resize(getViewPosition(g.view.Name()))
 	if !getApi().Github.IsAuthenticated() {
 		fmt.Fprintln(g.view, "Not authenticated")
 		fmt.Fprintln(g.view, "Press:")
