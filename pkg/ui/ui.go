@@ -53,9 +53,9 @@ func (ui *UI) InitUI() *UI {
 
 	if getApi().Configuration.GetLastTab() == "main" {
 		if getApi().Core.GetSelectedWorkspace() != nil {
-			getWorkspacesView().Focus()
+			getWorkspacesView().focus()
 		} else {
-			getTopicsView().Focus()
+			getTopicsView().focus()
 		}
 	}
 

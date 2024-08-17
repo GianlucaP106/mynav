@@ -32,7 +32,7 @@ func (tv *topicsView) getView() *tui.View {
 	return tv.view
 }
 
-func (tv *topicsView) Focus() {
+func (tv *topicsView) focus() {
 	focusView(tv.getView().Name())
 }
 
@@ -70,7 +70,7 @@ func (tv *topicsView) init() {
 
 	moveRight := func() {
 		if getApi().Core.GetTopicCount() > 0 {
-			getWorkspacesView().Focus()
+			getWorkspacesView().focus()
 		}
 	}
 
@@ -151,7 +151,7 @@ func (tv *topicsView) init() {
 						(*sd).close()
 					}
 
-					wv.Focus()
+					wv.focus()
 				},
 				onSelectDescription: "Go to workspace",
 				searchViewTitle:     "Search a workspace",

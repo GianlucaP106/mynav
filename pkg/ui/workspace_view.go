@@ -31,7 +31,7 @@ func (wv *workspacesView) getView() *tui.View {
 	return wv.view
 }
 
-func (wv *workspacesView) Focus() {
+func (wv *workspacesView) focus() {
 	focusView(wv.getView().Name())
 }
 
@@ -86,7 +86,7 @@ func (wv *workspacesView) init() {
 				return
 			}
 
-			getTopicsView().Focus()
+			getTopicsView().focus()
 		}).
 		Set('s', "See workspace information", func() {
 			curWorkspace := wv.getSelectedWorkspace()
@@ -206,7 +206,7 @@ func (wv *workspacesView) init() {
 
 					getTopicsView().tableRenderer.SelectRow(0)
 
-					wv.Focus()
+					wv.focus()
 				},
 				onSelectDescription: "Move workspace to this topic",
 				searchViewTitle:     "Filter",
