@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"mynav/pkg/events"
 	"mynav/pkg/tasks"
 	"mynav/pkg/tui"
 	"strconv"
@@ -45,28 +46,13 @@ func (p *psView) init() {
 		0.2,
 	})
 
+	events.AddEventListener(events.ProcChangeEvent, func(s string) {
+		p.refresh()
+		renderView(p)
+	})
+
 	p.psProcessing = tasks.QueueTask(func() {
-		rows := make([][]string, 0)
-		processes := make([]*process.Process, 0)
-		for _, ts := range getApi().Tmux.GetTmuxSessions() {
-			ps := getApi().Tmux.GetTmuxSessionChildProcesses(ts)
-			for _, proc := range ps {
-				name, err := proc.Name()
-				if err != nil {
-					continue
-				}
-
-				pid := strconv.Itoa(int(proc.Pid))
-				rows = append(rows, []string{
-					name,
-					ts.Name,
-					pid,
-				})
-				processes = append(processes, proc)
-			}
-		}
-
-		p.tableRenderer.FillTable(rows, processes)
+		p.refresh()
 		renderView(p)
 	})
 
@@ -77,9 +63,59 @@ func (p *psView) init() {
 		Set('k', "Move up", func() {
 			p.tableRenderer.Up()
 		}).
+		Set('X', "Kill this process", func() {
+			proc := p.getSelectedProcess()
+			if proc == nil {
+				return
+			}
+
+			openConfirmationDialog(func(b bool) {
+				if !b {
+					return
+				}
+
+				err := getApi().Proc.KillProcess(int(proc.Pid))
+				if err != nil {
+					openToastDialogError(err.Error())
+				}
+			}, "Are you sure you want to kill this process?")
+		}).
 		Set('?', "Toggle cheatsheet", func() {
 			OpenHelpDialog(p.view.GetKeybindings(), func() {})
 		})
+}
+
+func (p *psView) refresh() {
+	rows := make([][]string, 0)
+	processes := make([]*process.Process, 0)
+	for _, ts := range getApi().Tmux.GetTmuxSessions() {
+		ps := getApi().Tmux.GetTmuxSessionChildProcesses(ts)
+		for _, proc := range ps {
+			name, err := proc.Name()
+			if err != nil {
+				continue
+			}
+
+			pid := strconv.Itoa(int(proc.Pid))
+			rows = append(rows, []string{
+				name,
+				ts.Name,
+				pid,
+			})
+			processes = append(processes, proc)
+		}
+	}
+
+	p.tableRenderer.FillTable(rows, processes)
+}
+
+func (p *psView) getSelectedProcess() *process.Process {
+	_, value := p.tableRenderer.GetSelectedRow()
+	if value != nil {
+		return *value
+	}
+
+	return nil
 }
 
 func (p *psView) getView() *tui.View {

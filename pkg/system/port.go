@@ -63,10 +63,14 @@ func (p PortList) Sorted() PortList {
 	return p
 }
 
-type PortController struct{}
+type PortController struct {
+	processController *ProcessController
+}
 
-func NewPortController() *PortController {
-	pc := &PortController{}
+func NewPortController(p *ProcessController) *PortController {
+	pc := &PortController{
+		processController: p,
+	}
 	return pc
 }
 
@@ -91,7 +95,7 @@ func (pc *PortController) GetPorts() Ports {
 }
 
 func (pc *PortController) KillPort(p *Port) error {
-	if err := KillProcess(p.Pid); err != nil {
+	if err := pc.processController.KillProcess(p.Pid); err != nil {
 		return err
 	}
 

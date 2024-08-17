@@ -11,19 +11,21 @@ import (
 )
 
 type TmuxController struct {
-	PortController *system.PortController
-	Tmux           *gotmux.Tmux
+	portController    *system.PortController
+	processController *system.ProcessController
+	tmux              *gotmux.Tmux
 }
 
-func NewTmuxController(pc *system.PortController) *TmuxController {
+func NewTmuxController(pc *system.PortController, pcc *system.ProcessController) *TmuxController {
 	t, err := gotmux.DefaultTmux()
 	if err != nil {
 		log.Panicln(err)
 	}
 
 	tmc := &TmuxController{
-		PortController: pc,
-		Tmux:           t,
+		portController:    pc,
+		tmux:              t,
+		processController: pcc,
 	}
 
 	return tmc
@@ -40,7 +42,7 @@ func (tc *TmuxController) RenameTmuxSession(s *gotmux.Session, newName string) e
 }
 
 func (tc *TmuxController) CreateAndAttachTmuxSession(session string, path string) error {
-	s, err := tc.Tmux.NewSession(&gotmux.SessionOptions{
+	s, err := tc.tmux.NewSession(&gotmux.SessionOptions{
 		Name:           session,
 		StartDirectory: path,
 	})
@@ -70,12 +72,12 @@ func (tc *TmuxController) AttachTmuxSession(s *gotmux.Session) error {
 }
 
 func (tc *TmuxController) GetTmuxSessionCount() int {
-	s, _ := tc.Tmux.ListSessions()
+	s, _ := tc.tmux.ListSessions()
 	return len(s)
 }
 
 func (tc *TmuxController) GetTmuxSessions() []*gotmux.Session {
-	sessions, err := tc.Tmux.ListSessions()
+	sessions, err := tc.tmux.ListSessions()
 	if err != nil {
 		return []*gotmux.Session{}
 	}
@@ -84,7 +86,7 @@ func (tc *TmuxController) GetTmuxSessions() []*gotmux.Session {
 }
 
 func (tc *TmuxController) GetTmuxSessionByName(name string) *gotmux.Session {
-	session, _ := tc.Tmux.GetSessionByName(name)
+	session, _ := tc.tmux.GetSessionByName(name)
 	return session
 }
 
@@ -100,7 +102,7 @@ func (tc *TmuxController) DeleteTmuxSession(s *gotmux.Session) error {
 }
 
 func (tc *TmuxController) KillTmuxServer() error {
-	err := tc.Tmux.KillServer()
+	err := tc.tmux.KillServer()
 	if err != nil {
 		return err
 	}
@@ -113,7 +115,7 @@ func (tc *TmuxController) GetTmuxStats() (sessionCount int, windowCount int) {
 	sessionCount = 0
 	windowCount = 0
 
-	sessions, err := tc.Tmux.ListSessions()
+	sessions, err := tc.tmux.ListSessions()
 	if err != nil {
 		return
 	}
@@ -165,7 +167,13 @@ func (t *TmuxController) GetTmuxSessionChildProcesses(session *gotmux.Session) [
 				continue
 			}
 
+			children, err := proc.Children()
+			if err != nil {
+				continue
+			}
+
 			out = append(out, proc)
+			out = append(out, children...)
 		}
 	}
 
@@ -190,7 +198,7 @@ func (t *TmuxController) GetTmuxSessionByChildPid(pid int) *gotmux.Session {
 			}
 
 			for _, p := range panes {
-				if system.IsProcessChildOf(pid, int(p.Pid)) {
+				if t.processController.IsProcessChildOf(pid, int(p.Pid)) {
 					return session
 				}
 			}

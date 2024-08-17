@@ -5,6 +5,7 @@ import (
 	"mynav/pkg/events"
 	"mynav/pkg/system"
 	"mynav/pkg/tui"
+	"strconv"
 
 	"github.com/GianlucaP106/gotmux/gotmux"
 	"github.com/awesome-gocui/gocui"
@@ -53,12 +54,14 @@ func (p *portView) init() {
 		[]string{
 			"Port",
 			"Exe",
+			"Pid",
 			"Linked to",
 		},
 		[]float64{
-			0.25,
-			0.25,
-			0.5,
+			0.2,
+			0.2,
+			0.2,
+			0.4,
 		})
 
 	events.AddEventListener(events.PortChangeEvent, func(_ string) {
@@ -130,7 +133,6 @@ func (pv *portView) refresh() {
 	}
 
 	rows := make([][]string, 0)
-	rowValues := make([]*port, 0)
 	for _, p := range ports {
 		linkedTo := func() string {
 			if p.tmux == nil {
@@ -145,15 +147,15 @@ func (pv *portView) refresh() {
 			}
 		}()
 
-		rowValues = append(rowValues, p)
 		rows = append(rows, []string{
 			p.GetPortStr(),
 			p.GetExeName(),
+			strconv.Itoa(p.Pid),
 			linkedTo,
 		})
 	}
 
-	pv.tableRenderer.FillTable(rows, rowValues)
+	pv.tableRenderer.FillTable(rows, ports)
 }
 
 func (p *portView) getSelectedPort() *port {

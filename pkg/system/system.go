@@ -1,6 +1,7 @@
 package system
 
 import (
+	"os"
 	"os/exec"
 	"runtime"
 
@@ -66,4 +67,10 @@ func CopyToClip(s string) error {
 
 func TimeFormat() string {
 	return "Mon, 02 Jan 15:04:05"
+}
+
+func IsCurrentProcessHomeDir() bool {
+	homeDir, _ := os.UserHomeDir()
+	cwd, _ := os.Getwd()
+	return homeDir == cwd
 }
