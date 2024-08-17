@@ -1,26 +1,19 @@
 package system
 
 import (
+	"mynav/pkg/events"
 	"os"
 
 	"github.com/shirou/gopsutil/process"
 )
 
-func GetChildProcesses(pid int) ([]*process.Process, error) {
-	proc, err := process.NewProcess(int32(pid))
-	if err != nil {
-		return nil, err
-	}
+type ProcessController struct{}
 
-	children, err := proc.Children()
-	if err != nil {
-		return nil, err
-	}
-
-	return children, nil
+func NewProcessController() *ProcessController {
+	return &ProcessController{}
 }
 
-func IsProcessChildOf(child int, parent int) bool {
+func (p *ProcessController) IsProcessChildOf(child int, parent int) bool {
 	var pid int32
 	pid = int32(child)
 	parentPid := int32(parent)
@@ -44,7 +37,7 @@ func IsProcessChildOf(child int, parent int) bool {
 	}
 }
 
-func KillProcess(pid int) error {
+func (p *ProcessController) KillProcess(pid int) error {
 	proc, err := os.FindProcess(pid)
 	if err != nil {
 		return err
@@ -54,11 +47,6 @@ func KillProcess(pid int) error {
 		return err
 	}
 
+	events.Emit(events.ProcChangeEvent)
 	return nil
-}
-
-func IsCurrentProcessHomeDir() bool {
-	homeDir, _ := os.UserHomeDir()
-	cwd, _ := os.Getwd()
-	return homeDir == cwd
 }

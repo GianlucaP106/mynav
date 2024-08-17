@@ -181,6 +181,10 @@ func (v *View) SendToFront() {
 	_tui.SetViewOnTop(v.Name())
 }
 
+func (v *View) Resize(pos *ViewPosition) {
+	v.View = pos.Set().View
+}
+
 type KeyBindingBuilder struct {
 	view *View
 }

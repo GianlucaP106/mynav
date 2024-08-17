@@ -15,6 +15,7 @@ type Api struct {
 	Configuration *configuration.Configuration
 	Github        *github.GithubController
 	Port          *system.PortController
+	Proc          *system.ProcessController
 }
 
 func NewApi() (*Api, error) {
@@ -50,8 +51,9 @@ func (api *Api) InitConfiguration() error {
 }
 
 func (api *Api) InitStandaloneController() {
-	api.Port = system.NewPortController()
-	api.Tmux = core.NewTmuxController(api.Port)
+	api.Proc = system.NewProcessController()
+	api.Port = system.NewPortController(api.Proc)
+	api.Tmux = core.NewTmuxController(api.Port, api.Proc)
 
 	// TODO: move config to seperate module
 	api.Github = github.NewGithubController(api.Configuration.GetGithubToken(), func(gat *github.GithubAuthenticationToken) {

@@ -28,6 +28,7 @@ const (
 	TmuxPaneChangeEvent            = "TmuxPaneChangeEvent"
 	TopicChangeEvent               = "TopicChangeEvent"
 	PortChangeEvent                = "PortChangeEvent"
+	ProcChangeEvent                = "ProcChangeEvent"
 	GithubPrsChangesEvent          = "GithubPrsChangesEvent"
 	GithubReposChangesEvent        = "GithubReposChangesEvent"
 	GithubDeviceAuthenticatedEvent = "GithubDeviceAuthenticatedEvent"

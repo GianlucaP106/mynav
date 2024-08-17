@@ -364,7 +364,7 @@ func (wv *workspacesView) getSelectedWorkspace() *core.Workspace {
 func (wv *workspacesView) render() error {
 	isFocused := wv.view.IsFocused()
 	wv.view.Clear()
-	wv.view = getViewPosition(wv.view.Name()).Set()
+	wv.view.Resize(getViewPosition(wv.view.Name()))
 
 	wv.tableRenderer.RenderWithSelectCallBack(wv.view, func(_ int, _ *tui.TableRow[*core.Workspace]) bool {
 		return isFocused
