@@ -2,7 +2,6 @@ package ui
 
 import (
 	"mynav/pkg/core"
-	"mynav/pkg/events"
 	"mynav/pkg/persistence"
 	"mynav/pkg/tui"
 
@@ -54,14 +53,6 @@ func (tv *topicsView) init() {
 	}
 	tv.tableRenderer.InitTable(sizeX, sizeY, titles, colProportions)
 
-	events.AddEventListener(events.TopicChangeEvent, func(_ string) {
-		tv.refresh()
-		wv := getWorkspacesView()
-		wv.refresh()
-		renderView(tv)
-		renderView(wv)
-	})
-
 	tv.refresh()
 
 	if selectedWorkspace := getApi().Core.GetSelectedWorkspace(); selectedWorkspace != nil {
@@ -74,30 +65,29 @@ func (tv *topicsView) init() {
 		}
 	}
 
+	wv := getWorkspacesView()
 	tv.view.KeyBinding().
 		Set('j', "Move down", func() {
 			tv.tableRenderer.Down()
-			events.Emit(events.WorkspaceChangeEvent)
+			refreshAsync(wv)
 		}).
 		Set('k', "Move up", func() {
 			tv.tableRenderer.Up()
-			events.Emit(events.WorkspaceChangeEvent)
+			refreshAsync(wv)
 		}).
 		Set(gocui.KeyEnter, "Open topic", moveRight).
 		Set('/', "Search by name", func() {
 			openEditorDialog(func(s string) {
 				tv.search.Set(s)
 				tv.view.Subtitle = tui.WithSurroundingSpaces("Searching: " + s)
-				tv.refresh()
-				getWorkspacesView().refresh()
+				tv.refreshFsAsync()
 			}, func() {}, "Search", smallEditorSize)
 		}).
 		Set(gocui.KeyEsc, "Escape search", func() {
 			if tv.search.Get() != "" {
 				tv.search.Set("")
 				tv.view.Subtitle = ""
-				tv.refresh()
-				getWorkspacesView().refresh()
+				tv.refreshFsAsync()
 			}
 		}).
 		Set('a', "Create a topic", func() {
@@ -111,6 +101,7 @@ func (tv *topicsView) init() {
 				// This will result in the corresponding topic going to the top
 				// because we are sorting by modifed time
 				tv.tableRenderer.SelectRow(0)
+				tv.refreshFsAsync()
 			}, func() {}, "Topic name", smallEditorSize)
 		}).
 		Set('r', "Rename topic", func() {
@@ -124,6 +115,8 @@ func (tv *topicsView) init() {
 					openToastDialogError(err.Error())
 					return
 				}
+
+				tv.refreshFsAsync()
 			}, func() {}, "New topic name", smallEditorSize, t.Name)
 		}).
 		Set('s', "Search for a workspace", func() {
@@ -177,10 +170,12 @@ func (tv *topicsView) init() {
 				if err := getApi().Core.DeleteTopic(tv.getSelectedTopic()); err != nil {
 					openToastDialogError(err.Error())
 				}
+
+				tv.refreshFsAsync()
 			}, "Are you sure you want to delete this topic? All its content will be deleted.")
 		}).
 		Set('?', "Toggle cheatsheet", func() {
-			OpenHelpDialog(tv.view.GetKeybindings(), func() {})
+			openHelpDialog(tv.view.GetKeybindings(), func() {})
 		})
 }
 
@@ -203,6 +198,11 @@ func (tv *topicsView) refresh() {
 	}
 
 	tv.tableRenderer.FillTable(rows, rowValues)
+}
+
+func (t *topicsView) refreshFsAsync() {
+	refreshAsync(t)
+	refreshAsync(getWorkspacesView())
 }
 
 func (tv *topicsView) getSelectedTopic() *core.Topic {

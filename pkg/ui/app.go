@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"mynav/pkg/api"
+	"mynav/pkg/tasks"
 	"mynav/pkg/tui"
 
 	"github.com/awesome-gocui/gocui"
@@ -68,6 +69,13 @@ func focusView(viewName string) {
 			v.FrameColor = offFrameColor
 		}
 	}
+}
+
+func refreshAsync(v viewable) *tasks.Task {
+	return tasks.QueueTask(func() {
+		v.refresh()
+		renderView(v)
+	})
 }
 
 func getMainTabGroup() *tui.TabGroup {

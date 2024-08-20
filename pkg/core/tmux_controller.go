@@ -2,7 +2,6 @@ package core
 
 import (
 	"log"
-	"mynav/pkg/events"
 	"mynav/pkg/system"
 	"os"
 
@@ -37,7 +36,6 @@ func (tc *TmuxController) RenameTmuxSession(s *gotmux.Session, newName string) e
 		return err
 	}
 
-	events.Emit(events.TmuxSessionChangeEvent)
 	return nil
 }
 
@@ -55,8 +53,6 @@ func (tc *TmuxController) CreateAndAttachTmuxSession(session string, path string
 		return err
 	}
 
-	events.Emit(events.PortChangeEvent)
-	events.Emit(events.TmuxSessionChangeEvent)
 	return nil
 }
 
@@ -66,8 +62,6 @@ func (tc *TmuxController) AttachTmuxSession(s *gotmux.Session) error {
 		return err
 	}
 
-	events.Emit(events.PortChangeEvent)
-	events.Emit(events.TmuxSessionChangeEvent)
 	return nil
 }
 
@@ -96,9 +90,13 @@ func (tc *TmuxController) DeleteTmuxSession(s *gotmux.Session) error {
 		return err
 	}
 
-	events.Emit(events.TmuxSessionChangeEvent)
-	events.Emit(events.PortChangeEvent)
 	return nil
+}
+
+func (tc *TmuxController) KillManyTmuxSessions(sessions []*gotmux.Session) {
+	for _, s := range sessions {
+		s.Kill()
+	}
 }
 
 func (tc *TmuxController) KillTmuxServer() error {
@@ -107,7 +105,6 @@ func (tc *TmuxController) KillTmuxServer() error {
 		return err
 	}
 
-	events.Emit(events.TmuxSessionChangeEvent)
 	return nil
 }
 
@@ -134,7 +131,6 @@ func (tc *TmuxController) KillTmuxWindow(w *gotmux.Window) error {
 		return err
 	}
 
-	events.Emit(events.TmuxSessionChangeEvent)
 	return nil
 }
 
@@ -144,7 +140,6 @@ func (tc *TmuxController) KillTmuxPane(pane *gotmux.Pane) error {
 		return err
 	}
 
-	events.Emit(events.TmuxSessionChangeEvent)
 	return nil
 }
 

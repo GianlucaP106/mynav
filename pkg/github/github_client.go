@@ -2,8 +2,6 @@ package github
 
 import (
 	"context"
-	"mynav/pkg/events"
-	"mynav/pkg/tasks"
 	"sync"
 
 	gh "github.com/google/go-github/v62/github"
@@ -30,18 +28,17 @@ func NewGithubClient(token *GithubAuthenticationToken, onLogin func(*GithubAuthe
 	return client
 }
 
-func (g *GithubClient) AuthenticateWithDevice() *GithubDevicePreAuthentication {
+func (g *GithubClient) AuthenticateWithDevice() (*GithubDevicePreAuthentication, func()) {
 	gda, f := g.authenticator.AuthenticateWithDevice()
 
-	tasks.QueueTask(func() {
+	poll := func() {
 		client := f()
 		g.mu.Lock()
 		defer g.mu.Unlock()
 		g.client = client
-		events.Emit(events.GithubDeviceAuthenticatedEvent)
-	})
+	}
 
-	return gda
+	return gda, poll
 }
 
 func (g *GithubClient) AuthenticateWithPersonalAccessToken(token string) error {

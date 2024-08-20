@@ -25,6 +25,8 @@ func (hv *headerView) getView() *tui.View {
 	return hv.view
 }
 
+func (h *headerView) refresh() {}
+
 func (hv *headerView) init() {
 	hv.view = getViewPosition(HeaderView).Set()
 	hv.view.Frame = false

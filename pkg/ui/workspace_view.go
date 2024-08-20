@@ -2,7 +2,6 @@ package ui
 
 import (
 	"mynav/pkg/core"
-	"mynav/pkg/events"
 	"mynav/pkg/github"
 	"mynav/pkg/system"
 	"mynav/pkg/tui"
@@ -60,17 +59,13 @@ func (wv *workspacesView) init() {
 	wv.tableRenderer = tui.NewTableRenderer[*core.Workspace]()
 	wv.tableRenderer.InitTable(sizeX, sizeY, titles, proportions)
 
-	events.AddEventListener(events.WorkspaceChangeEvent, func(_ string) {
-		wv.refresh()
-		renderView(wv)
-	})
-
 	wv.refresh()
 
 	if selectedWorkspace := getApi().Core.GetSelectedWorkspace(); selectedWorkspace != nil {
 		wv.selectWorkspaceByShortPath(selectedWorkspace.ShortPath())
 	}
 
+	tv := getTopicsView()
 	wv.view.KeyBinding().
 		Set('j', "Move down", func() {
 			wv.tableRenderer.Down()
@@ -86,7 +81,7 @@ func (wv *workspacesView) init() {
 				return
 			}
 
-			getTopicsView().focus()
+			tv.focus()
 		}).
 		Set('s', "See workspace information", func() {
 			curWorkspace := wv.getSelectedWorkspace()
@@ -105,6 +100,8 @@ func (wv *workspacesView) init() {
 				if err := getApi().Core.CloneRepo(s, curWorkspace); err != nil {
 					openToastDialogError(err.Error())
 				}
+
+				tv.refreshFsAsync()
 			}, func() {}, "Git repo URL", smallEditorSize)
 		}).
 		Set('G', "Open browser to git repo", func() {
@@ -204,8 +201,8 @@ func (wv *workspacesView) init() {
 						(*sd).close()
 					}
 
-					getTopicsView().tableRenderer.SelectRow(0)
-
+					tv.tableRenderer.SelectRow(0)
+					tv.refreshFsAsync()
 					wv.focus()
 				},
 				onSelectDescription: "Move workspace to this topic",
@@ -231,7 +228,8 @@ func (wv *workspacesView) init() {
 					getApi().Core.DeleteWorkspace(curWorkspace)
 
 					// HACK: same as below
-					getTopicsView().tableRenderer.SelectRow(0)
+					tv.tableRenderer.SelectRow(0)
+					tv.refreshFsAsync()
 				}
 			}, "Are you sure you want to delete this workspace?")
 		}).
@@ -246,6 +244,8 @@ func (wv *workspacesView) init() {
 					openToastDialogError(err.Error())
 					return
 				}
+
+				tv.refreshFsAsync()
 			}, func() {}, "New workspace name", smallEditorSize, curWorkspace.Name)
 		}).
 		Set('e', "Add/change description", func() {
@@ -257,6 +257,7 @@ func (wv *workspacesView) init() {
 			openEditorDialog(func(desc string) {
 				if desc != "" {
 					getApi().Core.SetDescription(desc, curWorkspace)
+					tv.refreshFsAsync()
 				}
 			}, func() {}, "Description", largeEditorSize)
 		}).
@@ -276,8 +277,9 @@ func (wv *workspacesView) init() {
 				// HACK: when there a is a new workspace
 				// This will result in the workspace and the corresponding topic going to the top
 				// because we are sorting by modifed time
-				getTopicsView().tableRenderer.SelectRow(0)
+				tv.tableRenderer.SelectRow(0)
 				wv.tableRenderer.SelectRow(0)
+				tv.refreshFsAsync()
 			}, func() {}, "Workspace name ", smallEditorSize)
 		}).
 		Set('X', "Kill tmux session", func() {
@@ -290,12 +292,13 @@ func (wv *workspacesView) init() {
 				openConfirmationDialog(func(b bool) {
 					if b {
 						getApi().Core.DeleteWorkspaceTmuxSession(curWorkspace)
+						tv.refreshFsAsync()
 					}
 				}, "Are you sure you want to delete the tmux session?")
 			}
 		}).
 		Set('?', "Toggle cheatsheet", func() {
-			OpenHelpDialog(wv.view.GetKeybindings(), func() {})
+			openHelpDialog(wv.view.GetKeybindings(), func() {})
 		})
 }
 

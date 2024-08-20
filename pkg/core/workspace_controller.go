@@ -2,7 +2,6 @@ package core
 
 import (
 	"errors"
-	"mynav/pkg/events"
 	"mynav/pkg/system"
 	"strings"
 
@@ -32,8 +31,6 @@ func (wc *WorkspaceController) CreateWorkspace(name string, topic *Topic) (*Work
 		return nil, err
 	}
 
-	events.Emit(events.TopicChangeEvent)
-
 	return workspace, nil
 }
 
@@ -44,7 +41,6 @@ func (wc *WorkspaceController) DeleteWorkspace(w *Workspace) error {
 		return err
 	}
 
-	events.Emit(events.TopicChangeEvent)
 	return nil
 }
 
@@ -67,8 +63,6 @@ func (wc *WorkspaceController) MoveWorkspace(w *Workspace, newTopic *Topic) erro
 		wc.TmuxController.RenameTmuxSession(s, w.Path)
 	}
 
-	events.Emit(events.TopicChangeEvent)
-	events.Emit(events.PortChangeEvent)
 	return nil
 }
 
@@ -87,8 +81,6 @@ func (wc *WorkspaceController) RenameWorkspace(w *Workspace, newName string) err
 		wc.TmuxController.RenameTmuxSession(s, w.Path)
 	}
 
-	events.Emit(events.WorkspaceChangeEvent)
-	events.Emit(events.PortChangeEvent)
 	return nil
 }
 
@@ -105,7 +97,6 @@ func (wc *WorkspaceController) GetWorkspaceTmuxSessionCount() int {
 func (wc *WorkspaceController) SetDescription(description string, w *Workspace) {
 	w.Metadata.Description = description
 	wc.WorkspaceRepository.SetSelectedWorkspace(w)
-	events.Emit(events.WorkspaceChangeEvent)
 }
 
 func (wc *WorkspaceController) OpenNeovimInWorkspace(w *Workspace) error {
@@ -129,7 +120,7 @@ func (wc *WorkspaceController) CreateOrAttachTmuxSession(w *Workspace) error {
 		if err := wc.TmuxController.AttachTmuxSession(ts); err != nil {
 			return err
 		}
-		events.Emit(events.WorkspaceChangeEvent)
+
 		return nil
 	}
 
@@ -138,14 +129,12 @@ func (wc *WorkspaceController) CreateOrAttachTmuxSession(w *Workspace) error {
 		return err
 	}
 
-	events.Emit(events.WorkspaceChangeEvent)
 	return nil
 }
 
 func (wc *WorkspaceController) DeleteWorkspaceTmuxSession(w *Workspace) {
 	if ts := wc.TmuxController.GetTmuxSessionByName(w.Path); ts != nil {
 		wc.TmuxController.DeleteTmuxSession(ts)
-		events.Emit(events.WorkspaceChangeEvent)
 	}
 }
 
@@ -158,7 +147,6 @@ func (wc *WorkspaceController) DeleteAllWorkspaceTmuxSessions() error {
 		}
 	}
 
-	events.Emit(events.TmuxSessionChangeEvent)
 	return nil
 }
 
@@ -205,9 +193,6 @@ func (wc *WorkspaceController) DeleteWorkspacesByTopic(t *Topic) error {
 		}
 	}
 
-	events.Emit(events.PortChangeEvent)
-	events.Emit(events.TmuxSessionChangeEvent)
-	events.Emit(events.WorkspaceChangeEvent)
 	return nil
 }
 
@@ -216,9 +201,9 @@ func (wc *WorkspaceController) CloneRepo(repoUrl string, w *Workspace) error {
 	if err != nil {
 		return err
 	}
+
 	w.GitRemote = &repoUrl
 	wc.WorkspaceRepository.SetSelectedWorkspace(w)
-	events.Emit(events.WorkspaceChangeEvent)
 	return nil
 }
 

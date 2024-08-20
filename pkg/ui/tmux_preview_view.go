@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"mynav/pkg/events"
 	"mynav/pkg/persistence"
 	"mynav/pkg/tui"
 )
@@ -38,11 +37,6 @@ func (t *tmuxPreviewView) init() {
 	t.view.Wrap = false
 
 	t.content = persistence.NewValue("")
-
-	events.AddEventListener(events.TmuxPreviewChangeEvent, func(s string) {
-		t.refresh()
-		renderView(t)
-	})
 
 	t.refresh()
 }
