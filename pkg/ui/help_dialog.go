@@ -31,8 +31,7 @@ func newHelpViewEditor(up func(), down func(), enter func(), exit func()) gocui.
 		})
 }
 
-// TODO:
-func OpenHelpDialog(mappings []*tui.KeyBindingInfo, exit func()) *helpDialog {
+func openHelpDialog(mappings []*tui.KeyBindingInfo, exit func()) *helpDialog {
 	hv := &helpDialog{}
 	hv.mappings = mappings
 

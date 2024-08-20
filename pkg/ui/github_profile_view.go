@@ -2,8 +2,8 @@ package ui
 
 import (
 	"fmt"
-	"mynav/pkg/events"
 	"mynav/pkg/system"
+	"mynav/pkg/tasks"
 	"mynav/pkg/tui"
 	"sync"
 )
@@ -22,12 +22,21 @@ func getGithubProfileView() *githubProfileView {
 	return getViewable[*githubProfileView]()
 }
 
+func (g *githubProfileView) refresh() {}
+
 func (g *githubProfileView) init() {
 	g.view = getViewPosition(GithubProfileView).Set()
 
 	g.view.Title = tui.WithSurroundingSpaces("Profile")
 
 	styleView(g.view)
+
+	tasks.QueueTask(func() {
+		getApi().Github.LoadData()
+		refreshAsync(g)
+		refreshAsync(getGithubPrView())
+		refreshAsync(getGithubRepoView())
+	})
 
 	g.view.KeyBinding().
 		Set('L', "Login with device code and browser", func() {
@@ -37,7 +46,11 @@ func (g *githubProfileView) init() {
 
 			tdMu := &sync.Mutex{}
 			td := new(*toastDialog)
-			events.AddEventListener(events.GithubDeviceAuthenticatedEvent, func(listenerId string) {
+
+			deviceAuth, poll := getApi().Github.InitWithDeviceAuth()
+			tasks.QueueTask(func() {
+				poll()
+
 				tdMu.Lock()
 				defer tdMu.Unlock()
 
@@ -49,10 +62,10 @@ func (g *githubProfileView) init() {
 				}
 
 				getApi().Github.LoadData()
-				events.RemoveEventListener(events.GithubDeviceAuthenticatedEvent, listenerId)
+				refreshAsync(g)
+				refreshAsync(getGithubPrView())
+				refreshAsync(getGithubRepoView())
 			})
-
-			deviceAuth := getApi().Github.InitWithDeviceAuth()
 
 			if deviceAuth != nil {
 				tdMu.Lock()
@@ -84,7 +97,7 @@ func (g *githubProfileView) init() {
 			getApi().Github.LogoutUser()
 		}).
 		Set('?', "Toggle cheatsheet", func() {
-			OpenHelpDialog(g.view.GetKeybindings(), func() {})
+			openHelpDialog(g.view.GetKeybindings(), func() {})
 		})
 }
 

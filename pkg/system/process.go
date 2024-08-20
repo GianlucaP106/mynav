@@ -1,7 +1,6 @@
 package system
 
 import (
-	"mynav/pkg/events"
 	"os"
 
 	"github.com/shirou/gopsutil/process"
@@ -47,6 +46,5 @@ func (p *ProcessController) KillProcess(pid int) error {
 		return err
 	}
 
-	events.Emit(events.ProcChangeEvent)
 	return nil
 }

@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"mynav/pkg/events"
 	"mynav/pkg/github"
 	"mynav/pkg/system"
 	"mynav/pkg/tui"
@@ -56,10 +55,7 @@ func (g *githubPrView) init() {
 			0.40,
 		})
 
-	events.AddEventListener(events.GithubPrsChangesEvent, func(_ string) {
-		g.refresh()
-		renderView(g)
-	})
+	g.refresh()
 
 	g.view.KeyBinding().
 		Set('j', "Move down", func() {
@@ -77,7 +73,7 @@ func (g *githubPrView) init() {
 			system.OpenBrowser(pr.GetHTMLURL())
 		}).
 		Set('?', "Toggle cheatsheet", func() {
-			OpenHelpDialog(g.view.GetKeybindings(), func() {})
+			openHelpDialog(g.view.GetKeybindings(), func() {})
 		}).
 		Set(gocui.KeyCtrlL, "Focus "+GithubRepoView, func() {
 			getGithubRepoView().Focus()

@@ -1,9 +1,7 @@
 package github
 
 import (
-	"mynav/pkg/events"
 	"mynav/pkg/persistence"
-	"mynav/pkg/tasks"
 	"strings"
 )
 
@@ -27,20 +25,16 @@ func NewGithubController(token *GithubAuthenticationToken, onLogin func(*GithubA
 		isLoading:     persistence.NewValue(false),
 	}
 
-	g.LoadData()
-
 	return g
 }
 
 func (g *GithubController) LoadData() {
 	if g.IsAuthenticated() {
-		tasks.QueueTask(func() {
-			g.isLoading.Set(true)
-			defer g.isLoading.Set(false)
-			g.LoadProfile()
-			g.LoadUserRepos()
-			g.LoadUserPullRequests()
-		})
+		g.isLoading.Set(true)
+		defer g.isLoading.Set(false)
+		g.LoadProfile()
+		g.LoadUserRepos()
+		g.LoadUserPullRequests()
 	}
 }
 
@@ -52,7 +46,7 @@ func (g *GithubController) IsLoading() bool {
 	return g.isLoading.Get()
 }
 
-func (g *GithubController) InitWithDeviceAuth() *GithubDevicePreAuthentication {
+func (g *GithubController) InitWithDeviceAuth() (*GithubDevicePreAuthentication, func()) {
 	return g.client.AuthenticateWithDevice()
 }
 
@@ -76,8 +70,6 @@ func (g *GithubController) LoadUserPullRequests() {
 	g.prContainer.SetAll(prs, func(gpr *GithubPullRequest) string {
 		return gpr.GetURL()
 	})
-
-	events.Emit(events.GithubPrsChangesEvent)
 }
 
 func (g *GithubController) LoadUserRepos() {
@@ -89,8 +81,6 @@ func (g *GithubController) LoadUserRepos() {
 	g.repoContainer.SetAll(repos, func(gr *GithubRepository) string {
 		return gr.GetURL()
 	})
-
-	events.Emit(events.GithubReposChangesEvent)
 }
 
 func (g *GithubController) LoadProfile() {

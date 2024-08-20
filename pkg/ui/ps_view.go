@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"mynav/pkg/events"
 	"mynav/pkg/tasks"
 	"mynav/pkg/tui"
 	"strconv"
@@ -46,15 +45,7 @@ func (p *psView) init() {
 		0.2,
 	})
 
-	events.AddEventListener(events.ProcChangeEvent, func(s string) {
-		p.refresh()
-		renderView(p)
-	})
-
-	p.psProcessing = tasks.QueueTask(func() {
-		p.refresh()
-		renderView(p)
-	})
+	p.psProcessing = refreshAsync(p)
 
 	p.view.KeyBinding().
 		Set('j', "Move down", func() {
@@ -81,7 +72,7 @@ func (p *psView) init() {
 			}, "Are you sure you want to kill this process?")
 		}).
 		Set('?', "Toggle cheatsheet", func() {
-			OpenHelpDialog(p.view.GetKeybindings(), func() {})
+			openHelpDialog(p.view.GetKeybindings(), func() {})
 		})
 }
 

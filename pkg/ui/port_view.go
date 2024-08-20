@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"mynav/pkg/events"
 	"mynav/pkg/system"
 	"mynav/pkg/tui"
 	"strconv"
@@ -64,12 +63,7 @@ func (p *portView) init() {
 			0.4,
 		})
 
-	events.AddEventListener(events.PortChangeEvent, func(_ string) {
-		p.refresh()
-		renderView(p)
-	})
-
-	events.Emit(events.PortChangeEvent)
+	refreshAsync(p)
 
 	p.view.KeyBinding().
 		Set('j', "Move down", func() {
@@ -112,7 +106,7 @@ func (p *portView) init() {
 			}, "Are you sure you want to kill this port?")
 		}).
 		Set('?', "Toggle cheatsheet", func() {
-			OpenHelpDialog(p.view.GetKeybindings(), func() {})
+			openHelpDialog(p.view.GetKeybindings(), func() {})
 		})
 }
 

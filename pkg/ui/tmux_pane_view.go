@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"mynav/pkg/events"
 	"mynav/pkg/system"
 	"mynav/pkg/tui"
 	"strconv"
@@ -51,22 +50,19 @@ func (t *tmuxPaneView) init() {
 		0.50,
 	})
 
-	events.AddEventListener(events.TmuxPaneChangeEvent, func(s string) {
-		t.refresh()
-		renderView(t)
-		events.Emit(events.TmuxPreviewChangeEvent)
-	})
-
 	t.refresh()
 
+	tpv := getTmuxPreviewView()
+	tsv := getTmuxSessionView()
+	twv := getTmuxWindowView()
 	t.view.KeyBinding().
 		Set('j', "Move down", func() {
 			t.tableRenderer.Down()
-			events.Emit(events.TmuxPreviewChangeEvent)
+			refreshAsync(tpv)
 		}).
 		Set('k', "Move up", func() {
 			t.tableRenderer.Up()
-			events.Emit(events.TmuxPreviewChangeEvent)
+			refreshAsync(tpv)
 		}).
 		Set('X', "Kill this pane", func() {
 			pane := t.getSelectedPane()
@@ -83,16 +79,18 @@ func (t *tmuxPaneView) init() {
 				if err != nil {
 					openToastDialogError(err.Error())
 				}
+
+				tsv.refreshTmuxViewsAsync()
 			}, "Are you sure you want to kill this pane?")
 		}).
 		Set(gocui.KeyEsc, "Focus window view", func() {
-			getTmuxWindowView().focus()
+			twv.focus()
 		}).
 		Set(gocui.KeyCtrlH, "Focus window view", func() {
-			getTmuxWindowView().focus()
+			twv.focus()
 		}).
 		Set(gocui.KeyArrowLeft, "Focus window view", func() {
-			getTmuxWindowView().focus()
+			twv.focus()
 		})
 }
 

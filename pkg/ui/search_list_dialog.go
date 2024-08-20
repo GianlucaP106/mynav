@@ -67,7 +67,7 @@ func openSearchListDialog[T any](params searchDialogConfig[T]) *searchListDialog
 			s.focusList()
 		}).
 		Set('?', "Toggle cheatsheet", func() {
-			OpenHelpDialog(s.searchView.GetKeybindings(), func() {})
+			openHelpDialog(s.searchView.GetKeybindings(), func() {})
 		})
 
 	s.tableView.KeyBinding().
@@ -90,7 +90,7 @@ func openSearchListDialog[T any](params searchDialogConfig[T]) *searchListDialog
 			s.renderTable()
 		}).
 		Set('?', "Toggle cheatsheet", func() {
-			OpenHelpDialog(s.tableView.GetKeybindings(), func() {})
+			openHelpDialog(s.tableView.GetKeybindings(), func() {})
 		})
 
 	if params.focusList {

@@ -16,6 +16,7 @@ type UI struct {
 type viewable interface {
 	init()
 	getView() *tui.View
+	refresh()
 	render() error
 }
 
@@ -125,7 +126,7 @@ func (ui *UI) initGlobalKeybindings() {
 			})
 		}).
 		Set('?', "Toggle cheatsheet", func() {
-			OpenHelpDialog(nil, func() {})
+			openHelpDialog(nil, func() {})
 		})
 }
 

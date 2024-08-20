@@ -2,8 +2,8 @@ package ui
 
 import (
 	"mynav/pkg/core"
-	"mynav/pkg/events"
 	"mynav/pkg/system"
+	"mynav/pkg/tasks"
 	"mynav/pkg/tui"
 	"strconv"
 
@@ -54,12 +54,6 @@ func (tv *tmuxSessionView) init() {
 	}
 	tv.tableRenderer.InitTable(sizeX, sizeY, titles, proportions)
 
-	events.AddEventListener(events.TmuxSessionChangeEvent, func(_ string) {
-		tv.refresh()
-		renderView(tv)
-		events.Emit(events.TmuxWindowChangeEvent)
-	})
-
 	tv.refresh()
 
 	tv.view.KeyBinding().
@@ -93,7 +87,9 @@ func (tv *tmuxSessionView) init() {
 						openToastDialogError(err.Error())
 						return
 					}
-					events.Emit(events.WorkspaceChangeEvent)
+
+					tv.refreshTmuxViewsAsync()
+					refreshAsync(getWorkspacesView())
 				}
 			}, "Are you sure you want to delete this session?")
 		}).
@@ -108,11 +104,14 @@ func (tv *tmuxSessionView) init() {
 						openToastDialogError(err.Error())
 						return
 					}
+
+					tv.refreshTmuxViewsAsync()
+					refreshAsync(getWorkspacesView())
 				}
 			}, "Are you sure you want to delete ALL tmux sessions?")
 		}).
 		Set('W', "Kill ALL non-external tmux sessions (has a workspace)", func() {
-			if getApi().Configuration.Standalone || getApi().Core.GetWorkspaceTmuxSessionCount() == 0 {
+			if getApi().Configuration.Standalone || tv.getSelectedSession() == nil {
 				return
 			}
 
@@ -122,16 +121,19 @@ func (tv *tmuxSessionView) init() {
 						openToastDialogError(err.Error())
 						return
 					}
+
+					tv.refreshTmuxViewsAsync()
+					refreshAsync(getWorkspacesView())
 				}
 			}, "Are you sure you want to delete ALL non-external tmux sessions?")
 		}).
 		Set('j', "Move down", func() {
 			tv.tableRenderer.Down()
-			events.Emit(events.TmuxWindowChangeEvent)
+			tv.refreshDown()
 		}).
 		Set('k', "Move up", func() {
 			tv.tableRenderer.Up()
-			events.Emit(events.TmuxWindowChangeEvent)
+			tv.refreshDown()
 		}).
 		Set('c', "Open choose tree in session", func() {
 			// TODO: move this flow in core
@@ -187,6 +189,7 @@ func (tv *tmuxSessionView) init() {
 			if core.IsTmuxSession() {
 				return
 			}
+
 			openEditorDialog(func(s string) {
 				tui.RunAction(func() {
 					getApi().Tmux.CreateAndAttachTmuxSession(s, "~")
@@ -194,7 +197,7 @@ func (tv *tmuxSessionView) init() {
 			}, func() {}, "New session name", smallEditorSize)
 		}).
 		Set('?', "Toggle cheatsheet", func() {
-			OpenHelpDialog(tv.view.GetKeybindings(), func() {})
+			openHelpDialog(tv.view.GetKeybindings(), func() {})
 		})
 }
 
@@ -232,6 +235,30 @@ func (ts *tmuxSessionView) refresh() {
 	}
 
 	ts.tableRenderer.FillTable(rows, sessions)
+}
+
+func (ts *tmuxSessionView) refreshTmuxViewsAsync() {
+	tasks.QueueTask(func() {
+		ts.refresh()
+		renderView(ts)
+		ts.refreshDown()
+	})
+}
+
+func (ts *tmuxSessionView) refreshDown() {
+	tasks.QueueTask(func() {
+		twv := getTmuxWindowView()
+		twv.refresh()
+		renderView(twv)
+
+		tpv := getTmuxPaneView()
+		tpv.refresh()
+		renderView(tpv)
+
+		tpvv := getTmuxPreviewView()
+		tpvv.refresh()
+		renderView(tpvv)
+	})
 }
 
 func (tv *tmuxSessionView) render() error {
