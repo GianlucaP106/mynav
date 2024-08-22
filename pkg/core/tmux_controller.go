@@ -10,21 +10,17 @@ import (
 )
 
 type TmuxController struct {
-	portController    *system.PortController
-	processController *system.ProcessController
-	tmux              *gotmux.Tmux
+	tmux *gotmux.Tmux
 }
 
-func NewTmuxController(pc *system.PortController, pcc *system.ProcessController) *TmuxController {
+func NewTmuxController() *TmuxController {
 	t, err := gotmux.DefaultTmux()
 	if err != nil {
 		log.Panicln(err)
 	}
 
 	tmc := &TmuxController{
-		portController:    pc,
-		tmux:              t,
-		processController: pcc,
+		tmux: t,
 	}
 
 	return tmc
@@ -193,7 +189,7 @@ func (t *TmuxController) GetTmuxSessionByChildPid(pid int) *gotmux.Session {
 			}
 
 			for _, p := range panes {
-				if t.processController.IsProcessChildOf(pid, int(p.Pid)) {
+				if system.IsProcessChildOf(pid, int(p.Pid)) {
 					return session
 				}
 			}

@@ -2,7 +2,6 @@ package ui
 
 import (
 	"mynav/pkg/core"
-	"mynav/pkg/github"
 	"mynav/pkg/system"
 	"mynav/pkg/tui"
 	"strconv"
@@ -264,7 +263,7 @@ func (wv *workspacesView) init() {
 		Set('a', "Create a workspace", func() {
 			curTopic := getTopicsView().getSelectedTopic()
 			if curTopic == nil {
-				openToastDialog("You must create a topic first", false, "Note", func() {})
+				openToastDialog("You must create a topic first", toastDialogeNeutralType, "Note", func() {})
 				return
 			}
 
@@ -339,7 +338,7 @@ func (wv *workspacesView) refresh() {
 		}
 
 		if remote != "" {
-			remote = github.TrimGithubUrl(remote)
+			remote = core.TrimGithubUrl(remote)
 		}
 
 		rowValues = append(rowValues, w)

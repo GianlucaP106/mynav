@@ -6,13 +6,7 @@ import (
 	"github.com/shirou/gopsutil/process"
 )
 
-type ProcessController struct{}
-
-func NewProcessController() *ProcessController {
-	return &ProcessController{}
-}
-
-func (p *ProcessController) IsProcessChildOf(child int, parent int) bool {
+func IsProcessChildOf(child int, parent int) bool {
 	var pid int32
 	pid = int32(child)
 	parentPid := int32(parent)
@@ -36,7 +30,7 @@ func (p *ProcessController) IsProcessChildOf(child int, parent int) bool {
 	}
 }
 
-func (p *ProcessController) KillProcess(pid int) error {
+func KillProcess(pid int) error {
 	proc, err := os.FindProcess(pid)
 	if err != nil {
 		return err

@@ -2,16 +2,16 @@ package ui
 
 import (
 	"fmt"
-	"mynav/pkg/github"
 	"mynav/pkg/system"
 	"mynav/pkg/tui"
 
 	"github.com/awesome-gocui/gocui"
+	"github.com/google/go-github/v62/github"
 )
 
 type githubPrView struct {
 	view          *tui.View
-	tableRenderer *tui.TableRenderer[*github.GithubPullRequest]
+	tableRenderer *tui.TableRenderer[*github.PullRequest]
 }
 
 var _ viewable = new(githubPrView)
@@ -40,7 +40,7 @@ func (g *githubPrView) init() {
 	styleView(g.view)
 
 	sizeX, sizeY := g.view.Size()
-	g.tableRenderer = tui.NewTableRenderer[*github.GithubPullRequest]()
+	g.tableRenderer = tui.NewTableRenderer[*github.PullRequest]()
 	g.tableRenderer.InitTable(
 		sizeX,
 		sizeY,
@@ -76,14 +76,14 @@ func (g *githubPrView) init() {
 			openHelpDialog(g.view.GetKeybindings(), func() {})
 		}).
 		Set(gocui.KeyCtrlL, "Focus "+GithubRepoView, func() {
-			getGithubRepoView().Focus()
+			getGithubRepoView().focus()
 		}).
 		Set(gocui.KeyArrowRight, "Focus "+GithubRepoView, func() {
-			getGithubRepoView().Focus()
+			getGithubRepoView().focus()
 		})
 }
 
-func (g *githubPrView) getSelectedPr() *github.GithubPullRequest {
+func (g *githubPrView) getSelectedPr() *github.PullRequest {
 	_, pr := g.tableRenderer.GetSelectedRow()
 	if pr != nil {
 		return *pr
@@ -99,18 +99,18 @@ func (g *githubPrView) refresh() {
 
 	gpr := getApi().Github.GetUserPullRequests()
 
+	principal := getApi().Github.GetPrincipal()
 	rows := make([][]string, 0)
-	rowValues := make([]*github.GithubPullRequest, 0)
 	for _, pr := range gpr {
-		rowValues = append(rowValues, pr)
+		_, relation := getApi().Github.GetPrRelation(pr, principal)
 		rows = append(rows, []string{
-			pr.Repo.GetName(),
+			"TODO: REPO",
 			pr.GetTitle(),
-			pr.Relation,
+			relation,
 		})
 	}
 
-	g.tableRenderer.FillTable(rows, rowValues)
+	g.tableRenderer.FillTable(rows, gpr)
 }
 
 func (g *githubPrView) render() error {
@@ -123,13 +123,11 @@ func (g *githubPrView) render() error {
 	isFocused := g.view.IsFocused()
 	g.view.Resize(getViewPosition(g.view.Name()))
 
-	g.tableRenderer.RenderWithSelectCallBack(g.view, func(_ int, _ *tui.TableRow[*github.GithubPullRequest]) bool {
+	g.tableRenderer.RenderWithSelectCallBack(g.view, func(_ int, _ *tui.TableRow[*github.PullRequest]) bool {
 		return isFocused
 	})
 
-	if getApi().Github.IsLoading() {
-		fmt.Fprintln(g.view, "Loading...")
-	} else if g.tableRenderer.GetTableSize() == 0 {
+	if g.tableRenderer.GetTableSize() == 0 {
 		fmt.Fprintln(g.view, "Nothing to show")
 	}
 

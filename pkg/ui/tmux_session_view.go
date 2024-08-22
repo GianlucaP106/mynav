@@ -111,7 +111,7 @@ func (tv *tmuxSessionView) init() {
 			}, "Are you sure you want to delete ALL tmux sessions?")
 		}).
 		Set('W', "Kill ALL non-external tmux sessions (has a workspace)", func() {
-			if getApi().Configuration.Standalone || tv.getSelectedSession() == nil {
+			if getApi().GlobalConfiguration.Standalone || tv.getSelectedSession() == nil {
 				return
 			}
 
@@ -218,7 +218,7 @@ func (ts *tmuxSessionView) refresh() {
 	for _, session := range sessions {
 		workspace := "external"
 		sessionName := session.Name
-		if !getApi().Configuration.Standalone {
+		if !getApi().GlobalConfiguration.Standalone {
 			w := getApi().Core.GetWorkspaceByTmuxSession(session)
 			if w != nil {
 				workspace = w.ShortPath()

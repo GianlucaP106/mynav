@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"mynav/pkg/system"
 	"mynav/pkg/tasks"
 	"mynav/pkg/tui"
 	"strconv"
@@ -65,7 +66,7 @@ func (p *psView) init() {
 					return
 				}
 
-				err := getApi().Proc.KillProcess(int(proc.Pid))
+				err := system.KillProcess(int(proc.Pid))
 				if err != nil {
 					openToastDialogError(err.Error())
 				}

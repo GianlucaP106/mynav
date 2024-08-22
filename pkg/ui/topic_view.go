@@ -3,6 +3,7 @@ package ui
 import (
 	"mynav/pkg/core"
 	"mynav/pkg/persistence"
+	"mynav/pkg/tasks"
 	"mynav/pkg/tui"
 
 	"github.com/awesome-gocui/gocui"
@@ -201,8 +202,14 @@ func (tv *topicsView) refresh() {
 }
 
 func (t *topicsView) refreshFsAsync() {
-	refreshAsync(t)
-	refreshAsync(getWorkspacesView())
+	tasks.QueueTask(func() {
+		t.refresh()
+		renderView(t)
+
+		wv := getWorkspacesView()
+		wv.refresh()
+		renderView(wv)
+	})
 }
 
 func (tv *topicsView) getSelectedTopic() *core.Topic {

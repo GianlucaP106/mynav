@@ -2,15 +2,17 @@ package ui
 
 import (
 	"fmt"
-	"mynav/pkg/github"
+	"mynav/pkg/core"
+	"mynav/pkg/tasks"
 	"mynav/pkg/tui"
 
 	"github.com/awesome-gocui/gocui"
+	"github.com/google/go-github/v62/github"
 )
 
 type githubRepoView struct {
 	view          *tui.View
-	tableRenderer *tui.TableRenderer[*github.GithubRepository]
+	tableRenderer *tui.TableRenderer[*github.Repository]
 }
 
 var _ viewable = new(githubRepoView)
@@ -27,7 +29,7 @@ func (g *githubRepoView) getView() *tui.View {
 	return g.view
 }
 
-func (g *githubRepoView) Focus() {
+func (g *githubRepoView) focus() {
 	focusView(g.getView().Name())
 }
 
@@ -38,7 +40,7 @@ func (g *githubRepoView) init() {
 
 	styleView(g.view)
 
-	g.tableRenderer = tui.NewTableRenderer[*github.GithubRepository]()
+	g.tableRenderer = tui.NewTableRenderer[*github.Repository]()
 	sizeX, sizeY := g.view.Size()
 
 	g.tableRenderer.InitTable(
@@ -67,11 +69,81 @@ func (g *githubRepoView) init() {
 		Set('k', "Move up", func() {
 			g.tableRenderer.Up()
 		}).
+		Set('c', "Clone repo to a workspace", func() {
+			repo := g.getSelectedRepo()
+			if repo == nil {
+				return
+			}
+
+			sd := new(*searchListDialog[*core.Workspace])
+			*sd = openSearchListDialog(searchDialogConfig[*core.Workspace]{
+				tableViewTitle:  "workspaces",
+				searchViewTitle: "Filter",
+				tableTitles: []string{
+					"Topic/Name",
+				},
+				tableProportions: []float64{
+					1.0,
+				},
+				focusList: true,
+				initial: func() ([][]string, []*core.Workspace) {
+					workspaces := getApi().Core.GetWorkspaces()
+					rows := make([][]string, 0)
+					for _, w := range workspaces {
+						rows = append(rows, []string{
+							w.ShortPath(),
+						})
+					}
+					return rows, workspaces
+				},
+				onSearch: func(s string) ([][]string, []*core.Workspace) {
+					workspaces := getApi().Core.GetWorkspaces().FilterByNameContaining(s)
+					rows := make([][]string, 0)
+					for _, w := range workspaces {
+						rows = append(rows, []string{
+							w.ShortPath(),
+						})
+					}
+					return rows, workspaces
+				},
+				onSelect: func(a *core.Workspace) {
+					if *sd != nil {
+						(*sd).close()
+					}
+
+					g.focus()
+					err := a.CloneRepo(repo.GetHTMLURL())
+					if err != nil {
+						openToastDialogError(err.Error())
+						return
+					}
+
+					tasks.QueueTask(func() {
+						wv := getWorkspacesView()
+						tv := getTopicsView()
+						tv.refreshFsAsync()
+						getMainTabGroup().FocusTabByIndex(0)
+						wv.focus()
+						tv.selectTopicByName(a.Topic.Name)
+						wv.selectWorkspaceByShortPath(a.ShortPath())
+					})
+				},
+			})
+		}).
 		Set(gocui.KeyArrowRight, "Focus PR View", moveRight).
 		Set(gocui.KeyCtrlL, "Focus PR View", moveRight).
 		Set('?', "Toggle cheatsheet", func() {
 			openHelpDialog(g.view.GetKeybindings(), func() {})
 		})
+}
+
+func (g *githubRepoView) getSelectedRepo() *github.Repository {
+	_, value := g.tableRenderer.GetSelectedRow()
+	if value != nil {
+		return *value
+	}
+
+	return nil
 }
 
 func (g *githubRepoView) refresh() {
@@ -82,7 +154,7 @@ func (g *githubRepoView) refresh() {
 	repos := getApi().Github.GetUserRepos()
 
 	rows := make([][]string, 0)
-	rowValues := make([]*github.GithubRepository, 0)
+	rowValues := make([]*github.Repository, 0)
 	for _, repo := range repos {
 		rowValues = append(rowValues, repo)
 		rows = append(rows, []string{
@@ -104,13 +176,11 @@ func (g *githubRepoView) render() error {
 	isFocused := g.view.IsFocused()
 	g.view.Resize(getViewPosition(g.view.Name()))
 
-	g.tableRenderer.RenderWithSelectCallBack(g.view, func(_ int, _ *tui.TableRow[*github.GithubRepository]) bool {
+	g.tableRenderer.RenderWithSelectCallBack(g.view, func(_ int, _ *tui.TableRow[*github.Repository]) bool {
 		return isFocused
 	})
 
-	if getApi().Github.IsLoading() {
-		fmt.Fprintln(g.view, "Loading...")
-	} else if g.tableRenderer.GetTableSize() == 0 {
+	if g.tableRenderer.GetTableSize() == 0 {
 		fmt.Fprintln(g.view, "No repos to display")
 	}
 

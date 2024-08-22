@@ -1,11 +1,10 @@
-package configuration
+package core
 
 import (
 	"encoding/json"
 	"io"
 	"log"
 	"mynav/pkg"
-	"mynav/pkg/github"
 	"mynav/pkg/persistence"
 	"mynav/pkg/system"
 	"net/http"
@@ -17,9 +16,9 @@ import (
 )
 
 type GlobalConfigurationDataSchema struct {
-	UpdateAsked *time.Time                        `json:"update-asked"`
-	GithubToken *github.GithubAuthenticationToken `json:"github-token"`
-	LastTab     string                            `json:"last-tab"`
+	UpdateAsked *time.Time                 `json:"update-asked"`
+	GithubToken *GithubAuthenticationToken `json:"github-token"`
+	LastTab     string                     `json:"last-tab"`
 }
 
 type GlobalConfiguration struct {
@@ -84,11 +83,11 @@ func (gc *GlobalConfiguration) IsUpdateAsked() bool {
 	return isBeforeOneHourAgo(*time)
 }
 
-func (gc *GlobalConfiguration) GetGithubToken() *github.GithubAuthenticationToken {
+func (gc *GlobalConfiguration) GetGithubToken() *GithubAuthenticationToken {
 	return gc.Datasource.GetData().GithubToken
 }
 
-func (gc *GlobalConfiguration) SetGithubToken(token *github.GithubAuthenticationToken) {
+func (gc *GlobalConfiguration) SetGithubToken(token *GithubAuthenticationToken) {
 	data := gc.Datasource.GetData()
 	data.GithubToken = token
 	gc.Datasource.SaveData(data)
