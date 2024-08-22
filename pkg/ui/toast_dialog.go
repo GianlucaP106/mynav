@@ -16,7 +16,7 @@ type toastDialogType uint
 const (
 	toastDialogErrType toastDialogType = iota
 	toastDialogSuccessType
-	toastDialogeNeutralType
+	toastDialogNeutralType
 )
 
 func openToastDialog(message string, dialogType toastDialogType, title string, exit func()) *toastDialog {

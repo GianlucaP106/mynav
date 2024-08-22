@@ -3,7 +3,6 @@ package app
 import (
 	"log"
 	"mynav/pkg/core"
-	"mynav/pkg/logger"
 	"mynav/pkg/tasks"
 	"mynav/pkg/ui"
 )
@@ -13,7 +12,6 @@ type App struct {
 }
 
 func NewApp() *App {
-	logger.Init("debug.log")
 	api, err := core.NewApi()
 	if err != nil {
 		log.Fatalln(err.Error())
