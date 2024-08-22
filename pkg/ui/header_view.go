@@ -46,12 +46,10 @@ func (hv *headerView) render() error {
 	sep := tui.WithSurroundingSpaces("- ")
 	line := ""
 	line += "Tab: " + selectedTabName
-	if isMainTab {
-		line += " " + sep
-	}
 
 	if isMainTab {
 		if w := getApi().Core.GetSelectedWorkspace(); w != nil {
+			line += " " + sep
 			line += "Last workspace: " + w.ShortPath()
 		}
 	}

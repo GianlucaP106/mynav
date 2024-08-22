@@ -75,6 +75,11 @@ func (g *githubRepoView) init() {
 				return
 			}
 
+			if getApi().GlobalConfiguration.Standalone {
+				openToastDialog("Cannot clone to worksapce without a configured directory.", toastDialogNeutralType, "Note", func() {})
+				return
+			}
+
 			sd := new(*searchListDialog[*core.Workspace])
 			*sd = openSearchListDialog(searchDialogConfig[*core.Workspace]{
 				tableViewTitle:  "workspaces",
