@@ -1,4 +1,4 @@
-package github
+package core
 
 import (
 	"context"
@@ -8,16 +8,13 @@ import (
 	"net/http"
 	"time"
 
-	gh "github.com/google/go-github/v62/github"
+	"github.com/google/go-github/v62/github"
 	"golang.org/x/oauth2"
 	githuboauth "golang.org/x/oauth2/github"
 )
 
 type GithubAuthenticator struct {
 	oauthConfig *oauth2.Config
-
-	onLogin  func(*GithubAuthenticationToken)
-	onLogout func()
 }
 
 type GithubDevicePreAuthentication struct {
@@ -31,7 +28,7 @@ type GithubAuthenticationToken struct {
 
 const CLIENT_ID = "Ov23lirJDAVBmN4oRLY0"
 
-func NewGithubAuthenticator(onLogin func(*GithubAuthenticationToken), onLogout func(), scopes ...string) *GithubAuthenticator {
+func NewGithubAuthenticator(scopes ...string) *GithubAuthenticator {
 	c := &oauth2.Config{
 		ClientID: CLIENT_ID,
 		Scopes:   scopes,
@@ -40,14 +37,12 @@ func NewGithubAuthenticator(onLogin func(*GithubAuthenticationToken), onLogout f
 
 	ga := &GithubAuthenticator{
 		oauthConfig: c,
-		onLogin:     onLogin,
-		onLogout:    onLogout,
 	}
 
 	return ga
 }
 
-func (ga *GithubAuthenticator) AuthenticateWithDevice() (*GithubDevicePreAuthentication, func() *gh.Client) {
+func (ga *GithubAuthenticator) AuthenticateWithDevice() (*GithubDevicePreAuthentication, func() (*github.Client, *GithubAuthenticationToken)) {
 	deviceAuth, err := ga.oauthConfig.DeviceAuth(context.Background())
 	if err != nil {
 		log.Fatal(err)
@@ -57,11 +52,10 @@ func (ga *GithubAuthenticator) AuthenticateWithDevice() (*GithubDevicePreAuthent
 		DeviceAuthResponse: deviceAuth,
 	}
 
-	return gda, func() *gh.Client {
+	return gda, func() (*github.Client, *GithubAuthenticationToken) {
 		auth := ga.pollAuthenticateDevice(gda)
-		ga.onLogin(auth)
 		client := ga.initClient(auth)
-		return client
+		return client, auth
 	}
 }
 
@@ -79,23 +73,21 @@ func (ga *GithubAuthenticator) pollAuthenticateDevice(da *GithubDevicePreAuthent
 	}
 }
 
-func (ga *GithubAuthenticator) AuthenticateWithPersonalAccessToken(token string) (*gh.Client, error) {
+func (ga *GithubAuthenticator) AuthenticateWithPersonalAccessToken(token string) (*github.Client, *GithubAuthenticationToken, error) {
 	gt := &GithubAuthenticationToken{
 		PersonalAccessToken: &token,
 	}
 
-	ga.onLogin(gt)
-
 	client := ga.initClient(gt)
 	if client == nil {
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	if _, _, err := client.Users.Get(context.Background(), ""); err != nil {
-		return nil, errors.New("invalid token")
+		return nil, nil, errors.New("invalid token")
 	}
 
-	return client, nil
+	return client, gt, nil
 }
 
 func (ga *GithubAuthenticator) httpClient(auth *GithubAuthenticationToken) *http.Client {
@@ -106,13 +98,13 @@ func (gda *GithubDevicePreAuthentication) OpenBrowser() {
 	system.OpenBrowser(gda.VerificationURI)
 }
 
-func (gda *GithubAuthenticator) initClient(auth *GithubAuthenticationToken) *gh.Client {
-	var client *gh.Client
+func (gda *GithubAuthenticator) initClient(auth *GithubAuthenticationToken) *github.Client {
+	var client *github.Client
 	if auth.PersonalAccessToken != nil {
-		client = gh.NewClient(nil).WithAuthToken(*auth.PersonalAccessToken)
+		client = github.NewClient(nil).WithAuthToken(*auth.PersonalAccessToken)
 	} else {
 		http := gda.httpClient(auth)
-		client = gh.NewClient(http)
+		client = github.NewClient(http)
 	}
 
 	return client

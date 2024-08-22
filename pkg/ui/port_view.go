@@ -99,7 +99,7 @@ func (p *portView) init() {
 
 			openConfirmationDialog(func(b bool) {
 				if b {
-					if err := getApi().Port.KillPort(port.Port); err != nil {
+					if err := system.KillPort(port.Port); err != nil {
 						openToastDialogError(err.Error())
 					}
 				}
@@ -112,7 +112,7 @@ func (p *portView) init() {
 
 func (pv *portView) refresh() {
 	ports := make([]*port, 0)
-	for _, p := range getApi().Port.GetPorts().ToList().Sorted() {
+	for _, p := range system.GetPorts().ToList().Sorted() {
 		if t := getApi().Tmux.GetTmuxSessionByPort(p); t != nil {
 			ports = append(ports, &port{
 				tmux: t,

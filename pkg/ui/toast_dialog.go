@@ -11,17 +11,28 @@ type toastDialog struct {
 	view *tui.View
 }
 
-func openToastDialog(message string, error bool, title string, exit func()) *toastDialog {
+type toastDialogType uint
+
+const (
+	toastDialogErrType toastDialogType = iota
+	toastDialogSuccessType
+	toastDialogeNeutralType
+)
+
+func openToastDialog(message string, dialogType toastDialogType, title string, exit func()) *toastDialog {
 	td := &toastDialog{}
 
 	td.view = tui.SetCenteredView(ToastDialog, max(len(message), len(title))+5, 3, 0)
 	td.view.Title = tui.WithSurroundingSpaces(title)
 	td.view.Editable = true
 	styleView(td.view)
-	if error {
+	switch dialogType {
+	case toastDialogErrType:
 		td.view.FrameColor = gocui.ColorRed
-	} else {
+	case toastDialogSuccessType:
 		td.view.FrameColor = gocui.ColorGreen
+	default:
+		td.view.FrameColor = onFrameColor
 	}
 
 	keys := []gocui.Key{
@@ -49,7 +60,7 @@ func openToastDialog(message string, error bool, title string, exit func()) *toa
 }
 
 func openToastDialogError(message string) *toastDialog {
-	return openToastDialog(message, true, "Error", func() {})
+	return openToastDialog(message, toastDialogErrType, "Error", func() {})
 }
 
 func (td *toastDialog) close() {

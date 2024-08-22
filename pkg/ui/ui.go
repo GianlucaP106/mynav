@@ -1,7 +1,7 @@
 package ui
 
 import (
-	"mynav/pkg/api"
+	"mynav/pkg/core"
 	"mynav/pkg/tui"
 
 	"github.com/awesome-gocui/gocui"
@@ -9,7 +9,7 @@ import (
 
 type UI struct {
 	mainTabGroup *tui.TabGroup
-	api          *api.Api
+	api          *core.Api
 	views        []viewable
 }
 
@@ -50,11 +50,11 @@ func (ui *UI) InitUI() *UI {
 
 	systemUpdate()
 
-	if getApi().Configuration.GetLastTab() != "" {
-		ui.mainTabGroup.FocusTab(getApi().Configuration.GetLastTab())
+	if getApi().GlobalConfiguration.GetLastTab() != "" {
+		ui.mainTabGroup.FocusTab(getApi().GlobalConfiguration.GetLastTab())
 	}
 
-	if getApi().Configuration.GetLastTab() == "main" {
+	if getApi().GlobalConfiguration.GetLastTab() == "main" {
 		if getApi().Core.GetSelectedWorkspace() != nil {
 			getWorkspacesView().focus()
 		} else {
@@ -97,7 +97,7 @@ func (ui *UI) initStandaloneUI() {
 func (ui *UI) askConfig() {
 	openConfirmationDialog(func(b bool) {
 		if !b {
-			getApi().Configuration.SetStandalone(true)
+			getApi().GlobalConfiguration.SetStandalone(true)
 			ui.initStandaloneUI()
 			return
 		}
@@ -117,12 +117,12 @@ func (ui *UI) initGlobalKeybindings() {
 		SetWithQuit('q', quit, "Quit").
 		Set(']', "Cycle tab right", func() {
 			ui.mainTabGroup.IncrementSelectedTab(func(tab *tui.Tab) {
-				getApi().Configuration.SetLastTab(tab.Frame.Name())
+				getApi().GlobalConfiguration.SetLastTab(tab.Frame.Name())
 			})
 		}).
 		Set('[', "Cycle tab left", func() {
 			ui.mainTabGroup.DecrementSelectedTab(func(tab *tui.Tab) {
-				getApi().Configuration.SetLastTab(tab.Frame.Name())
+				getApi().GlobalConfiguration.SetLastTab(tab.Frame.Name())
 			})
 		}).
 		Set('?', "Toggle cheatsheet", func() {

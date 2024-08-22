@@ -3,7 +3,7 @@ package ui
 import (
 	"errors"
 	"log"
-	"mynav/pkg/api"
+	"mynav/pkg/core"
 	"mynav/pkg/tasks"
 	"mynav/pkg/tui"
 
@@ -12,7 +12,7 @@ import (
 
 var _ui *UI
 
-func Start(api *api.Api) {
+func Start(api *core.Api) {
 	g := tui.NewTui()
 	defer g.Close()
 
@@ -21,9 +21,9 @@ func Start(api *api.Api) {
 		api:   api,
 	}
 
-	if getApi().Configuration.IsConfigInitialized {
+	if getApi().LocalConfiguration.IsConfigInitialized {
 		_ui.InitUI()
-	} else if getApi().Configuration.Standalone {
+	} else if getApi().GlobalConfiguration.Standalone {
 		_ui.initStandaloneUI()
 	} else {
 		_ui.askConfig()
@@ -82,6 +82,6 @@ func getMainTabGroup() *tui.TabGroup {
 	return _ui.mainTabGroup
 }
 
-func getApi() *api.Api {
+func getApi() *core.Api {
 	return _ui.api
 }

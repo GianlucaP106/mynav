@@ -31,12 +31,10 @@ func (g *githubProfileView) init() {
 
 	styleView(g.view)
 
-	tasks.QueueTask(func() {
-		getApi().Github.LoadData()
-		refreshAsync(g)
-		refreshAsync(getGithubPrView())
-		refreshAsync(getGithubRepoView())
-	})
+	isAuthenticated := getApi().Github.IsAuthenticated()
+	if isAuthenticated {
+		g.loadData()
+	}
 
 	g.view.KeyBinding().
 		Set('L', "Login with device code and browser", func() {
@@ -61,25 +59,20 @@ func (g *githubProfileView) init() {
 					})
 				}
 
-				getApi().Github.LoadData()
-				refreshAsync(g)
-				refreshAsync(getGithubPrView())
-				refreshAsync(getGithubRepoView())
+				g.loadData()
 			})
 
 			if deviceAuth != nil {
 				tdMu.Lock()
-				(*td) = openToastDialog(deviceAuth.UserCode, false, "User device code - automatically copied to clipboard", func() {})
+				(*td) = openToastDialog(deviceAuth.UserCode, toastDialogeNeutralType, "User device code - automatically copied to clipboard", func() {})
 				tdMu.Unlock()
 				system.CopyToClip(deviceAuth.UserCode)
 				deviceAuth.OpenBrowser()
 			}
 		}).
 		Set('o', "Open in browser", func() {
-			profile := getApi().Github.GetProfile()
-			if profile.IsLoaded() {
-				profile.OpenBrowser()
-			}
+			profile := getApi().Github.GetPrincipal()
+			system.OpenBrowser(profile.GetHTMLURL())
 		}).
 		Set('P', "Login with personal access token", func() {
 			if getApi().Github.IsAuthenticated() {
@@ -95,15 +88,28 @@ func (g *githubProfileView) init() {
 		}).
 		Set('O', "Logout", func() {
 			getApi().Github.LogoutUser()
+			openToastDialog("Successfully logged out - restart mynav to clear the github views", toastDialogSuccessType, "Note", func() {})
 		}).
 		Set('?', "Toggle cheatsheet", func() {
 			openHelpDialog(g.view.GetKeybindings(), func() {})
 		})
 }
 
+func (g *githubProfileView) loadData() {
+	tasks.QueueTask(func() {
+		getApi().Github.LoadProfile()
+		refreshAsync(g)
+
+		getApi().Github.LoadUserRepos()
+		refreshAsync(getGithubRepoView())
+
+		getApi().Github.LoadUserPullRequests()
+		refreshAsync(getGithubPrView())
+	})
+}
+
 func (g *githubProfileView) render() error {
 	g.view.Clear()
-	g.view = getViewPosition(g.view.Name()).Set()
 	g.view.Resize(getViewPosition(g.view.Name()))
 	if !getApi().Github.IsAuthenticated() {
 		fmt.Fprintln(g.view, "Not authenticated")
@@ -113,11 +119,11 @@ func (g *githubProfileView) render() error {
 		return nil
 	}
 
-	profile := getApi().Github.GetProfile()
-	fmt.Fprintln(g.view, "Login: ", profile.Login)
-	fmt.Fprintln(g.view, "Email: ", profile.Email)
-	fmt.Fprintln(g.view, "Name: ", profile.Name)
-	fmt.Fprintln(g.view, "Url: ", profile.Url)
+	profile := getApi().Github.GetPrincipal()
+	fmt.Fprintln(g.view, "Login: ", profile.GetLogin())
+	fmt.Fprintln(g.view, "Email: ", profile.GetEmail())
+	fmt.Fprintln(g.view, "Name: ", profile.GetName())
+	fmt.Fprintln(g.view, "Url: ", profile.GetURL())
 
 	return nil
 }
