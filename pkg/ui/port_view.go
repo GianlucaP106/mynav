@@ -82,7 +82,7 @@ func (p *portView) init() {
 				return
 			}
 
-			tui.RunAction(func() {
+			runAction(func() {
 				getApi().Tmux.AttachTmuxSession(port.tmux)
 			})
 		}).

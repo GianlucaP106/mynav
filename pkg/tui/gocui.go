@@ -98,9 +98,11 @@ func UpdateTui(f func(g *Tui) error) {
 	})
 }
 
-func RunAction(action func()) {
+func Suspend() {
 	gocui.Suspend()
-	action()
+}
+
+func Resume() {
 	gocui.Resume()
 }
 

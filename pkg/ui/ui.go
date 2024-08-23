@@ -182,3 +182,11 @@ func (ui *UI) buildGithubTab() *tui.Tab {
 	tab.GenerateNavigationKeyBindings()
 	return tab
 }
+
+func runAction(f func()) {
+	tui.Suspend()
+	f()
+	tui.Resume()
+	getTopicsView().refreshFsAsync()
+	getTmuxSessionView().refreshTmuxViewsAsync()
+}

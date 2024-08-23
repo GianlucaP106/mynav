@@ -88,7 +88,7 @@ func (t *tmuxWindowView) init() {
 				return
 			}
 
-			tui.RunAction(func() {
+			runAction(func() {
 				getApi().Tmux.AttachTmuxSession(session)
 			})
 		}).
