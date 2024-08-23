@@ -14,7 +14,7 @@ func openConfirmationDialog(onConfirm func(bool), title string) *confirmationDia
 	cd := &confirmationDialog{}
 	cd.title = title
 	prevView := tui.GetFocusedView()
-	cd.view = tui.SetCenteredView(ConfirmationDialog, len(title)+5, 3, 0)
+	cd.view = tui.SetCenteredView(ConfirmationDialog, len(title)+5, 5, 0)
 	cd.view.Title = tui.WithSurroundingSpaces("Confirm")
 	cd.view.Wrap = true
 	cd.view.Editable = true
@@ -39,6 +39,8 @@ func openConfirmationDialog(onConfirm func(bool), title string) *confirmationDia
 	cd.view.Focus()
 	cd.view.Clear()
 	fmt.Fprintln(cd.view, tui.DisplayWhite(cd.title, tui.LeftAlign, sizeX))
+	fmt.Fprintln(cd.view, tui.BlankLine(sizeX))
+	fmt.Fprintln(cd.view, tui.DisplayWhite("Cancel [esc] | Confirm [enter]", tui.LeftAlign, sizeX))
 	return cd
 }
 
