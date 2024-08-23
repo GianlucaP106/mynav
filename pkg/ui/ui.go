@@ -25,11 +25,6 @@ func (ui *UI) InitUI() *UI {
 		newHeaderView(),
 		newTopicsView(),
 		newWorkspcacesView(),
-
-		// NOTE: not using these views for the moment - https://github.com/GianlucaP106/mynav/issues/287
-		// newPortView(),
-		// newPsView(),
-
 		newTmuxSessionView(),
 		newTmuxWindowView(),
 		newTmuxPaneView(),
@@ -159,15 +154,6 @@ func (ui *UI) buildTmuxTab() *tui.Tab {
 	tab.AddView(getTmuxWindowView().view, tui.TopRightPosition)
 	tab.AddView(getTmuxPreviewView().view, tui.NoPosition)
 	tab.AddView(getTmuxPaneView().view, tui.NoPosition)
-	tab.AddView(getHeaderView().view, tui.NoPosition)
-	tab.GenerateNavigationKeyBindings()
-	return tab
-}
-
-func (ui *UI) buildSystemTab() *tui.Tab {
-	tab := ui.mainTabGroup.NewTab("system", getPortView().getView().Name())
-	tab.AddView(getPortView().view, tui.TopRightPosition)
-	tab.AddView(getPsView().view, tui.TopLeftPosition)
 	tab.AddView(getHeaderView().view, tui.NoPosition)
 	tab.GenerateNavigationKeyBindings()
 	return tab

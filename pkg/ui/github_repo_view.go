@@ -3,7 +3,6 @@ package ui
 import (
 	"fmt"
 	"mynav/pkg/core"
-	"mynav/pkg/tasks"
 	"mynav/pkg/tui"
 
 	"github.com/awesome-gocui/gocui"
@@ -123,7 +122,7 @@ func (g *githubRepoView) init() {
 						return
 					}
 
-					tasks.QueueTask(func() {
+					go func() {
 						wv := getWorkspacesView()
 						tv := getTopicsView()
 						tv.refreshFsAsync()
@@ -131,7 +130,7 @@ func (g *githubRepoView) init() {
 						wv.focus()
 						tv.selectTopicByName(a.Topic.Name)
 						wv.selectWorkspaceByShortPath(a.ShortPath())
-					})
+					}()
 				},
 			})
 		}).
