@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"mynav/pkg/core"
 	"mynav/pkg/system"
 	"mynav/pkg/tui"
 
@@ -45,7 +46,7 @@ func (g *githubPrView) init() {
 		sizeX,
 		sizeY,
 		[]string{
-			"Repo name",
+			"Repo Name",
 			"Pr title",
 			"Relation",
 		},
@@ -104,7 +105,7 @@ func (g *githubPrView) refresh() {
 	for _, pr := range gpr {
 		_, relation := getApi().Github.GetPrRelation(pr, principal)
 		rows = append(rows, []string{
-			"TODO: REPO",
+			core.ExtractRepoFromPrUrl(pr.GetHTMLURL()),
 			pr.GetTitle(),
 			relation,
 		})
