@@ -4,7 +4,6 @@ import (
 	"errors"
 	"log"
 	"mynav/pkg/core"
-	"mynav/pkg/tasks"
 	"mynav/pkg/tui"
 
 	"github.com/awesome-gocui/gocui"
@@ -71,11 +70,11 @@ func focusView(viewName string) {
 	}
 }
 
-func refreshAsync(v viewable) *tasks.Task {
-	return tasks.QueueTask(func() {
+func refreshAsync(v viewable) {
+	go func() {
 		v.refresh()
 		renderView(v)
-	})
+	}()
 }
 
 func getMainTabGroup() *tui.TabGroup {

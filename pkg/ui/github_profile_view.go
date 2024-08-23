@@ -3,7 +3,6 @@ package ui
 import (
 	"fmt"
 	"mynav/pkg/system"
-	"mynav/pkg/tasks"
 	"mynav/pkg/tui"
 	"sync"
 )
@@ -46,7 +45,7 @@ func (g *githubProfileView) init() {
 			td := new(*toastDialog)
 
 			deviceAuth, poll := getApi().Github.InitWithDeviceAuth()
-			tasks.QueueTask(func() {
+			go func() {
 				poll()
 
 				tdMu.Lock()
@@ -60,7 +59,7 @@ func (g *githubProfileView) init() {
 				}
 
 				g.loadData()
-			})
+			}()
 
 			if deviceAuth != nil {
 				tdMu.Lock()
@@ -96,7 +95,7 @@ func (g *githubProfileView) init() {
 }
 
 func (g *githubProfileView) loadData() {
-	tasks.QueueTask(func() {
+	go func() {
 		getApi().Github.LoadProfile()
 		refreshAsync(g)
 
@@ -105,7 +104,7 @@ func (g *githubProfileView) loadData() {
 
 		getApi().Github.LoadUserPullRequests()
 		refreshAsync(getGithubPrView())
-	})
+	}()
 }
 
 func (g *githubProfileView) render() error {

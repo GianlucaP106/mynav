@@ -3,7 +3,6 @@ package ui
 import (
 	"mynav/pkg/core"
 	"mynav/pkg/system"
-	"mynav/pkg/tasks"
 	"mynav/pkg/tui"
 	"strconv"
 	"time"
@@ -162,14 +161,14 @@ func (t *tmuxWindowView) refresh() {
 }
 
 func (t *tmuxWindowView) refreshDown() {
-	tasks.QueueTask(func() {
+	go func() {
 		tpv := getTmuxPaneView()
 		tpv.refresh()
 		renderView(tpv)
 		tpv2 := getTmuxPreviewView()
 		tpv2.refresh()
 		renderView(tpv2)
-	})
+	}()
 }
 
 func (t *tmuxWindowView) render() error {

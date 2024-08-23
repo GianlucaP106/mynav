@@ -3,7 +3,6 @@ package app
 import (
 	"log"
 	"mynav/pkg/core"
-	"mynav/pkg/tasks"
 	"mynav/pkg/ui"
 )
 
@@ -23,6 +22,5 @@ func NewApp() *App {
 }
 
 func (app *App) Start() {
-	tasks.StartExecutor()
 	ui.Start(app.api)
 }
