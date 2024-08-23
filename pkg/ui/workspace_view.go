@@ -132,7 +132,7 @@ func (wv *workspacesView) init() {
 				return
 			}
 
-			tui.RunAction(func() {
+			runAction(func() {
 				if core.IsTmuxSession() {
 					getApi().Core.OpenNeovimInWorkspace(curWorkspace)
 				} else {
@@ -146,7 +146,7 @@ func (wv *workspacesView) init() {
 				return
 			}
 
-			tui.RunAction(func() {
+			runAction(func() {
 				getApi().Core.OpenNeovimInWorkspace(curWorkspace)
 			})
 		}).
@@ -156,7 +156,7 @@ func (wv *workspacesView) init() {
 				return
 			}
 
-			tui.RunAction(func() {
+			runAction(func() {
 				getApi().Core.OpenTerminalInWorkspace(curWorkspace)
 			})
 		}).

@@ -1,7 +1,5 @@
 package ui
 
-import "mynav/pkg/tui"
-
 func systemUpdate() bool {
 	if getApi().LocalConfiguration.IsConfigInitialized && !getApi().GlobalConfiguration.IsUpdateAsked() {
 		getApi().GlobalConfiguration.SetUpdateAsked()
@@ -9,7 +7,7 @@ func systemUpdate() bool {
 		if update {
 			openConfirmationDialog(func(b bool) {
 				if b {
-					tui.RunAction(func() {
+					runAction(func() {
 						getApi().GlobalConfiguration.UpdateMynav()
 					})
 				}

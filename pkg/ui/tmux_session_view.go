@@ -68,7 +68,7 @@ func (tv *tmuxSessionView) init() {
 				return
 			}
 
-			tui.RunAction(func() {
+			runAction(func() {
 				getApi().Tmux.AttachTmuxSession(session)
 			})
 		}).
@@ -181,7 +181,7 @@ func (tv *tmuxSessionView) init() {
 				return
 			}
 
-			tui.RunAction(func() {
+			runAction(func() {
 				session.Attach()
 			})
 		}).
@@ -191,7 +191,7 @@ func (tv *tmuxSessionView) init() {
 			}
 
 			openEditorDialog(func(s string) {
-				tui.RunAction(func() {
+				runAction(func() {
 					getApi().Tmux.CreateAndAttachTmuxSession(s, "~")
 				})
 			}, func() {}, "New session name", smallEditorSize)
