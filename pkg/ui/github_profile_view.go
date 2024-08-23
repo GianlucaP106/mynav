@@ -64,7 +64,7 @@ func (g *githubProfileView) init() {
 
 			if deviceAuth != nil {
 				tdMu.Lock()
-				(*td) = openToastDialog(deviceAuth.UserCode, toastDialogNeutralType, "User device code - automatically copied to clipboard", func() {})
+				(*td) = openToastDialog(fmt.Sprintf("Code: %s - %s", deviceAuth.UserCode, deviceAuth.VerificationURI), toastDialogNeutralType, "User device code - automatically copied to clipboard", func() {})
 				tdMu.Unlock()
 				system.CopyToClip(deviceAuth.UserCode)
 				deviceAuth.OpenBrowser()

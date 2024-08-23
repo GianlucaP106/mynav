@@ -214,3 +214,9 @@ func TrimGithubUrl(url string) string {
 	items := strings.Split(url, "/")
 	return strings.Join(items[len(items)-2:], "/")
 }
+
+func ExtractRepoFromPrUrl(url string) string {
+	items := strings.Split(url, "/")
+	itemsLen := len(items)
+	return strings.Join(items[itemsLen-4:itemsLen-2], "/")
+}
