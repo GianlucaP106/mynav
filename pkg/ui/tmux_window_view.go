@@ -107,7 +107,7 @@ func (t *tmuxWindowView) init() {
 					openToastDialogError(err.Error())
 				}
 
-				tv.refreshTmuxViewsAsync()
+				refreshTmuxViewsAsync()
 			}, "Are you sure you want to kill this window?")
 		}).
 		Set(gocui.KeyEsc, "Focus session view", func() {

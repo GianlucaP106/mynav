@@ -173,6 +173,6 @@ func runAction(f func()) {
 	tui.Suspend()
 	f()
 	tui.Resume()
-	getTopicsView().refreshFsAsync()
-	getTmuxSessionView().refreshTmuxViewsAsync()
+	refreshFsAsync()
+	refreshTmuxViewsAsync()
 }

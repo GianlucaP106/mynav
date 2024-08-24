@@ -53,7 +53,6 @@ func (t *tmuxPaneView) init() {
 	t.refresh()
 
 	tpv := getTmuxPreviewView()
-	tsv := getTmuxSessionView()
 	twv := getTmuxWindowView()
 	t.view.KeyBinding().
 		Set('j', "Move down", func() {
@@ -80,7 +79,7 @@ func (t *tmuxPaneView) init() {
 					openToastDialogError(err.Error())
 				}
 
-				tsv.refreshTmuxViewsAsync()
+				refreshTmuxViewsAsync()
 			}, "Are you sure you want to kill this pane?")
 		}).
 		Set(gocui.KeyEsc, "Focus window view", func() {
