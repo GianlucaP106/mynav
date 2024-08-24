@@ -250,18 +250,19 @@ func (wv *workspacesView) init() {
 			})
 		}).
 		Set('D', "Delete a workspace", func() {
-			if getApi().Core.GetWorkspacesByTopicCount(getTopicsView().getSelectedTopic()) <= 0 {
+			curWorkspace := wv.getSelectedWorkspace()
+			if curWorkspace == nil {
 				return
 			}
 
 			openConfirmationDialog(func(b bool) {
 				if b {
-					curWorkspace := wv.getSelectedWorkspace()
 					getApi().Core.DeleteWorkspace(curWorkspace)
 
 					// HACK: same as below
 					tv.tableRenderer.SelectRow(0)
 					refreshFsAsync()
+					refreshTmuxViewsAsync()
 				}
 			}, "Are you sure you want to delete this workspace?")
 		}).
