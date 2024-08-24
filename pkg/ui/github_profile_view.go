@@ -2,19 +2,23 @@ package ui
 
 import (
 	"fmt"
+	"mynav/pkg/persistence"
 	"mynav/pkg/system"
 	"mynav/pkg/tui"
 	"sync"
 )
 
 type githubProfileView struct {
-	view *tui.View
+	view           *tui.View
+	isFetchingData *persistence.Value[bool]
 }
 
 var _ viewable = new(githubProfileView)
 
 func newGithubProfileView() *githubProfileView {
-	return &githubProfileView{}
+	return &githubProfileView{
+		isFetchingData: persistence.NewValue(false),
+	}
 }
 
 func getGithubProfileView() *githubProfileView {
@@ -96,6 +100,7 @@ func (g *githubProfileView) init() {
 
 func (g *githubProfileView) loadData() {
 	go func() {
+		g.isFetchingData.Set(true)
 		getApi().Github.LoadProfile()
 		refreshAsync(g)
 
@@ -104,6 +109,7 @@ func (g *githubProfileView) loadData() {
 
 		getApi().Github.LoadUserPullRequests()
 		refreshAsync(getGithubPrView())
+		g.isFetchingData.Set(false)
 	}()
 }
 
