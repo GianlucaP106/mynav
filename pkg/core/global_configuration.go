@@ -9,6 +9,7 @@ import (
 	"mynav/pkg/system"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"time"
 
@@ -94,7 +95,7 @@ func (gc *GlobalConfiguration) SetGithubToken(token *GithubAuthenticationToken) 
 }
 
 func (gc *GlobalConfiguration) UpdateMynav() error {
-	return system.Command("sh", "-c", "curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.sh | bash").Run()
+	return exec.Command("sh", "-c", "curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.sh | bash").Run()
 }
 
 func (c *GlobalConfiguration) SetLastTab(lastTab string) {
