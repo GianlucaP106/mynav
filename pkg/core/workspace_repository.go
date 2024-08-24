@@ -20,16 +20,15 @@ type WorkspaceRepository struct {
 
 func NewWorkspaceRepository(topics Topics, storePath string) *WorkspaceRepository {
 	w := &WorkspaceRepository{}
-	w.Datasource = persistence.NewDatasource[WorkspaceDataSchema](storePath)
-
-	w.Datasource.LoadData()
-	if w.Datasource.GetData() == nil {
-		w.Datasource.SaveData(&WorkspaceDataSchema{
-			Workspaces:        map[string]*WorkspaceMetadata{},
-			SelectedWorkspace: "",
-		})
+	ds, err := persistence.NewDatasource[WorkspaceDataSchema](storePath, &WorkspaceDataSchema{
+		Workspaces:        map[string]*WorkspaceMetadata{},
+		SelectedWorkspace: "",
+	})
+	if err != nil {
+		return nil
 	}
 
+	w.Datasource = ds
 	w.LoadContainer(topics)
 	return w
 }

@@ -22,8 +22,12 @@ func NewApi() (*Api, error) {
 	api := &Api{}
 	api.Core = &Core{}
 	api.LocalConfiguration = NewLocalConfiguration()
-	api.GlobalConfiguration = NewGlobalConfiguration()
+	gc, err := NewGlobalConfiguration()
+	if err != nil {
+		return nil, err
+	}
 
+	api.GlobalConfiguration = gc
 	if api.LocalConfiguration.IsConfigInitialized {
 		api.InitControllers()
 	} else {
