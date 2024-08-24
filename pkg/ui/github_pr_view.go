@@ -83,6 +83,9 @@ func (g *githubPrView) init() {
 			system.CopyToClip(url)
 			openToastDialog(url, toastDialogNeutralType, "Copied PR URL to clipboard", func() {})
 		}).
+		Set('R', "Refetch all github data", func() {
+			getGithubProfileView().refetchData()
+		}).
 		Set('?', "Toggle cheatsheet", func() {
 			openHelpDialog(g.view.GetKeybindings(), func() {})
 		}).
