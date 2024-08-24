@@ -31,7 +31,7 @@ func getViewPosition(viewName string) *tui.ViewPosition {
 	maxX, maxY := tui.ScreenSize()
 	positionMap := map[string]*tui.ViewPosition{}
 
-	top := maxY / 20
+	top := maxY / 16
 	bottom := ((maxY * 92) / 100)
 
 	positionMap[WorkspacesView] = tui.NewViewPosition(
