@@ -117,6 +117,20 @@ func (wv *workspacesView) init() {
 				openToastDialogError(err.Error())
 			}
 		}).
+		Set('u', "Copy git repo url to clipboard", func() {
+			curWorkspace := wv.getSelectedWorkspace()
+			if curWorkspace == nil {
+				return
+			}
+
+			if curWorkspace.GitRemote == nil {
+				return
+			}
+			remote := *curWorkspace.GitRemote
+
+			system.CopyToClip(remote)
+			openToastDialog(remote, toastDialogNeutralType, "Repo URL copied", func() {})
+		}).
 		Set('/', "Search by name", func() {
 			openEditorDialog(func(s string) {
 				if s != "" {

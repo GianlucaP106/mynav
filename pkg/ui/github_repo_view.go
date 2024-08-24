@@ -143,6 +143,16 @@ func (g *githubRepoView) init() {
 
 			system.OpenBrowser(repo.GetHTMLURL())
 		}).
+		Set('u', "Copy repo url to clipboard", func() {
+			repo := g.getSelectedRepo()
+			if repo == nil {
+				return
+			}
+
+			url := repo.GetHTMLURL()
+			system.CopyToClip(url)
+			openToastDialog(url, toastDialogNeutralType, "Repo URL copied to clipboard", func() {})
+		}).
 		Set(gocui.KeyArrowRight, "Focus PR View", moveRight).
 		Set(gocui.KeyCtrlL, "Focus PR View", moveRight).
 		Set('?', "Toggle cheatsheet", func() {

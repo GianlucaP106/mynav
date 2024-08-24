@@ -73,6 +73,16 @@ func (g *githubPrView) init() {
 
 			system.OpenBrowser(pr.GetHTMLURL())
 		}).
+		Set('u', "Copy PR URL to clipboard", func() {
+			pr := g.getSelectedPr()
+			if pr == nil {
+				return
+			}
+
+			url := pr.GetHTMLURL()
+			system.CopyToClip(url)
+			openToastDialog(url, toastDialogNeutralType, "Copied PR URL to clipboard", func() {})
+		}).
 		Set('?', "Toggle cheatsheet", func() {
 			openHelpDialog(g.view.GetKeybindings(), func() {})
 		}).

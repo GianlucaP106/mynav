@@ -75,7 +75,19 @@ func (g *githubProfileView) init() {
 		}).
 		Set('o', "Open in browser", func() {
 			profile := getApi().Github.GetPrincipal()
-			system.OpenBrowser(profile.GetHTMLURL())
+			if profile != nil {
+				system.OpenBrowser(profile.GetHTMLURL())
+			}
+		}).
+		Set('u', "Copy profile url to cliboard", func() {
+			user := getApi().Github.GetPrincipal()
+			if user == nil {
+				return
+			}
+
+			url := user.GetHTMLURL()
+			system.CopyToClip(url)
+			openToastDialog(url, toastDialogNeutralType, "Profile URL copied", func() {})
 		}).
 		Set('P', "Login with personal access token", func() {
 			if getApi().Github.IsAuthenticated() {
