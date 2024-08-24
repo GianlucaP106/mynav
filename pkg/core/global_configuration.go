@@ -32,16 +32,16 @@ type Configuration struct {
 	*GlobalConfiguration
 }
 
-func NewGlobalConfiguration() *GlobalConfiguration {
+func NewGlobalConfiguration() (*GlobalConfiguration, error) {
 	gc := &GlobalConfiguration{}
 	gc.Standalone = system.IsCurrentProcessHomeDir()
-	gc.Datasource = persistence.NewDatasource[GlobalConfigurationDataSchema](gc.GetConfigFile())
-	gc.Datasource.LoadData()
-	if gc.Datasource.GetData() == nil {
-		gc.Datasource.SaveData(&GlobalConfigurationDataSchema{})
+	ds, err := persistence.NewDatasource[GlobalConfigurationDataSchema](gc.GetConfigFile(), &GlobalConfigurationDataSchema{})
+	if err != nil {
+		return nil, err
 	}
 
-	return gc
+	gc.Datasource = ds
+	return gc, nil
 }
 
 func (gc *GlobalConfiguration) GetGlobalConfigDir() string {

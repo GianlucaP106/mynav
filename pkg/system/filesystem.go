@@ -53,28 +53,24 @@ func WriteFile(path string, b []byte) error {
 	return os.WriteFile(path, b, 0644)
 }
 
-func SaveJson[T any](data *T, store string) {
+func SaveJson[T any](data *T, store string) error {
 	if !Exists(store) {
 		os.Create(store)
 	}
 
 	json, err := json.Marshal(data)
 	if err != nil {
-		log.Panicln(err)
-		return
+		return err
 	}
 
-	if err := WriteFile(store, json); err != nil {
-		log.Panicln(err)
-		return
-	}
+	return WriteFile(store, json)
 }
 
-func LoadJson[T any](store string) *T {
+func LoadJson[T any](store string) (*T, error) {
 	file, err := os.Open(store)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil
+			return nil, err
 		}
 		log.Panicln(err)
 	}
@@ -82,17 +78,15 @@ func LoadJson[T any](store string) *T {
 
 	jsonData, err := io.ReadAll(file)
 	if err != nil {
-		log.Panicln(err)
-		return nil
+		return nil, err
 	}
 
 	var data T
 	if err := json.Unmarshal(jsonData, &data); err != nil {
-		log.Panicln(err)
-		return nil
+		return nil, err
 	}
 
-	return &data
+	return &data, nil
 }
 
 func ShortenPath(path string, maxLength int) string {
