@@ -1,4 +1,4 @@
-# MyNav
+# mynav
 
 A user friendly TUI workspace manager
 
