@@ -3,10 +3,13 @@
 A user friendly TUI workspace manager
 
 ## Description
-Mynav is a TUI workspace manager. It aims to allow for an easy view of all your workspaces, notes or programming projects. It integrates with tmux and neovim for a great workspace management experience.
+Mynav is a TUI workspace and session manager. It aims to allow for an easy view of all your workspaces, notes or programming projects.
 
-<img width="1937" alt="Screenshot 2024-07-26 at 9 13 48 PM" src="https://github.com/user-attachments/assets/9fee6ed3-eddb-4e30-bad6-c4a7a06207bf">
-<img width="1937" alt="Screenshot 2024-07-26 at 9 14 01 PM" src="https://github.com/user-attachments/assets/884fd525-66db-4d13-9e2a-1b94daad1cea">
+### Main tab
+![basic-workspace](https://github.com/user-attachments/assets/50d52d3e-ac73-43cc-8ad8-d6d8d22daf82)
+
+### Tmux tab
+![tmux-view](https://github.com/user-attachments/assets/8e9ae3cd-0338-4c1f-ba48-db674124c1b5)
 
 
 ## Installation
