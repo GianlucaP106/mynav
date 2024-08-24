@@ -128,7 +128,9 @@ func (g *githubPrView) render() error {
 		return isFocused
 	})
 
-	if g.tableRenderer.GetTableSize() == 0 {
+	if getGithubProfileView().isFetchingData.Get() {
+		fmt.Fprintln(g.view, "Loading...")
+	} else if g.tableRenderer.GetTableSize() == 0 {
 		fmt.Fprintln(g.view, "Nothing to show")
 	}
 

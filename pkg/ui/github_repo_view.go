@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"mynav/pkg/core"
+	"mynav/pkg/system"
 	"mynav/pkg/tui"
 
 	"github.com/awesome-gocui/gocui"
@@ -134,6 +135,14 @@ func (g *githubRepoView) init() {
 				},
 			})
 		}).
+		Set('o', "Open repo in browser", func() {
+			repo := g.getSelectedRepo()
+			if repo == nil {
+				return
+			}
+
+			system.OpenBrowser(repo.GetHTMLURL())
+		}).
 		Set(gocui.KeyArrowRight, "Focus PR View", moveRight).
 		Set(gocui.KeyCtrlL, "Focus PR View", moveRight).
 		Set('?', "Toggle cheatsheet", func() {
@@ -184,7 +193,9 @@ func (g *githubRepoView) render() error {
 		return isFocused
 	})
 
-	if g.tableRenderer.GetTableSize() == 0 {
+	if getGithubProfileView().isFetchingData.Get() {
+		fmt.Fprintln(g.view, "Loading...")
+	} else if g.tableRenderer.GetTableSize() == 0 {
 		fmt.Fprintln(g.view, "No repos to display")
 	}
 
