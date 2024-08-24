@@ -74,3 +74,12 @@ func IsCurrentProcessHomeDir() bool {
 	cwd, _ := os.Getwd()
 	return homeDir == cwd
 }
+
+func DoesProgramExist(program string) bool {
+	_, err := exec.LookPath(program)
+	return err == nil
+}
+
+func OpenLazygit(path string) error {
+	return exec.Command("lazygit", "-p", path).Run()
+}

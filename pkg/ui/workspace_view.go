@@ -89,6 +89,25 @@ func (wv *workspacesView) init() {
 			}
 			openWorkspaceInfoDialog(curWorkspace, func() {})
 		}).
+		Set('L', "Open lazygit at this workspace (if there is a git repository)", func() {
+			w := wv.getSelectedWorkspace()
+			if w == nil {
+				return
+			}
+
+			if !system.DoesProgramExist("lazygit") {
+				openToastDialogError("lazygit is not installed on the system")
+				return
+			}
+
+			if w.GitRemote == nil {
+				return
+			}
+
+			runAction(func() {
+				system.OpenLazygit(w.Path)
+			})
+		}).
 		Set('g', "Clone git repo", func() {
 			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {

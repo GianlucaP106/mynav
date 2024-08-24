@@ -35,10 +35,6 @@ func GetOpenTerminalCmd(path string) ([]string, error) {
 	return command, nil
 }
 
-func Command(command ...string) *exec.Cmd {
-	return exec.Command(command[0], command[1:]...)
-}
-
 func CommandWithRedirect(command ...string) *exec.Cmd {
 	cmd := exec.Command(command[0], command[1:]...)
 	cmd.Stdin = os.Stdin
