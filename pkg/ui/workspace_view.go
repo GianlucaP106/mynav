@@ -278,6 +278,9 @@ func (wv *workspacesView) init() {
 					return
 				}
 
+				tv.tableRenderer.SelectRow(0)
+				wv.tableRenderer.SelectRow(0)
+				refreshTmuxViewsAsync()
 				refreshFsAsync()
 			}, func() {}, "New workspace name", smallEditorSize, curWorkspace.Name)
 		}).
