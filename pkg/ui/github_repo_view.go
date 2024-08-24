@@ -143,6 +143,9 @@ func (g *githubRepoView) init() {
 
 			system.OpenBrowser(repo.GetHTMLURL())
 		}).
+		Set('R', "Refetch all github data", func() {
+			getGithubProfileView().refetchData()
+		}).
 		Set('u', "Copy repo url to clipboard", func() {
 			repo := g.getSelectedRepo()
 			if repo == nil {

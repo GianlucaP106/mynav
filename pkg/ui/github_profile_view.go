@@ -36,7 +36,7 @@ func (g *githubProfileView) init() {
 
 	isAuthenticated := getApi().Github.IsAuthenticated()
 	if isAuthenticated {
-		g.loadData()
+		g.fetchData()
 	}
 
 	g.view.KeyBinding().
@@ -62,7 +62,7 @@ func (g *githubProfileView) init() {
 					})
 				}
 
-				g.loadData()
+				g.fetchData()
 			}()
 
 			if deviceAuth != nil {
@@ -105,12 +105,15 @@ func (g *githubProfileView) init() {
 			getApi().Github.LogoutUser()
 			openToastDialog("Successfully logged out - restart mynav to clear the github views", toastDialogSuccessType, "Note", func() {})
 		}).
+		Set('R', "Refetch all github data", func() {
+			g.refetchData()
+		}).
 		Set('?', "Toggle cheatsheet", func() {
 			openHelpDialog(g.view.GetKeybindings(), func() {})
 		})
 }
 
-func (g *githubProfileView) loadData() {
+func (g *githubProfileView) fetchData() {
 	go func() {
 		g.isFetchingData.Set(true)
 		getApi().Github.LoadProfile()
@@ -123,6 +126,14 @@ func (g *githubProfileView) loadData() {
 		refreshAsync(getGithubPrView())
 		g.isFetchingData.Set(false)
 	}()
+}
+
+func (g *githubProfileView) refetchData() {
+	repoView := getGithubRepoView()
+	prView := getGithubPrView()
+	repoView.tableRenderer.ClearTable()
+	prView.tableRenderer.ClearTable()
+	g.fetchData()
 }
 
 func (g *githubProfileView) render() error {
@@ -140,7 +151,7 @@ func (g *githubProfileView) render() error {
 	fmt.Fprintln(g.view, "Login: ", profile.GetLogin())
 	fmt.Fprintln(g.view, "Email: ", profile.GetEmail())
 	fmt.Fprintln(g.view, "Name: ", profile.GetName())
-	fmt.Fprintln(g.view, "Url: ", profile.GetURL())
+	fmt.Fprintln(g.view, "Url: ", profile.GetHTMLURL())
 
 	return nil
 }
