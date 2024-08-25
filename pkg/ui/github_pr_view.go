@@ -86,14 +86,14 @@ func (g *githubPrView) init() {
 		Set('R', "Refetch all github data", func() {
 			getGithubProfileView().refetchData()
 		}).
-		Set('?', "Toggle cheatsheet", func() {
-			openHelpDialog(g.view.GetKeybindings(), func() {})
-		}).
 		Set(gocui.KeyCtrlL, "Focus "+GithubRepoView, func() {
 			getGithubRepoView().focus()
 		}).
 		Set(gocui.KeyArrowRight, "Focus "+GithubRepoView, func() {
 			getGithubRepoView().focus()
+		}).
+		Set('?', "Toggle cheatsheet", func() {
+			openHelpDialog(g.view.GetKeybindings(), func() {})
 		})
 }
 
