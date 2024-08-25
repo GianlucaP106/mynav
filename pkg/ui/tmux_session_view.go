@@ -67,9 +67,17 @@ func (tv *tmuxSessionView) init() {
 				return
 			}
 
+			var error error = nil
 			runAction(func() {
-				getApi().Tmux.AttachTmuxSession(session)
+				err := getApi().Tmux.AttachTmuxSession(session)
+				if err != nil {
+					error = err
+				}
 			})
+
+			if error != nil {
+				openToastDialogError(error.Error())
+			}
 		}).
 		Set(gocui.KeyEnter, "Focus window view", func() {
 			getTmuxWindowView().focus()

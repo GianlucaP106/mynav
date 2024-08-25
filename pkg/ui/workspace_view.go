@@ -184,9 +184,15 @@ func (wv *workspacesView) init() {
 						error = err
 					}
 				} else if core.IsTmuxSession() {
-					getApi().Core.OpenNeovimInWorkspace(curWorkspace)
+					err := getApi().Core.OpenNeovimInWorkspace(curWorkspace)
+					if err != nil {
+						error = err
+					}
 				} else {
-					getApi().Core.CreateOrAttachTmuxSession(curWorkspace)
+					err := getApi().Core.CreateOrAttachTmuxSession(curWorkspace)
+					if err != nil {
+						error = err
+					}
 				}
 			})
 
