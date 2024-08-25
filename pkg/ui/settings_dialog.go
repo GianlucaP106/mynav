@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"mynav/pkg/system"
 	"mynav/pkg/tui"
 	"strings"
 
@@ -49,7 +50,13 @@ func openSettingsDialog() *settingsDialog {
 					return
 				}
 
-				getApi().GlobalConfiguration.SetCustomWorkspaceOpenerCmd(str)
+				switch s.getSelectedSetting() {
+				case "CustomWorkspaceOpener":
+					getApi().GlobalConfiguration.SetCustomWorkspaceOpenerCmd(str)
+				case "TerminalOpener":
+					getApi().GlobalConfiguration.SetTerminalOpenerCmd(str)
+				}
+
 				s.refresh()
 			}, func() {}, "Change setting", smallEditorSize, cmdStr)
 		}).
@@ -59,7 +66,13 @@ func openSettingsDialog() *settingsDialog {
 					return
 				}
 
-				getApi().GlobalConfiguration.SetCustomWorkspaceOpenerCmd("")
+				switch s.getSelectedSetting() {
+				case "CustomWorkspaceOpener":
+					getApi().GlobalConfiguration.SetCustomWorkspaceOpenerCmd("")
+				case "TerminalOpener":
+					getApi().GlobalConfiguration.SetTerminalOpenerCmd("")
+				}
+
 				s.refresh()
 			}, "Are you sure you want to set this setting back to default?")
 		}).
@@ -75,11 +88,30 @@ func openSettingsDialog() *settingsDialog {
 	return s
 }
 
+func (s *settingsDialog) getSelectedSetting() string {
+	_, value := s.tableRenderer.GetSelectedRow()
+	if value != nil {
+		return *value
+	}
+
+	return ""
+}
+
 func (s *settingsDialog) refresh() {
 	cmd := getApi().GlobalConfiguration.GetCustomWorkspaceOpenerCmd()
 	cmdStr := "tmux/nvim (Default)"
 	if len(cmd) > 0 {
 		cmdStr = strings.Join(cmd, " ")
+	}
+
+	terminalOpener := getApi().GlobalConfiguration.GetTerminalOpenerCmd()
+	defaultOpenTerminalCmd, _ := system.GetOpenTerminalCmd()
+	terminalOpenerStr := ""
+	if len(terminalOpener) > 0 {
+		terminalOpenerStr = strings.Join(terminalOpener, " ")
+	} else if len(defaultOpenTerminalCmd) > 0 {
+		terminalOpenerStr = strings.Join(defaultOpenTerminalCmd, " ")
+		terminalOpenerStr = terminalOpenerStr + " (Default)"
 	}
 
 	rows := make([][]string, 0)
@@ -90,6 +122,12 @@ func (s *settingsDialog) refresh() {
 		cmdStr,
 	})
 	rowValues = append(rowValues, "CustomWorkspaceOpener")
+
+	rows = append(rows, []string{
+		"Terminal Opener command",
+		terminalOpenerStr,
+	})
+	rowValues = append(rowValues, "TerminalOpener")
 
 	s.tableRenderer.FillTable(rows, rowValues)
 	s.render()

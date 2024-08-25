@@ -105,10 +105,12 @@ func (wc *WorkspaceController) OpenNeovimInWorkspace(w *Workspace) error {
 }
 
 func (wc *WorkspaceController) OpenTerminalInWorkspace(w *Workspace) error {
-	cmd, err := system.GetOpenTerminalCmd(w.Path)
+	cmd, err := system.GetOpenTerminalCmd()
 	if err != nil {
 		return err
 	}
+
+	cmd = append(cmd, w.Path)
 
 	wc.WorkspaceRepository.SetSelectedWorkspace(w)
 	return system.CommandWithRedirect(cmd...).Run()

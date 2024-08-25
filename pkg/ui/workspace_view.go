@@ -4,6 +4,7 @@ import (
 	"mynav/pkg/core"
 	"mynav/pkg/system"
 	"mynav/pkg/tui"
+	"os/exec"
 	"strconv"
 	"strings"
 
@@ -209,9 +210,20 @@ func (wv *workspacesView) init() {
 				return
 			}
 
+			terminalOpenCmd := getApi().GlobalConfiguration.GetTerminalOpenerCmd()
+			var error error = nil
 			runAction(func() {
-				getApi().Core.OpenTerminalInWorkspace(curWorkspace)
+				if len(terminalOpenCmd) > 0 {
+					err := exec.Command(terminalOpenCmd[0], terminalOpenCmd[1:]...).Run()
+					if err != nil {
+						error = err
+					}
+				} else {
+					getApi().Core.OpenTerminalInWorkspace(curWorkspace)
+				}
 			})
+
+			openToastDialogError(error.Error())
 		}).
 		Set('m', "Move workspace to another topic", func() {
 			curWorkspace := wv.getSelectedWorkspace()
