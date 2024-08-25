@@ -22,6 +22,7 @@ type GlobalConfigurationDataSchema struct {
 	GithubToken             *GithubAuthenticationToken `json:"github-token"`
 	LastTab                 string                     `json:"last-tab"`
 	CustomWorspaceOpenerCmd []string                   `json:"custom-workspace-openner"`
+	TerminalOpenerCmd       []string                   `json:"terminal-opener-command"`
 }
 
 type GlobalConfiguration struct {
@@ -127,6 +128,22 @@ func (c *GlobalConfiguration) SetCustomWorkspaceOpenerCmd(cmd string) {
 	}
 
 	data.CustomWorspaceOpenerCmd = command
+	c.Datasource.SaveData(data)
+}
+
+func (c *GlobalConfiguration) GetTerminalOpenerCmd() []string {
+	data := c.Datasource.GetData()
+	return data.TerminalOpenerCmd
+}
+
+func (c *GlobalConfiguration) SetTerminalOpenerCmd(cmd string) {
+	data := c.Datasource.GetData()
+	command := []string{}
+	if cmd != "" {
+		command = append(command, strings.Split(cmd, " ")...)
+	}
+
+	data.TerminalOpenerCmd = command
 	c.Datasource.SaveData(data)
 }
 
