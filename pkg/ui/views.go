@@ -25,6 +25,7 @@ const (
 	ToastDialog           = "ToastDialogView"
 	SearchListDialog1View = "SearchListDialog1"
 	SearchListDialog2View = "SearchListDialog2"
+	SettingsDialog        = "SettingsDialog"
 )
 
 func getViewPosition(viewName string) *tui.ViewPosition {

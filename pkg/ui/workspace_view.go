@@ -5,6 +5,7 @@ import (
 	"mynav/pkg/system"
 	"mynav/pkg/tui"
 	"strconv"
+	"strings"
 
 	"github.com/awesome-gocui/gocui"
 )
@@ -62,6 +63,12 @@ func (wv *workspacesView) init() {
 
 	if selectedWorkspace := getApi().Core.GetSelectedWorkspace(); selectedWorkspace != nil {
 		wv.selectWorkspaceByShortPath(selectedWorkspace.ShortPath())
+	}
+
+	displayedWorkspaceOpenerCmd := getApi().GlobalConfiguration.GetCustomWorkspaceOpenerCmd()
+	displayedWorkspaceOpenerCmdStr := "tmux/nvim"
+	if len(displayedWorkspaceOpenerCmd) > 0 {
+		displayedWorkspaceOpenerCmdStr = strings.Join(displayedWorkspaceOpenerCmd, " ")
 	}
 
 	tv := getTopicsView()
@@ -159,19 +166,32 @@ func (wv *workspacesView) init() {
 				}
 			}, func() {}, "Search", smallEditorSize)
 		}).
-		Set(gocui.KeyEnter, "Open in tmux/open in neovim", func() {
+		Set(gocui.KeyEnter, "Open in "+displayedWorkspaceOpenerCmdStr, func() {
 			curWorkspace := wv.getSelectedWorkspace()
 			if curWorkspace == nil {
 				return
 			}
 
+			cmd := getApi().GlobalConfiguration.GetCustomWorkspaceOpenerCmd()
+			var error error = nil
 			runAction(func() {
-				if core.IsTmuxSession() {
+				if len(cmd) > 0 {
+					cmd = append(cmd, curWorkspace.Path)
+					c := system.CommandWithRedirect(cmd...)
+					err := c.Run()
+					if err != nil {
+						error = err
+					}
+				} else if core.IsTmuxSession() {
 					getApi().Core.OpenNeovimInWorkspace(curWorkspace)
 				} else {
 					getApi().Core.CreateOrAttachTmuxSession(curWorkspace)
 				}
 			})
+
+			if error != nil {
+				openToastDialogError(error.Error())
+			}
 		}).
 		Set('v', "Open in neovim", func() {
 			curWorkspace := wv.getSelectedWorkspace()

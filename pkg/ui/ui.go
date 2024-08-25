@@ -68,11 +68,6 @@ func (ui *UI) initStandaloneUI() {
 		newTmuxWindowView(),
 		newTmuxPaneView(),
 		newTmuxPreviewView(),
-
-		// NOTE: not using these views for the moment - https://github.com/GianlucaP106/mynav/issues/287
-		// newPortView(),
-		// newPsView(),
-
 		newGithubPrView(),
 		newGithubProfileView(),
 		newGithubRepoView(),
@@ -110,6 +105,9 @@ func (ui *UI) initGlobalKeybindings() {
 		SetWithQuit(gocui.KeyCtrlC, quit, "Quit").
 		SetWithQuit('q', quit, "Quit").
 		SetWithQuit('q', quit, "Quit").
+		Set('S', "Open settings", func() {
+			openSettingsDialog()
+		}).
 		Set(']', "Cycle tab right", func() {
 			ui.mainTabGroup.IncrementSelectedTab(func(tab *tui.Tab) {
 				getApi().GlobalConfiguration.SetLastTab(tab.Frame.Name())

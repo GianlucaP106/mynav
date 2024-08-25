@@ -11,15 +11,17 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"golang.org/x/mod/semver"
 )
 
 type GlobalConfigurationDataSchema struct {
-	UpdateAsked *time.Time                 `json:"update-asked"`
-	GithubToken *GithubAuthenticationToken `json:"github-token"`
-	LastTab     string                     `json:"last-tab"`
+	UpdateAsked             *time.Time                 `json:"update-asked"`
+	GithubToken             *GithubAuthenticationToken `json:"github-token"`
+	LastTab                 string                     `json:"last-tab"`
+	CustomWorspaceOpenerCmd []string                   `json:"custom-workspace-openner"`
 }
 
 type GlobalConfiguration struct {
@@ -35,7 +37,7 @@ type Configuration struct {
 func NewGlobalConfiguration() (*GlobalConfiguration, error) {
 	gc := &GlobalConfiguration{}
 	gc.Standalone = system.IsCurrentProcessHomeDir()
-	ds, err := persistence.NewDatasource[GlobalConfigurationDataSchema](gc.GetConfigFile(), &GlobalConfigurationDataSchema{})
+	ds, err := persistence.NewDatasource(gc.GetConfigFile(), &GlobalConfigurationDataSchema{})
 	if err != nil {
 		return nil, err
 	}
@@ -110,6 +112,22 @@ func (c *GlobalConfiguration) GetLastTab() string {
 
 func (c *GlobalConfiguration) SetStandalone(s bool) {
 	c.Standalone = s
+}
+
+func (c *GlobalConfiguration) GetCustomWorkspaceOpenerCmd() []string {
+	data := c.Datasource.GetData()
+	return data.CustomWorspaceOpenerCmd
+}
+
+func (c *GlobalConfiguration) SetCustomWorkspaceOpenerCmd(cmd string) {
+	data := c.Datasource.GetData()
+	command := []string{}
+	if cmd != "" {
+		command = append(command, strings.Split(cmd, " ")...)
+	}
+
+	data.CustomWorspaceOpenerCmd = command
+	c.Datasource.SaveData(data)
 }
 
 type Release struct {
