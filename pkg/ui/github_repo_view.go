@@ -192,16 +192,14 @@ func (g *githubRepoView) refresh() {
 }
 
 func (g *githubRepoView) render() error {
+	g.view.Clear()
+	g.view.Resize(getViewPosition(g.view.Name()))
 	if !getApi().Github.IsAuthenticated() {
-		g.view.Clear()
 		fmt.Fprintln(g.view, "Not authenticated")
 		return nil
 	}
 
-	g.view.Clear()
 	isFocused := g.view.IsFocused()
-	g.view.Resize(getViewPosition(g.view.Name()))
-
 	g.tableRenderer.RenderWithSelectCallBack(g.view, func(_ int, _ *tui.TableRow[*github.Repository]) bool {
 		return isFocused
 	})

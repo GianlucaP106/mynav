@@ -129,14 +129,13 @@ func (g *githubPrView) refresh() {
 
 func (g *githubPrView) render() error {
 	g.view.Clear()
+	g.view.Resize(getViewPosition(g.view.Name()))
 	if !getApi().Github.IsAuthenticated() {
 		fmt.Fprintln(g.view, "Not authenticated")
 		return nil
 	}
 
 	isFocused := g.view.IsFocused()
-	g.view.Resize(getViewPosition(g.view.Name()))
-
 	g.tableRenderer.RenderWithSelectCallBack(g.view, func(_ int, _ *tui.TableRow[*github.PullRequest]) bool {
 		return isFocused
 	})
