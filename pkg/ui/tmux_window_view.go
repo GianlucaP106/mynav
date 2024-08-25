@@ -87,9 +87,17 @@ func (t *tmuxWindowView) init() {
 				return
 			}
 
+			var error error = nil
 			runAction(func() {
-				getApi().Tmux.AttachTmuxSession(session)
+				err := getApi().Tmux.AttachTmuxSession(session)
+				if err != nil {
+					error = err
+				}
 			})
+
+			if error != nil {
+				openToastDialogError(error.Error())
+			}
 		}).
 		Set('X', "Kill this window", func() {
 			w := t.getSelectedWindow()
