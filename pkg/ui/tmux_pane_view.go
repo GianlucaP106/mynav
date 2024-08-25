@@ -90,6 +90,9 @@ func (t *tmuxPaneView) init() {
 		}).
 		Set(gocui.KeyArrowLeft, "Focus window view", func() {
 			twv.focus()
+		}).
+		Set('?', "Toggle cheatsheet", func() {
+			openHelpDialog(twv.view.GetKeybindings(), func() {})
 		})
 }
 
