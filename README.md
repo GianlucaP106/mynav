@@ -47,9 +47,12 @@ export PATH="$PATH:$HOME/.mynav"
 ## Usage
 
 ```bash
-# The first time this is ran, it will initialize the directory
 mynav
 ```
+> #### NOTE:
+> - mynav will look for a configuration in the current or any parent directory, otherwise will ask to initialize the current directory.
+> - mynav can be initialized in multiple independant directories, but not nested.
+> - mynav cannot be initialized in the user home directory.
 
 ## Features
 
@@ -89,8 +92,8 @@ mynav
 | ]         | Cycle right tab |
 | j        | Move down in lists |
 | k        | Move up in lists   |
-| Arrows   | Move arround panes |
-| Ctrl-Vim | Move around panes  |
+| arrows   | Move arround panes |
+| ctrl-vim | Move around panes  |
 | ?        | Open cheatsheet  |
 
 #### Topics
