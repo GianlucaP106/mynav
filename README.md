@@ -1,16 +1,18 @@
 # mynav
 
-A user friendly TUI workspace manager
-
-## Description
-Mynav is a TUI workspace and session manager. It aims to allow for an easy view of all your workspaces, notes or programming projects.
+A user friendly TUI workspace manager, aiming to allow for an easy view of all your workspaces in a terminal environment.
 
 ### Main tab
+
 ![main-tab](https://github.com/user-attachments/assets/3e340077-1cd5-41e3-a5c0-4ee4bff6cf4a)
 
 ### Tmux tab
+
 ![tmux-view2](https://github.com/user-attachments/assets/f139408a-8855-40fb-8411-8e9de8bdd947)
 
+## Elevator pitch
+
+Before mynav, I would often get annoyed when working on multiple projects using tmux, I would manually `cd` from project directory to project directory. Of course, if you have tmux sessions active, you can use choose tree to bounce from session to session, but this persists only if the tmux server is alive. With mynav, I can combine the features of tmux, with a workspace management system, allowing for a effecient development workflow in a terminal environment.
 
 ## Installation
 
@@ -37,20 +39,22 @@ curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.sh 
 ```
 
 ### Add to PATH
+
 ```bash
 export PATH="$PATH:$HOME/.mynav"
 ```
 
 ## Usage
+
 ```bash
 # The first time this is ran, it will initialize the directory
 mynav
 ```
 
-> ### Use '?' in the TUI to see all the key maps!
-
 ## Features
+
 ### Workspace and session management
+
 - Organize workspaces by topic.
 - Create, view, update and delete workspaces and topics.
 - View information about workspaces, such as git information, activity, descriptions...
@@ -58,28 +62,86 @@ mynav
 - Create, view, update and delete workspace sessions.
 
 ### Tmux session, windows and panes
+
 - View tmux session, windows and panes.
 - Create, view. update and delete tmux sessions.
 - View a preview of tmux sessions.
 - A number of tmux commands as keymaps.
 
-### Simple dev oriented Github client
+### Simple development oriented Github client
+
 - Authenticate using device authentication or personal access token authentication.
 - View github profile info, repos and PRs.
 - Open browser/Copy url of PRs and repos.
 - Clone repo directly to a workspace, avoiding the need to use your browser.
 
+## Keymaps
+>
+> ### Use '?' in the TUI to see all the key maps
 
+#### Global
 
+| Key       | Action          |
+| ---       | --------------- |
+| q         | quit            |
+| S         | Open settings   |
+| [         | Cycle left tab  |
+| ]         | Cycle right tab |
+| j        | Move down in lists |
+| k        | Move up in lists   |
+| Arrows   | Move arround panes |
+| Ctrl-Vim | Move around panes  |
+| ?        | Open cheatsheet  |
 
+#### Topics
 
+| Key   | Action                        |
+| ----- | ----------------------------- |
+| enter | Open topic                    |
+| /     | Search by name                |
+| a     | Create topic                  |
+| r     | Rename topic                  |
+| s     | Search for workspace globally |
+| D     | Delete topic                  |
 
+#### Workspaces
 
+| Key   | Action                                     |
+| ----- | ------------------------------------------ |
+| esc   | Go back                                    |
+| s     | See workspace information                  |
+| L     | Open lazygit at workspace                  |
+| g     | git clone                                  |
+| G     | Open browser to git repo                   |
+| u     | Copy git remote url to clipboard           |
+| /     | Search by name                             |
+| enter | Open workspace                             |
+| v     | Open workspace using neovim                |
+| t     | Open workspace using native terminal       |
+| m     | Move workspace to a different topic        |
+| D     | Delete workspace                           |
+| r     | Rename workspace                           |
+| e     | Add/change description                     |
+| a     | Create workspace                           |
+| X     | Kill tmux session (if any)                 |
 
+#### Tmux sessions
 
+| Key   | Action                                 |
+| ----- | -------------------------------------- |
+| o     | Attach to session                      |
+| enter | Focus windows view                     |
+| D     | Delete session                         |
+| X     | Kill the tmux server                   |
+| W     | Kill all workspace-associated sessions |
+| c     | Open choose tree on session            |
+| a     | New session                            |
 
+#### Tmux windows
 
-
-
-
-
+| Key   | Action              |
+| ----- | ------------------- |
+| o     | Attach to session   |
+| X     | Kill this window    |
+| esc   | Focus sessions view |
+| enter | Focus panes view    |
