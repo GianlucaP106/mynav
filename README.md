@@ -49,7 +49,9 @@ export PATH="$PATH:$HOME/.mynav"
 ```bash
 mynav
 ```
-> #### NOTE:
+
+> #### NOTE
+>
 > - mynav will look for a configuration in the current or any parent directory, otherwise will ask to initialize the current directory.
 > - mynav can be initialized in multiple independant directories, but not nested.
 > - mynav cannot be initialized in the user home directory.
@@ -148,3 +150,31 @@ mynav
 | X     | Kill this window    |
 | esc   | Focus sessions view |
 | enter | Focus panes view    |
+
+#### Github profile
+
+| Key | Action                             |
+| --- | ---------------------------------- |
+| L   | Login with device code and browser |
+| P   | Login with personal access token   |
+| o   | Open profile in browser            |
+| u   | Copy profile url to clipboard      |
+| O   | Logout                             |
+| R   | Refetch all Github data            |
+
+#### Github repos
+
+| Key | Action                   |
+| --- | ------------------------ |
+| c   | Clone repo to workspace  |
+| o   | Open repo in browser     |
+| u   | Copy repo url to browser |
+| R   | Refetch all Github data |
+
+#### Github pull requests
+
+| Key | Action                  |
+| --- | ----------------------- |
+| o   | Open PR in browser      |
+| u   | Copy PR url to browser  |
+| R   | Refetch all Github data |
