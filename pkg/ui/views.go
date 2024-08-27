@@ -109,7 +109,7 @@ func getViewPosition(viewName string) *tui.ViewPosition {
 		GithubRepoView,
 		maxX/2+1,
 		top,
-		maxX-4,
+		maxX-2,
 		bottom,
 		0,
 	)

@@ -75,6 +75,43 @@ func (tc *TmuxController) GetTmuxSessions() []*gotmux.Session {
 	return sessions
 }
 
+func (t *TmuxController) OpenTmuxSessionChooseTree(s *gotmux.Session) error {
+	windows, err := s.ListWindows()
+	if err != nil {
+		return err
+	}
+
+	var window *gotmux.Window
+	for _, w := range windows {
+		if w != nil {
+			window = w
+			break
+		}
+	}
+
+	if window == nil {
+		window, err = s.New()
+		if err != nil {
+			return err
+		}
+	}
+
+	var pane *gotmux.Pane
+	pane, err = window.GetPaneByIndex(0)
+	if err != nil {
+		return err
+	}
+
+	err = pane.ChooseTree(&gotmux.ChooseTreeOptions{
+		SessionsCollapsed: true,
+	})
+	if err != nil {
+		return err
+	}
+
+	return s.Attach()
+}
+
 func (tc *TmuxController) GetTmuxSessionByName(name string) *gotmux.Session {
 	session, _ := tc.tmux.GetSessionByName(name)
 	return session
