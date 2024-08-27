@@ -48,3 +48,38 @@ mynav
 ```
 
 > ### Use '?' in the TUI to see all the key maps!
+
+## Features
+### Workspace and session management
+- Organize workspaces by topic.
+- Create, view, update and delete workspaces and topics.
+- View information about workspaces, such as git information, activity, descriptions...
+- Enter a session for each workspace, allowing to swap between workspaces easilty (uses tmux).
+- Create, view, update and delete workspace sessions.
+
+### Tmux session, windows and panes
+- View tmux session, windows and panes.
+- Create, view. update and delete tmux sessions.
+- View a preview of tmux sessions.
+- A number of tmux commands as keymaps.
+
+### Simple dev oriented Github client
+- Authenticate using device authentication or personal access token authentication.
+- View github profile info, repos and PRs.
+- Open browser/Copy url of PRs and repos.
+- Clone repo directly to a workspace, avoiding the need to use your browser.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
