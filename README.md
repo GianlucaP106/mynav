@@ -19,7 +19,7 @@ Mynav is a TUI workspace and session manager. It aims to allow for an easy view 
 ```bash
 docker run -it --name mynav --rm ubuntu bash -c '
         apt update &&
-        apt install -y git golang-go neovim tmux curl unzip &&
+        apt install -y git golang-go neovim tmux curl unzip libx11-dev &&
         cd &&
         (curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.sh | bash) &&
         export PATH="$PATH:$HOME/.mynav" &&
