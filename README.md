@@ -178,3 +178,11 @@ mynav
 | o   | Open PR in browser      |
 | u   | Copy PR url to browser  |
 | R   | Refetch all Github data |
+
+#### Settings dialog
+
+| Key   | Action                   |
+| ----- | ------------------------ |
+| enter | Change setting           |
+| D     | Reset setting to default |
+| esc   | Close settings dialog    |
