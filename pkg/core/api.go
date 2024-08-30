@@ -29,9 +29,13 @@ func NewApi() (*Api, error) {
 
 	api.GlobalConfiguration = gc
 	if api.LocalConfiguration.IsConfigInitialized {
-		api.InitControllers()
+		if err := api.InitControllers(); err != nil {
+			return nil, err
+		}
 	} else {
-		api.InitStandaloneController()
+		if err := api.InitStandaloneController(); err != nil {
+			return nil, err
+		}
 	}
 
 	return api, nil
@@ -53,14 +57,24 @@ func (api *Api) InitConfiguration() error {
 	return nil
 }
 
-func (api *Api) InitStandaloneController() {
-	api.Tmux = NewTmuxController()
+func (api *Api) InitStandaloneController() error {
+	tmux, err := NewTmuxController()
+	api.Tmux = tmux
+	if err != nil {
+		return err
+	}
+
 	api.Github = NewGithubController(api.GlobalConfiguration)
+	return nil
 }
 
-func (api *Api) InitControllers() {
+func (api *Api) InitControllers() error {
 	if api.LocalConfiguration.IsConfigInitialized {
-		api.InitStandaloneController()
+		err := api.InitStandaloneController()
+		if err != nil {
+			return err
+		}
+
 		api.Core.TopicController = NewTopicController(api.LocalConfiguration.GetLocalConfigDir(), api.Tmux)
 		api.Core.WorkspaceController = NewWorkspaceController(
 			api.Core.GetTopics(),
@@ -69,4 +83,5 @@ func (api *Api) InitControllers() {
 		)
 		api.Core.TopicController.WorkspaceController = api.Core.WorkspaceController
 	}
+	return nil
 }

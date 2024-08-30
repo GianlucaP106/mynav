@@ -1,7 +1,6 @@
 package core
 
 import (
-	"log"
 	"mynav/pkg/system"
 	"os"
 
@@ -13,17 +12,17 @@ type TmuxController struct {
 	tmux *gotmux.Tmux
 }
 
-func NewTmuxController() *TmuxController {
+func NewTmuxController() (*TmuxController, error) {
 	t, err := gotmux.DefaultTmux()
 	if err != nil {
-		log.Panicln(err)
+		return nil, err
 	}
 
 	tmc := &TmuxController{
 		tmux: t,
 	}
 
-	return tmc
+	return tmc, nil
 }
 
 func (tc *TmuxController) RenameTmuxSession(s *gotmux.Session, newName string) error {
