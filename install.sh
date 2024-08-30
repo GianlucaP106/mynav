@@ -17,3 +17,6 @@ tag_without_v=$(echo "$latest_tag" | tr -d "v")
 cd "src/mynav-${tag_without_v}"
 go build -o mynav
 mv mynav ../../mynav
+
+cd ~/.mynav
+rm -rf src
