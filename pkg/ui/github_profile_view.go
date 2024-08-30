@@ -56,8 +56,9 @@ func (g *githubProfileView) init() {
 				defer tdMu.Unlock()
 
 				if td != nil && *td != nil {
-					tui.UpdateTui(func(g *tui.Tui) error {
+					tui.UpdateTui(func(t *tui.Tui) error {
 						(*td).close()
+						g.view.Focus()
 						return nil
 					})
 				}
