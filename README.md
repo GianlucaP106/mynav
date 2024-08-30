@@ -50,7 +50,7 @@ export PATH="$PATH:$HOME/.mynav"
 mynav
 ```
 
-> #### NOTE
+>Note:
 >
 > - mynav will look for a configuration in the current or any parent directory, otherwise will ask to initialize the current directory.
 > - mynav can be initialized in multiple independant directories, but not nested.
