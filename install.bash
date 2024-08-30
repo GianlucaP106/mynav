@@ -14,7 +14,7 @@ echo "Installing latest release ${latest_tag}"
 os="$(uname -s)"
 arch="$(uname -m)"
 
-if ["$arch" = "aarch64"]; then
+if [ "$arch" = "aarch64" ]; then
     arch="arm64"
 fi
 
