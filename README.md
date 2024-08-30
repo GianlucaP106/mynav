@@ -30,9 +30,9 @@ docker run -it --name mynav --rm ubuntu bash -c '
     '
 ```
 
-> Note: The installation uses go and git, and the application uses git, nvim, and tmux.
-
 ### Build from source
+>
+>Note: Requires go to be installed
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.sh | bash
