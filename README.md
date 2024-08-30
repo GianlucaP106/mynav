@@ -23,7 +23,7 @@ docker run -it --name mynav --rm ubuntu bash -c '
         apt update &&
         apt install -y git golang-go neovim tmux curl unzip libx11-dev &&
         cd &&
-        (curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.sh | bash) &&
+        (curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.bash | bash) &&
         export PATH="$PATH:$HOME/.mynav" &&
         mkdir nav && cd nav &&
         mynav
