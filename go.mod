@@ -3,6 +3,7 @@ module mynav
 go 1.22.3
 
 require (
+	github.com/GianlucaP106/gotmux v0.2.0
 	github.com/awesome-gocui/gocui v1.1.0
 	github.com/google/go-github/v62 v62.0.0
 	github.com/gookit/color v1.5.4
@@ -13,12 +14,10 @@ require (
 )
 
 require (
-	github.com/GianlucaP106/gotmux v0.2.0 // indirect
 	github.com/gdamore/encoding v1.0.0 // indirect
 	github.com/gdamore/tcell/v2 v2.4.0 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.0.3 // indirect
 	github.com/mattn/go-runewidth v0.0.10 // indirect
 	github.com/rivo/uniseg v0.1.0 // indirect
