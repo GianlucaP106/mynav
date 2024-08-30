@@ -81,6 +81,9 @@ func openSettingsDialog() *settingsDialog {
 			if prevView != nil {
 				prevView.Focus()
 			}
+		}).
+		Set('?', "Toggle cheatsheet", func() {
+			openHelpDialog(s.view.GetKeybindings(), func() {})
 		})
 
 	s.view.Focus()
