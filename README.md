@@ -30,19 +30,39 @@ docker run -it --name mynav --rm ubuntu bash -c '
     '
 ```
 
+### Binary installation
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.bash | bash
+```
+
+> **See all binaries on the [latest release](https://github.com/GianlucaP106/mynav/releases/latest) page.**
+
 ### Build from source
->
->Note: Requires go to be installed
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.sh | bash
-```
+# go to mynav's configuration directory
+mkdir ~/.mynav/ 2>/dev/null | true
+cd ~/.mynav
 
-### Add to PATH
+# clone the repo
+git clone https://github.com/GianlucaP106/mynav src
+cd src
 
-```bash
+# build the project
+go build -o ~/.mynav/mynav
+
+# add to path
 export PATH="$PATH:$HOME/.mynav"
+
+# optionally delete the source code
+cd ~/.mynav
+rm -rf src
 ```
+
+#### Supported platforms
+
+mynav is only supported for Linux and MacOS.
 
 ## Usage
 
@@ -50,15 +70,15 @@ export PATH="$PATH:$HOME/.mynav"
 mynav
 ```
 
->Note:
->
-> - mynav will look for a configuration in the current or any parent directory, otherwise will ask to initialize the current directory.
-> - mynav can be initialized in multiple independant directories, but not nested.
-> - mynav cannot be initialized in the user home directory.
+#### Configuration
+
+- mynav will look for a configuration in the current or any parent directory, otherwise will ask to initialize the current directory.
+- mynav can be initialized in multiple independant directories, but not nested.
+- mynav cannot be initialized in the user home directory.
 
 ## Features
 
-### Workspace and session management
+#### Workspace and session management
 
 - Organize workspaces by topic.
 - Create, view, update and delete workspaces and topics.
@@ -66,14 +86,14 @@ mynav
 - Enter a session for each workspace, allowing to swap between workspaces easilty (uses tmux).
 - Create, view, update and delete workspace sessions.
 
-### Tmux session, windows and panes
+#### Tmux session, windows and panes
 
 - View tmux session, windows and panes.
 - Create, view. update and delete tmux sessions.
 - View a preview of tmux sessions.
 - A number of tmux commands as keymaps.
 
-### Simple development oriented Github client
+#### Simple Github client
 
 - Authenticate using device authentication or personal access token authentication.
 - View github profile info, repos and PRs.
@@ -81,8 +101,8 @@ mynav
 - Clone repo directly to a workspace, avoiding the need to use your browser.
 
 ## Keymaps
->
-> ### Use '?' in the TUI to see all the key maps
+
+#### Use '?' in the TUI to see all the key maps
 
 #### Global
 
