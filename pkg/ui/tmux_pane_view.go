@@ -45,8 +45,8 @@ func (t *tmuxPaneView) init() {
 		"Pid",
 		"Path",
 	}, []float64{
-		0.25,
-		0.25,
+		0.3,
+		0.2,
 		0.50,
 	})
 

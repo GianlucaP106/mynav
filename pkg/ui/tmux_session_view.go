@@ -43,13 +43,13 @@ func (tv *tmuxSessionView) init() {
 	tv.tableRenderer = tui.NewTableRenderer[*gotmux.Session]()
 	titles := []string{
 		"Windows",
-		"Workspace",
 		"Session name",
+		"Workspace",
 	}
 	proportions := []float64{
 		0.2,
-		0.3,
 		0.5,
+		0.3,
 	}
 	tv.tableRenderer.InitTable(sizeX, sizeY, titles, proportions)
 
@@ -200,8 +200,8 @@ func (ts *tmuxSessionView) refresh() {
 		windows := strconv.Itoa(session.Windows)
 		rows = append(rows, []string{
 			windows,
-			workspace,
 			sessionName,
+			workspace,
 		})
 	}
 
