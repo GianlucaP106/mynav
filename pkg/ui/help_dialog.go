@@ -58,7 +58,7 @@ func openHelpDialog(mappings []*tui.KeyBindingInfo, exit func()) *helpDialog {
 		exit()
 	})
 
-	sizeX, _ := hv.view.Size()
+	sizeX, sizeY := hv.view.Size()
 	hv.tableRenderer = tui.NewTableRenderer[*tui.KeyBindingInfo]()
 	title := []string{
 		"Key",
@@ -69,7 +69,7 @@ func openHelpDialog(mappings []*tui.KeyBindingInfo, exit func()) *helpDialog {
 		0.66,
 	}
 
-	hv.tableRenderer.InitTable(sizeX, 13, title, proportions)
+	hv.tableRenderer.InitTable(sizeX, sizeY, title, proportions)
 	hv.refreshTable()
 	hv.render()
 	hv.view.Focus()
