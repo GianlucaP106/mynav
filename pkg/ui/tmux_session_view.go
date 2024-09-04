@@ -95,8 +95,8 @@ func (tv *tmuxSessionView) init() {
 						return
 					}
 
-					refreshTmuxViewsAsync()
-
+					refreshTmuxViews()
+					refreshMainViews()
 				}
 			}, "Are you sure you want to delete this session?")
 		}).
@@ -112,8 +112,8 @@ func (tv *tmuxSessionView) init() {
 						return
 					}
 
-					refreshTmuxViewsAsync()
-					refreshFsAsync()
+					refreshTmuxViews()
+					refreshMainViews()
 				}
 			}, "Are you sure you want to delete ALL tmux sessions?")
 		}).
@@ -129,8 +129,8 @@ func (tv *tmuxSessionView) init() {
 						return
 					}
 
-					refreshTmuxViewsAsync()
-					refreshFsAsync()
+					refreshTmuxViews()
+					refreshMainViews()
 				}
 			}, "Are you sure you want to delete ALL non-external tmux sessions?")
 		}).
@@ -208,7 +208,7 @@ func (ts *tmuxSessionView) refresh() {
 	ts.tableRenderer.FillTable(rows, sessions)
 }
 
-func refreshTmuxViewsAsync() {
+func refreshTmuxViews() {
 	go func() {
 		ts := getTmuxSessionView()
 		ts.refresh()

@@ -127,7 +127,7 @@ func (wv *workspacesView) init() {
 					openToastDialogError(err.Error())
 				}
 
-				refreshFsAsync()
+				refreshMainViews()
 			}, func() {}, "Git repo URL", smallEditorSize)
 		}).
 		Set('G', "Open browser to git repo", func() {
@@ -272,7 +272,7 @@ func (wv *workspacesView) init() {
 					}
 
 					tv.tableRenderer.SelectRow(0)
-					refreshFsAsync()
+					refreshMainViews()
 					wv.focus()
 				},
 				onSelectDescription: "Move workspace to this topic",
@@ -299,8 +299,8 @@ func (wv *workspacesView) init() {
 
 					// HACK: same as below
 					tv.tableRenderer.SelectRow(0)
-					refreshFsAsync()
-					refreshTmuxViewsAsync()
+					refreshMainViews()
+					refreshTmuxViews()
 				}
 			}, "Are you sure you want to delete this workspace?")
 		}).
@@ -318,8 +318,8 @@ func (wv *workspacesView) init() {
 
 				tv.tableRenderer.SelectRow(0)
 				wv.tableRenderer.SelectRow(0)
-				refreshTmuxViewsAsync()
-				refreshFsAsync()
+				refreshTmuxViews()
+				refreshMainViews()
 			}, func() {}, "New workspace name", smallEditorSize, curWorkspace.Name)
 		}).
 		Set('e', "Add/change description", func() {
@@ -331,7 +331,7 @@ func (wv *workspacesView) init() {
 			openEditorDialog(func(desc string) {
 				if desc != "" {
 					getApi().Core.SetDescription(desc, curWorkspace)
-					refreshFsAsync()
+					refreshMainViews()
 				}
 			}, func() {}, "Description", largeEditorSize)
 		}).
@@ -353,7 +353,7 @@ func (wv *workspacesView) init() {
 				// because we are sorting by modifed time
 				tv.tableRenderer.SelectRow(0)
 				wv.tableRenderer.SelectRow(0)
-				refreshFsAsync()
+				refreshMainViews()
 			}, func() {}, "Workspace name ", smallEditorSize)
 		}).
 		Set('X', "Kill tmux session", func() {
@@ -366,7 +366,8 @@ func (wv *workspacesView) init() {
 				openConfirmationDialog(func(b bool) {
 					if b {
 						getApi().Core.DeleteWorkspaceTmuxSession(curWorkspace)
-						refreshFsAsync()
+						refreshMainViews()
+						refreshTmuxViews()
 					}
 				}, "Are you sure you want to delete the tmux session?")
 			}

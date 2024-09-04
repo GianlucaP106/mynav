@@ -79,7 +79,7 @@ func (t *tmuxPaneView) init() {
 					openToastDialogError(err.Error())
 				}
 
-				refreshTmuxViewsAsync()
+				refreshTmuxViews()
 			}, "Are you sure you want to kill this pane?")
 		}).
 		Set(gocui.KeyEsc, "Focus window view", func() {
