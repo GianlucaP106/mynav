@@ -6,6 +6,7 @@ import (
 	"mynav/pkg/system"
 	"mynav/pkg/tui"
 	"sort"
+	"strings"
 
 	"github.com/awesome-gocui/gocui"
 	"github.com/google/go-github/v62/github"
@@ -14,6 +15,7 @@ import (
 type githubRepoView struct {
 	view          *tui.View
 	tableRenderer *tui.TableRenderer[*github.Repository]
+	search        string
 }
 
 var _ viewable = new(githubRepoView)
@@ -157,6 +159,17 @@ func (g *githubRepoView) init() {
 			system.CopyToClip(url)
 			openToastDialog(url, toastDialogNeutralType, "Repo URL copied to clipboard", func() {})
 		}).
+		Set('/', "", func() {
+			openEditorDialog(func(s string) {
+				if s == "" {
+					return
+				}
+
+				g.search = s
+				g.view.Subtitle = fmt.Sprintf("Searching: %s", g.search)
+				g.refresh()
+			}, func() {}, "Search by name", smallEditorSize)
+		}).
 		Set(gocui.KeyArrowRight, "Focus PR View", moveRight).
 		Set(gocui.KeyCtrlL, "Focus PR View", moveRight).
 		Set('?', "Toggle cheatsheet", func() {
@@ -179,6 +192,16 @@ func (g *githubRepoView) refresh() {
 	}
 
 	repos := getApi().Github.GetUserRepos()
+
+	if g.search != "" {
+		o := make([]*github.Repository, 0)
+		for _, r := range repos {
+			if strings.Contains(r.GetName(), g.search) {
+				o = append(o, r)
+			}
+		}
+		repos = o
+	}
 
 	sort.Slice(repos, func(i, j int) bool {
 		return repos[i].GetUpdatedAt().After(repos[j].GetUpdatedAt().Time)
