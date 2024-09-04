@@ -80,14 +80,14 @@ func (tv *topicsView) init() {
 			openEditorDialog(func(s string) {
 				tv.search.Set(s)
 				tv.view.Subtitle = tui.WithSurroundingSpaces("Searching: " + s)
-				refreshFsAsync()
+				refreshMainViews()
 			}, func() {}, "Search", smallEditorSize)
 		}).
 		Set(gocui.KeyEsc, "Escape search", func() {
 			if tv.search.Get() != "" {
 				tv.search.Set("")
 				tv.view.Subtitle = ""
-				refreshFsAsync()
+				refreshMainViews()
 			}
 		}).
 		Set('a', "Create a topic", func() {
@@ -101,7 +101,7 @@ func (tv *topicsView) init() {
 				// This will result in the corresponding topic going to the top
 				// because we are sorting by modifed time
 				tv.tableRenderer.SelectRow(0)
-				refreshFsAsync()
+				refreshMainViews()
 			}, func() {}, "Topic name", smallEditorSize)
 		}).
 		Set('r', "Rename topic", func() {
@@ -116,7 +116,7 @@ func (tv *topicsView) init() {
 					return
 				}
 
-				refreshFsAsync()
+				refreshMainViews()
 			}, func() {}, "New topic name", smallEditorSize, t.Name)
 		}).
 		Set('s', "Search for a workspace", func() {
@@ -171,7 +171,7 @@ func (tv *topicsView) init() {
 					openToastDialogError(err.Error())
 				}
 
-				refreshFsAsync()
+				refreshMainViews()
 			}, "Are you sure you want to delete this topic? All its content will be deleted.")
 		}).
 		Set('?', "Toggle cheatsheet", func() {
@@ -200,7 +200,7 @@ func (tv *topicsView) refresh() {
 	tv.tableRenderer.FillTable(rows, rowValues)
 }
 
-func refreshFsAsync() {
+func refreshMainViews() {
 	if !getApi().GlobalConfiguration.Standalone {
 		go func() {
 			t := getTopicsView()

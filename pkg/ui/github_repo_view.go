@@ -129,7 +129,7 @@ func (g *githubRepoView) init() {
 					go func() {
 						wv := getWorkspacesView()
 						tv := getTopicsView()
-						refreshFsAsync()
+						refreshMainViews()
 						getMainTabGroup().FocusTabByIndex(0)
 						wv.focus()
 						tv.selectTopicByName(a.Topic.Name)
