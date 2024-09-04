@@ -5,6 +5,7 @@ import (
 	"mynav/pkg/core"
 	"mynav/pkg/system"
 	"mynav/pkg/tui"
+	"sort"
 
 	"github.com/awesome-gocui/gocui"
 	"github.com/google/go-github/v62/github"
@@ -178,6 +179,10 @@ func (g *githubRepoView) refresh() {
 	}
 
 	repos := getApi().Github.GetUserRepos()
+
+	sort.Slice(repos, func(i, j int) bool {
+		return repos[i].GetUpdatedAt().After(repos[j].GetUpdatedAt().Time)
+	})
 
 	rows := make([][]string, 0)
 	rowValues := make([]*github.Repository, 0)
