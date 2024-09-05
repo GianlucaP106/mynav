@@ -173,27 +173,9 @@ func (wv *workspacesView) init() {
 				return
 			}
 
-			cmd := getApi().GlobalConfiguration.GetCustomWorkspaceOpenerCmd()
 			var error error = nil
 			runAction(func() {
-				if len(cmd) > 0 {
-					cmd = append(cmd, curWorkspace.Path)
-					c := system.CommandWithRedirect(cmd...)
-					err := c.Run()
-					if err != nil {
-						error = err
-					}
-				} else if core.IsTmuxSession() {
-					err := getApi().Core.OpenNeovimInWorkspace(curWorkspace)
-					if err != nil {
-						error = err
-					}
-				} else {
-					err := getApi().Core.CreateOrAttachTmuxSession(curWorkspace)
-					if err != nil {
-						error = err
-					}
-				}
+				error = getApi().Core.OpenWorkspace(curWorkspace)
 			})
 
 			if error != nil {

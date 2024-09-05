@@ -11,6 +11,8 @@ import (
 type WorkspaceController struct {
 	WorkspaceRepository *WorkspaceRepository
 	TmuxController      *TmuxController
+	IpcClient           *IpcClient
+	GlobalConfiguration *GlobalConfiguration
 }
 
 func NewWorkspaceController(topics Topics, storePath string, tr *TmuxController) *WorkspaceController {
@@ -134,6 +136,30 @@ func (wc *WorkspaceController) CreateOrAttachTmuxSession(w *Workspace) error {
 	return nil
 }
 
+func (wc *WorkspaceController) OpenWorkspace(workspace *Workspace) error {
+	cmd := wc.GlobalConfiguration.GetCustomWorkspaceOpenerCmd()
+	if len(cmd) > 0 {
+		cmd = append(cmd, workspace.Path)
+		c := system.CommandWithRedirect(cmd...)
+		err := c.Run()
+		if err != nil {
+			return err
+		}
+	} else if !IsParentAppInstance() {
+		err := wc.OpenNeovimInWorkspace(workspace)
+		if err != nil {
+			return err
+		}
+	} else {
+		err := wc.CreateOrAttachTmuxSession(workspace)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (wc *WorkspaceController) DeleteWorkspaceTmuxSession(w *Workspace) {
 	if ts := wc.TmuxController.GetTmuxSessionByName(w.Path); ts != nil {
 		wc.TmuxController.DeleteTmuxSession(ts)
@@ -180,6 +206,10 @@ func (wc *WorkspaceController) GetWorkspacesByTopicCount(t *Topic) int {
 
 func (wc *WorkspaceController) GetWorkspaces() Workspaces {
 	return wc.WorkspaceRepository.Container.All()
+}
+
+func (wc *WorkspaceController) GetWorkspaceByShortPath(s string) *Workspace {
+	return wc.WorkspaceRepository.Find(s)
 }
 
 func (wc *WorkspaceController) DeleteWorkspacesByTopic(t *Topic) error {

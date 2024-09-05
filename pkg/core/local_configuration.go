@@ -83,6 +83,14 @@ func (c *LocalConfiguration) GetWorkspaceStorePath() string {
 	return filepath.Join(c.GetConfigPath(), "workspaces.json")
 }
 
+func (c *LocalConfiguration) GetSocketPath() string {
+	return filepath.Join(c.GetConfigPath(), "mynav.sock")
+}
+
+func IsParentAppInstance() bool {
+	return !IsTmuxSession()
+}
+
 func isBeforeOneHourAgo(timestamp time.Time) bool {
 	now := time.Now()
 	oneHourAgo := now.Add(-1 * time.Hour)

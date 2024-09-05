@@ -236,6 +236,11 @@ func (t *TmuxController) GetTmuxSessionByChildPid(pid int) *gotmux.Session {
 	return nil
 }
 
+func (t *TmuxController) GetTmuxClient() *gotmux.Client {
+	client, _ := t.tmux.GetClient()
+	return client
+}
+
 func IsTmuxSession() bool {
 	return os.Getenv("TMUX") != ""
 }
