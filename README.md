@@ -21,7 +21,7 @@ Before mynav, I would often get annoyed when working on multiple projects using 
 ```bash
 docker run -it --name mynav --rm ubuntu bash -c '
         apt update &&
-        apt install -y git golang-go neovim tmux curl unzip libx11-dev &&
+        apt install -y git golang-go neovim tmux curl unzip &&
         cd &&
         (curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.bash | bash) &&
         export PATH="$PATH:$HOME/.mynav" &&
