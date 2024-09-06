@@ -1,6 +1,6 @@
 # mynav
 
-A user friendly TUI workspace manager, aiming to allow for an easy view of all your workspaces in a terminal environment.
+A user friendly TUI workspace and session manager, aiming to allow for an easy view of all your workspaces and sessions in a terminal environment.
 
 ### Main tab
 
