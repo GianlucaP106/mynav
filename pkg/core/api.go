@@ -16,6 +16,8 @@ type Api struct {
 	GlobalConfiguration *GlobalConfiguration
 	LocalConfiguration  *LocalConfiguration
 	Github              *GithubController
+	IpcClient           *IpcClient
+	IpcServer           *IpcServer
 }
 
 func NewApi() (*Api, error) {
@@ -39,12 +41,6 @@ func NewApi() (*Api, error) {
 	}
 
 	return api, nil
-}
-
-func (api *Api) GetSystemStats() (numTopics int, numWorkspaces int) {
-	numTopics = api.Core.GetTopicCount()
-	numWorkspaces = api.Core.GetWorkspaceCount()
-	return
 }
 
 func (api *Api) InitConfiguration() error {
@@ -81,7 +77,21 @@ func (api *Api) InitControllers() error {
 			api.LocalConfiguration.GetWorkspaceStorePath(),
 			api.Tmux,
 		)
+
 		api.Core.TopicController.WorkspaceController = api.Core.WorkspaceController
+		api.Core.WorkspaceController.GlobalConfiguration = api.GlobalConfiguration
 	}
+
 	return nil
+}
+
+func (api *Api) InitIpc(runAction func(func())) {
+	socketPath := api.LocalConfiguration.GetSocketPath()
+	if IsParentAppInstance() {
+		// funcs
+		api.IpcServer = NewIpcServer(socketPath)
+	}
+
+	api.IpcClient = NewIpcClient(socketPath)
+	api.Core.WorkspaceController.IpcClient = api.IpcClient
 }
