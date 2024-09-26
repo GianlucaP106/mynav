@@ -202,7 +202,7 @@ func (tv *topicsView) refresh() {
 
 func refreshMainViews() {
 	if !getApi().GlobalConfiguration.Standalone {
-		go func() {
+		queueRefresh(func() {
 			t := getTopicsView()
 			t.refresh()
 			renderView(t)
@@ -210,7 +210,7 @@ func refreshMainViews() {
 			wv := getWorkspacesView()
 			wv.refresh()
 			renderView(wv)
-		}()
+		})
 	}
 }
 

@@ -10,6 +10,7 @@ import (
 type UI struct {
 	mainTabGroup *tui.TabGroup
 	api          *core.Api
+	refreshQueue chan func()
 	views        []viewable
 }
 
@@ -58,10 +59,11 @@ func (ui *UI) InitUI() *UI {
 	}
 
 	ui.initGlobalKeybindings()
+	ui.initRefreshExecutor()
 	return ui
 }
 
-func (ui *UI) initStandaloneUI() {
+func (ui *UI) InitStandaloneUI() {
 	ui.views = []viewable{
 		newHeaderView(),
 		newTmuxSessionView(),
@@ -82,13 +84,28 @@ func (ui *UI) initStandaloneUI() {
 
 	systemUpdate()
 	ui.initGlobalKeybindings()
+	ui.initRefreshExecutor()
+}
+
+func (ui *UI) initRefreshExecutor() {
+	ui.refreshQueue = make(chan func(), 10)
+	go func() {
+		for {
+			task := <-ui.refreshQueue
+			task()
+		}
+	}()
+}
+
+func (ui *UI) queueRefresh(f func()) {
+	ui.refreshQueue <- f
 }
 
 func (ui *UI) askConfig() {
 	openConfirmationDialog(func(b bool) {
 		if !b {
 			getApi().GlobalConfiguration.SetStandalone(true)
-			ui.initStandaloneUI()
+			ui.InitStandaloneUI()
 			return
 		}
 
@@ -165,12 +182,4 @@ func (ui *UI) buildGithubTab() *tui.Tab {
 	tab.AddView(getHeaderView().view, tui.NoPosition)
 	tab.GenerateNavigationKeyBindings()
 	return tab
-}
-
-func runAction(f func()) {
-	tui.Suspend()
-	f()
-	tui.Resume()
-	refreshMainViews()
-	refreshTmuxViews()
 }
