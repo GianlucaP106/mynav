@@ -209,12 +209,12 @@ func (ts *tmuxSessionView) refresh() {
 }
 
 func refreshTmuxViews() {
-	go func() {
+	queueRefresh(func() {
 		ts := getTmuxSessionView()
 		ts.refresh()
 		renderView(ts)
 		ts.refreshDown()
-	}()
+	})
 }
 
 func (ts *tmuxSessionView) refreshDown() {

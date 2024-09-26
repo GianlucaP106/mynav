@@ -1,5 +1,3 @@
-github.com/GianlucaP106/gotmux v0.2.0 h1:6oVhs+r6kyIQsPjrgxGYH1/Ki5epb9AW9zeamkStKnA=
-github.com/GianlucaP106/gotmux v0.2.0/go.mod h1:qOsZ+exnCbgv3KJ84VaBo4Q7mXs/W23CW4fyoXAgKe4=
 github.com/GianlucaP106/gotmux v0.2.1-0.20240906010315-bb38e85334e8 h1:VOR/nn5FQLFGU6g5p9kXi9UmW3GGsZFvdXBWFggD6BI=
 github.com/GianlucaP106/gotmux v0.2.1-0.20240906010315-bb38e85334e8/go.mod h1:qOsZ+exnCbgv3KJ84VaBo4Q7mXs/W23CW4fyoXAgKe4=
 github.com/atotto/clipboard v0.1.4 h1:EH0zSVneZPSuFR11BlR9YppQTVDbh5+16AmcJi4g1z4=

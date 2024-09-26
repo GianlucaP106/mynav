@@ -23,7 +23,7 @@ func Start(api *core.Api) {
 	if getApi().LocalConfiguration.IsConfigInitialized {
 		_ui.InitUI()
 	} else if getApi().GlobalConfiguration.Standalone {
-		_ui.initStandaloneUI()
+		_ui.InitStandaloneUI()
 	} else {
 		_ui.askConfig()
 	}
@@ -71,10 +71,10 @@ func focusView(viewName string) {
 }
 
 func refreshAsync(v viewable) {
-	go func() {
+	queueRefresh(func() {
 		v.refresh()
 		renderView(v)
-	}()
+	})
 }
 
 func getMainTabGroup() *tui.TabGroup {
@@ -83,4 +83,16 @@ func getMainTabGroup() *tui.TabGroup {
 
 func getApi() *core.Api {
 	return _ui.api
+}
+
+func runAction(f func()) {
+	tui.Suspend()
+	f()
+	tui.Resume()
+	refreshMainViews()
+	refreshTmuxViews()
+}
+
+func queueRefresh(f func()) {
+	_ui.queueRefresh(f)
 }
