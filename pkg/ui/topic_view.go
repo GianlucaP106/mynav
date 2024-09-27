@@ -126,9 +126,21 @@ func (tv *topicsView) init() {
 					workspaces := getApi().Core.GetWorkspaces().Sorted().FilterByNameContaining(s)
 					rows := make([][]string, 0)
 					for _, w := range workspaces {
+						remote, _ := w.GetGitRemote()
+						if remote != "" {
+							remote = core.TrimGithubUrl(remote)
+						}
+
+						session := getApi().Tmux.GetTmuxSessionByName(w.Path)
+						sessionStr := "None"
+						if session != nil {
+							sessionStr = "Active"
+						}
+
 						rows = append(rows, []string{
-							w.Topic.Name,
-							w.Name,
+							w.ShortPath(),
+							remote,
+							sessionStr,
 						})
 					}
 
@@ -150,11 +162,13 @@ func (tv *topicsView) init() {
 				searchViewTitle:     "Search a workspace",
 				tableViewTitle:      "Result",
 				tableTitles: []string{
-					"Topic",
-					"Name",
+					"Workspace",
+					"Git Remote",
+					"Tmux Session",
 				}, tableProportions: []float64{
-					0.5,
-					0.5,
+					0.4,
+					0.4,
+					0.2,
 				},
 			})
 		}).
