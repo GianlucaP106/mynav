@@ -46,7 +46,7 @@ func (wv *workspacesView) init() {
 	titles := []string{
 		"Name",
 		"Description",
-		"Git remote",
+		"Git Remote",
 		"Last Modified",
 		"Tmux Session",
 	}
