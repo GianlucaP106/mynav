@@ -10,8 +10,8 @@ import (
 )
 
 type LocalConfiguration struct {
-	path                string
-	IsConfigInitialized bool
+	path          string
+	IsInitialized bool
 }
 
 func NewLocalConfiguration() *LocalConfiguration {
@@ -27,16 +27,12 @@ func (c *LocalConfiguration) InitConfig(dir string) (string, error) {
 	}
 
 	c.path = dir
-	c.IsConfigInitialized = true
+	c.IsInitialized = true
 	return c.path, nil
 }
 
 func (c *LocalConfiguration) GetConfigPath() string {
 	return filepath.Join(c.path, ".mynav")
-}
-
-func (c *LocalConfiguration) GetLocalConfigDir() string {
-	return c.path
 }
 
 func (c *LocalConfiguration) DetectConfig() bool {
@@ -75,7 +71,7 @@ func (c *LocalConfiguration) DetectConfig() bool {
 		return false
 	}
 	c.path = configPath
-	c.IsConfigInitialized = true
+	c.IsInitialized = true
 	return true
 }
 

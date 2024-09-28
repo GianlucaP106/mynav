@@ -1,7 +1,6 @@
 package core
 
 import (
-	"mynav/pkg/persistence"
 	"strings"
 
 	"github.com/google/go-github/v62/github"
@@ -10,9 +9,9 @@ import (
 type GithubController struct {
 	client        GithubClient
 	config        *GlobalConfiguration
-	profile       *persistence.Value[*github.User]
-	prContainer   *persistence.Container[github.PullRequest]
-	repoContainer *persistence.Container[github.Repository]
+	profile       *Value[*github.User]
+	prContainer   *Container[github.PullRequest]
+	repoContainer *Container[github.Repository]
 }
 
 const FETCH_LIMIT = 1000
@@ -22,9 +21,9 @@ func NewGithubController(config *GlobalConfiguration) *GithubController {
 	g := &GithubController{
 		config:        config,
 		client:        NewGithubClient(token),
-		prContainer:   persistence.NewContainer[github.PullRequest](),
-		repoContainer: persistence.NewContainer[github.Repository](),
-		profile:       persistence.NewValue[*github.User](nil),
+		prContainer:   NewContainer[github.PullRequest](),
+		repoContainer: NewContainer[github.Repository](),
+		profile:       NewValue[*github.User](nil),
 	}
 
 	return g

@@ -89,7 +89,7 @@ func (t *tmuxWindowView) init() {
 
 			var error error = nil
 			runAction(func() {
-				err := getApi().Tmux.AttachTmuxSession(session)
+				err := api().Tmux.AttachTmuxSession(session)
 				if err != nil {
 					error = err
 				}
@@ -110,7 +110,7 @@ func (t *tmuxWindowView) init() {
 					return
 				}
 
-				err := getApi().Tmux.KillTmuxWindow(w)
+				err := api().Tmux.KillTmuxWindow(w)
 				if err != nil {
 					openToastDialogError(err.Error())
 				}

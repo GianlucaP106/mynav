@@ -90,7 +90,7 @@ func (wd *workspaceInfoDialog) getWorkspaceInfoContent(w *core.Workspace) []stri
 		out = append(out, tui.BlankLine(sizeX))
 	}
 
-	if s := getApi().Tmux.GetTmuxSessionByName(w.Path); s != nil {
+	if s := api().Tmux.GetTmuxSessionByName(w.Path); s != nil {
 		out = append(out, formatItem("Tmux session: ", s.Name)...)
 		out = append(out, tui.WithSpaces(strconv.Itoa(s.Windows)+" window(s)", sizeX))
 		out = append(out, tui.BlankLine(sizeX))

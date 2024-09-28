@@ -2,7 +2,6 @@ package ui
 
 import (
 	"mynav/pkg/core"
-	"mynav/pkg/persistence"
 	"mynav/pkg/tui"
 
 	"github.com/awesome-gocui/gocui"
@@ -11,15 +10,15 @@ import (
 type topicsView struct {
 	view          *tui.View
 	tableRenderer *tui.TableRenderer[*core.Topic]
-	search        *persistence.Value[string]
-	globalSearch  *persistence.Value[string]
+	search        *core.Value[string]
+	globalSearch  *core.Value[string]
 }
 
 var _ viewable = new(topicsView)
 
 func newTopicsView() *topicsView {
 	return &topicsView{
-		search: persistence.NewValue(""),
+		search: core.NewValue(""),
 	}
 }
 
@@ -55,12 +54,12 @@ func (tv *topicsView) init() {
 
 	tv.refresh()
 
-	if selectedWorkspace := getApi().Core.GetSelectedWorkspace(); selectedWorkspace != nil {
+	if selectedWorkspace := api().Workspaces.GetSelectedWorkspace(); selectedWorkspace != nil {
 		tv.selectTopicByName(selectedWorkspace.Topic.Name)
 	}
 
 	moveRight := func() {
-		if getApi().Core.GetTopicCount() > 0 {
+		if api().Topics.GetTopicCount() > 0 {
 			getWorkspacesView().focus()
 		}
 	}
@@ -69,11 +68,11 @@ func (tv *topicsView) init() {
 	tv.view.KeyBinding().
 		Set('j', "Move down", func() {
 			tv.tableRenderer.Down()
-			refreshAsync(wv)
+			refresh(wv)
 		}).
 		Set('k', "Move up", func() {
 			tv.tableRenderer.Up()
-			refreshAsync(wv)
+			refresh(wv)
 		}).
 		Set(gocui.KeyEnter, "Open topic", moveRight).
 		Set('/', "Search by name", func() {
@@ -92,7 +91,7 @@ func (tv *topicsView) init() {
 		}).
 		Set('a', "Create a topic", func() {
 			openEditorDialog(func(s string) {
-				if err := getApi().Core.CreateTopic(s); err != nil {
+				if err := api().Topics.CreateTopic(s); err != nil {
 					openToastDialogError(err.Error())
 					return
 				}
@@ -111,7 +110,7 @@ func (tv *topicsView) init() {
 			}
 
 			openEditorDialogWithDefaultValue(func(s string) {
-				if err := getApi().Core.RenameTopic(t, s); err != nil {
+				if err := api().Topics.RenameTopic(t, s); err != nil {
 					openToastDialogError(err.Error())
 					return
 				}
@@ -123,7 +122,7 @@ func (tv *topicsView) init() {
 			sd := new(*searchListDialog[*core.Workspace])
 			*sd = openSearchListDialog(searchDialogConfig[*core.Workspace]{
 				onSearch: func(s string) ([][]string, []*core.Workspace) {
-					workspaces := getApi().Core.GetWorkspaces().Sorted().FilterByNameContaining(s)
+					workspaces := api().Workspaces.GetWorkspaces().Sorted().FilterByNameContaining(s)
 					rows := make([][]string, 0)
 					for _, w := range workspaces {
 						remote, _ := w.GetGitRemote()
@@ -131,7 +130,7 @@ func (tv *topicsView) init() {
 							remote = core.TrimGithubUrl(remote)
 						}
 
-						session := getApi().Tmux.GetTmuxSessionByName(w.Path)
+						session := api().Tmux.GetTmuxSessionByName(w.Path)
 						sessionStr := "None"
 						if session != nil {
 							sessionStr = "Active"
@@ -173,7 +172,7 @@ func (tv *topicsView) init() {
 			})
 		}).
 		Set('D', "Delete topic", func() {
-			if getApi().Core.GetTopicCount() <= 0 {
+			if api().Topics.GetTopicCount() <= 0 {
 				return
 			}
 			openConfirmationDialog(func(b bool) {
@@ -181,7 +180,7 @@ func (tv *topicsView) init() {
 					return
 				}
 
-				if err := getApi().Core.DeleteTopic(tv.getSelectedTopic()); err != nil {
+				if err := api().Topics.DeleteTopic(tv.getSelectedTopic()); err != nil {
 					openToastDialogError(err.Error())
 				}
 
@@ -194,7 +193,7 @@ func (tv *topicsView) init() {
 }
 
 func (tv *topicsView) refresh() {
-	topics := getApi().Core.GetTopics().Sorted()
+	topics := api().Topics.GetTopics().Sorted()
 
 	search := tv.search.Get()
 	if search != "" {
@@ -215,8 +214,8 @@ func (tv *topicsView) refresh() {
 }
 
 func refreshMainViews() {
-	if !getApi().GlobalConfiguration.Standalone {
-		queueRefresh(func() {
+	if !api().GlobalConfiguration.Standalone {
+		ui.queueRefresh(func() {
 			t := getTopicsView()
 			t.refresh()
 			renderView(t)

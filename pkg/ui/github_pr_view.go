@@ -107,16 +107,16 @@ func (g *githubPrView) getSelectedPr() *github.PullRequest {
 }
 
 func (g *githubPrView) refresh() {
-	if !getApi().Github.IsAuthenticated() {
+	if !api().Github.IsAuthenticated() {
 		return
 	}
 
-	gpr := getApi().Github.GetUserPullRequests()
+	gpr := api().Github.GetUserPullRequests()
 
-	principal := getApi().Github.GetPrincipal()
+	principal := api().Github.GetPrincipal()
 	rows := make([][]string, 0)
 	for _, pr := range gpr {
-		_, relation := getApi().Github.GetPrRelation(pr, principal)
+		_, relation := api().Github.GetPrRelation(pr, principal)
 		rows = append(rows, []string{
 			core.ExtractRepoFromPrUrl(pr.GetHTMLURL()),
 			pr.GetTitle(),
@@ -130,7 +130,7 @@ func (g *githubPrView) refresh() {
 func (g *githubPrView) render() error {
 	g.view.Clear()
 	g.view.Resize(getViewPosition(g.view.Name()))
-	if !getApi().Github.IsAuthenticated() {
+	if !api().Github.IsAuthenticated() {
 		fmt.Fprintln(g.view, "Not authenticated")
 		return nil
 	}

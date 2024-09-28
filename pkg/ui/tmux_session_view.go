@@ -69,7 +69,7 @@ func (tv *tmuxSessionView) init() {
 
 			var error error = nil
 			runAction(func() {
-				err := getApi().Tmux.AttachTmuxSession(session)
+				err := api().Tmux.AttachTmuxSession(session)
 				if err != nil {
 					error = err
 				}
@@ -90,7 +90,7 @@ func (tv *tmuxSessionView) init() {
 
 			openConfirmationDialog(func(b bool) {
 				if b {
-					if err := getApi().Tmux.DeleteTmuxSession(session); err != nil {
+					if err := api().Tmux.DeleteTmuxSession(session); err != nil {
 						openToastDialogError(err.Error())
 						return
 					}
@@ -107,7 +107,7 @@ func (tv *tmuxSessionView) init() {
 
 			openConfirmationDialog(func(b bool) {
 				if b {
-					if err := getApi().Tmux.KillTmuxServer(); err != nil {
+					if err := api().Tmux.KillTmuxServer(); err != nil {
 						openToastDialogError(err.Error())
 						return
 					}
@@ -118,13 +118,13 @@ func (tv *tmuxSessionView) init() {
 			}, "Are you sure you want to delete ALL tmux sessions?")
 		}).
 		Set('W', "Kill ALL non-external tmux sessions (has a workspace)", func() {
-			if getApi().GlobalConfiguration.Standalone || tv.getSelectedSession() == nil {
+			if api().GlobalConfiguration.Standalone || tv.getSelectedSession() == nil {
 				return
 			}
 
 			openConfirmationDialog(func(b bool) {
 				if b {
-					if err := getApi().Core.DeleteAllWorkspaceTmuxSessions(); err != nil {
+					if err := api().Workspaces.DeleteAllWorkspaceTmuxSessions(); err != nil {
 						openToastDialogError(err.Error())
 						return
 					}
@@ -150,7 +150,7 @@ func (tv *tmuxSessionView) init() {
 
 			var err error = nil
 			runAction(func() {
-				err = getApi().Tmux.OpenTmuxSessionChooseTree(session)
+				err = api().Tmux.OpenTmuxSessionChooseTree(session)
 			})
 			if err != nil {
 				openToastDialogError(err.Error())
@@ -163,7 +163,7 @@ func (tv *tmuxSessionView) init() {
 
 			openEditorDialog(func(s string) {
 				runAction(func() {
-					getApi().Tmux.CreateAndAttachTmuxSession(s, "~")
+					api().Tmux.CreateAndAttachTmuxSession(s, "~")
 				})
 			}, func() {}, "New session name", smallEditorSize)
 		}).
@@ -183,14 +183,14 @@ func (tv *tmuxSessionView) getSelectedSession() *gotmux.Session {
 
 func (ts *tmuxSessionView) refresh() {
 	sessions := make([]*gotmux.Session, 0)
-	sessions = append(sessions, getApi().Tmux.GetTmuxSessions()...)
+	sessions = append(sessions, api().Tmux.GetTmuxSessions()...)
 
 	rows := make([][]string, 0)
 	for _, session := range sessions {
 		workspace := "external"
 		sessionName := session.Name
-		if !getApi().GlobalConfiguration.Standalone {
-			w := getApi().Core.GetWorkspaceByTmuxSession(session)
+		if !api().GlobalConfiguration.Standalone {
+			w := api().Workspaces.GetWorkspaceByTmuxSession(session)
 			if w != nil {
 				workspace = w.ShortPath()
 				sessionName = system.ShortenPath(sessionName, 20)
@@ -209,7 +209,7 @@ func (ts *tmuxSessionView) refresh() {
 }
 
 func refreshTmuxViews() {
-	queueRefresh(func() {
+	ui.queueRefresh(func() {
 		ts := getTmuxSessionView()
 		ts.refresh()
 		renderView(ts)

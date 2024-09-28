@@ -2,7 +2,7 @@ package ui
 
 import (
 	"fmt"
-	"mynav/pkg/persistence"
+	"mynav/pkg/core"
 	"mynav/pkg/system"
 	"mynav/pkg/tui"
 	"sync"
@@ -10,14 +10,14 @@ import (
 
 type githubProfileView struct {
 	view           *tui.View
-	isFetchingData *persistence.Value[bool]
+	isFetchingData *core.Value[bool]
 }
 
 var _ viewable = new(githubProfileView)
 
 func newGithubProfileView() *githubProfileView {
 	return &githubProfileView{
-		isFetchingData: persistence.NewValue(false),
+		isFetchingData: core.NewValue(false),
 	}
 }
 
@@ -34,21 +34,21 @@ func (g *githubProfileView) init() {
 
 	styleView(g.view)
 
-	isAuthenticated := getApi().Github.IsAuthenticated()
+	isAuthenticated := api().Github.IsAuthenticated()
 	if isAuthenticated {
 		g.fetchData()
 	}
 
 	g.view.KeyBinding().
 		Set('L', "Login with device code and browser", func() {
-			if getApi().Github.IsAuthenticated() {
+			if api().Github.IsAuthenticated() {
 				return
 			}
 
 			tdMu := &sync.Mutex{}
 			td := new(*toastDialog)
 
-			deviceAuth, poll := getApi().Github.InitWithDeviceAuth()
+			deviceAuth, poll := api().Github.InitWithDeviceAuth()
 			go func() {
 				poll()
 
@@ -75,13 +75,13 @@ func (g *githubProfileView) init() {
 			}
 		}).
 		Set('o', "Open in browser", func() {
-			profile := getApi().Github.GetPrincipal()
+			profile := api().Github.GetPrincipal()
 			if profile != nil {
 				system.OpenBrowser(profile.GetHTMLURL())
 			}
 		}).
 		Set('u', "Copy profile url to cliboard", func() {
-			user := getApi().Github.GetPrincipal()
+			user := api().Github.GetPrincipal()
 			if user == nil {
 				return
 			}
@@ -91,19 +91,19 @@ func (g *githubProfileView) init() {
 			openToastDialog(url, toastDialogNeutralType, "Profile URL copied", func() {})
 		}).
 		Set('P', "Login with personal access token", func() {
-			if getApi().Github.IsAuthenticated() {
+			if api().Github.IsAuthenticated() {
 				return
 			}
 
 			openEditorDialog(func(s string) {
-				if err := getApi().Github.InitWithPAT(s); err != nil {
+				if err := api().Github.InitWithPAT(s); err != nil {
 					openToastDialogError(err.Error())
 					return
 				}
 			}, func() {}, "Personal Access Token", smallEditorSize)
 		}).
 		Set('O', "Logout", func() {
-			getApi().Github.LogoutUser()
+			api().Github.LogoutUser()
 			openToastDialog("Successfully logged out - restart mynav to clear the github views", toastDialogSuccessType, "Note", func() {})
 		}).
 		Set('R', "Refetch all github data", func() {
@@ -117,14 +117,14 @@ func (g *githubProfileView) init() {
 func (g *githubProfileView) fetchData() {
 	go func() {
 		g.isFetchingData.Set(true)
-		getApi().Github.LoadProfile()
-		refreshAsync(g)
+		api().Github.LoadProfile()
+		refresh(g)
 
-		getApi().Github.LoadUserRepos()
-		refreshAsync(getGithubRepoView())
+		api().Github.LoadUserRepos()
+		refresh(getGithubRepoView())
 
-		getApi().Github.LoadUserPullRequests()
-		refreshAsync(getGithubPrView())
+		api().Github.LoadUserPullRequests()
+		refresh(getGithubPrView())
 		g.isFetchingData.Set(false)
 	}()
 }
@@ -140,7 +140,7 @@ func (g *githubProfileView) refetchData() {
 func (g *githubProfileView) render() error {
 	g.view.Clear()
 	g.view.Resize(getViewPosition(g.view.Name()))
-	if !getApi().Github.IsAuthenticated() {
+	if !api().Github.IsAuthenticated() {
 		fmt.Fprintln(g.view, "Not authenticated")
 		fmt.Fprintln(g.view, "Press:")
 		fmt.Fprintln(g.view, "'L' - to login with device code using a browser")
@@ -148,7 +148,7 @@ func (g *githubProfileView) render() error {
 		return nil
 	}
 
-	profile := getApi().Github.GetPrincipal()
+	profile := api().Github.GetPrincipal()
 	fmt.Fprintln(g.view, "Login: ", profile.GetLogin())
 	fmt.Fprintln(g.view, "Email: ", profile.GetEmail())
 	fmt.Fprintln(g.view, "Name: ", profile.GetName())
