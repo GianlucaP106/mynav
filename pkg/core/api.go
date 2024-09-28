@@ -5,24 +5,17 @@ import (
 	"os"
 )
 
-type Core struct {
-	*TopicController
-	*WorkspaceController
-}
-
 type Api struct {
 	Tmux                *TmuxController
-	Core                *Core
+	Topics              *TopicController
+	Workspaces          *WorkspaceController
 	GlobalConfiguration *GlobalConfiguration
 	LocalConfiguration  *LocalConfiguration
 	Github              *GithubController
-	IpcClient           *IpcClient
-	IpcServer           *IpcServer
 }
 
 func NewApi() (*Api, error) {
 	api := &Api{}
-	api.Core = &Core{}
 	api.LocalConfiguration = NewLocalConfiguration()
 	gc, err := NewGlobalConfiguration()
 	if err != nil {
@@ -30,12 +23,12 @@ func NewApi() (*Api, error) {
 	}
 
 	api.GlobalConfiguration = gc
-	if api.LocalConfiguration.IsConfigInitialized {
-		if err := api.InitControllers(); err != nil {
+	if api.LocalConfiguration.IsInitialized {
+		if err := api.initControllers(); err != nil {
 			return nil, err
 		}
 	} else {
-		if err := api.InitStandaloneController(); err != nil {
+		if err := api.initStandaloneControllers(); err != nil {
 			return nil, err
 		}
 	}
@@ -49,11 +42,11 @@ func (api *Api) InitConfiguration() error {
 		return errors.New("cannot initialize mynav in the home directory")
 	}
 
-	api.InitControllers()
+	api.initControllers()
 	return nil
 }
 
-func (api *Api) InitStandaloneController() error {
+func (api *Api) initStandaloneControllers() error {
 	tmux, err := NewTmuxController()
 	api.Tmux = tmux
 	if err != nil {
@@ -64,34 +57,24 @@ func (api *Api) InitStandaloneController() error {
 	return nil
 }
 
-func (api *Api) InitControllers() error {
-	if api.LocalConfiguration.IsConfigInitialized {
-		err := api.InitStandaloneController()
-		if err != nil {
-			return err
-		}
-
-		api.Core.TopicController = NewTopicController(api.LocalConfiguration.GetLocalConfigDir(), api.Tmux)
-		api.Core.WorkspaceController = NewWorkspaceController(
-			api.Core.GetTopics(),
-			api.LocalConfiguration.GetWorkspaceStorePath(),
-			api.Tmux,
-		)
-
-		api.Core.TopicController.WorkspaceController = api.Core.WorkspaceController
-		api.Core.WorkspaceController.GlobalConfiguration = api.GlobalConfiguration
+func (api *Api) initControllers() error {
+	if !api.LocalConfiguration.IsInitialized {
+		return nil
 	}
+
+	err := api.initStandaloneControllers()
+	if err != nil {
+		return err
+	}
+
+	api.Topics = NewTopicController(api.LocalConfiguration, api.Tmux)
+	api.Workspaces = NewWorkspaceController(
+		api.Topics.GetTopics(),
+		api.Tmux,
+		api.GlobalConfiguration,
+		api.LocalConfiguration,
+	)
+	api.Topics.workspaceController = api.Workspaces
 
 	return nil
-}
-
-func (api *Api) InitIpc(runAction func(func())) {
-	socketPath := api.LocalConfiguration.GetSocketPath()
-	if IsParentAppInstance() {
-		// funcs
-		api.IpcServer = NewIpcServer(socketPath)
-	}
-
-	api.IpcClient = NewIpcClient(socketPath)
-	api.Core.WorkspaceController.IpcClient = api.IpcClient
 }

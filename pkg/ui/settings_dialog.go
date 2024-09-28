@@ -43,7 +43,7 @@ func openSettingsDialog() *settingsDialog {
 			s.render()
 		}).
 		Set(gocui.KeyEnter, "Change setting", func() {
-			cmd := getApi().GlobalConfiguration.GetCustomWorkspaceOpenerCmd()
+			cmd := api().GlobalConfiguration.GetCustomWorkspaceOpenerCmd()
 			cmdStr := strings.Join(cmd, " ")
 			openEditorDialogWithDefaultValue(func(str string) {
 				if str == "" {
@@ -52,9 +52,9 @@ func openSettingsDialog() *settingsDialog {
 
 				switch s.getSelectedSetting() {
 				case "CustomWorkspaceOpener":
-					getApi().GlobalConfiguration.SetCustomWorkspaceOpenerCmd(str)
+					api().GlobalConfiguration.SetCustomWorkspaceOpenerCmd(str)
 				case "TerminalOpener":
-					getApi().GlobalConfiguration.SetTerminalOpenerCmd(str)
+					api().GlobalConfiguration.SetTerminalOpenerCmd(str)
 				}
 
 				s.refresh()
@@ -68,9 +68,9 @@ func openSettingsDialog() *settingsDialog {
 
 				switch s.getSelectedSetting() {
 				case "CustomWorkspaceOpener":
-					getApi().GlobalConfiguration.SetCustomWorkspaceOpenerCmd("")
+					api().GlobalConfiguration.SetCustomWorkspaceOpenerCmd("")
 				case "TerminalOpener":
-					getApi().GlobalConfiguration.SetTerminalOpenerCmd("")
+					api().GlobalConfiguration.SetTerminalOpenerCmd("")
 				}
 
 				s.refresh()
@@ -101,13 +101,13 @@ func (s *settingsDialog) getSelectedSetting() string {
 }
 
 func (s *settingsDialog) refresh() {
-	cmd := getApi().GlobalConfiguration.GetCustomWorkspaceOpenerCmd()
+	cmd := api().GlobalConfiguration.GetCustomWorkspaceOpenerCmd()
 	cmdStr := "tmux/nvim (Default)"
 	if len(cmd) > 0 {
 		cmdStr = strings.Join(cmd, " ")
 	}
 
-	terminalOpener := getApi().GlobalConfiguration.GetTerminalOpenerCmd()
+	terminalOpener := api().GlobalConfiguration.GetTerminalOpenerCmd()
 	defaultOpenTerminalCmd, _ := system.GetOpenTerminalCmd()
 	terminalOpenerStr := ""
 	if len(terminalOpener) > 0 {

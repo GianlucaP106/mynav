@@ -78,7 +78,7 @@ func (g *githubRepoView) init() {
 				return
 			}
 
-			if getApi().GlobalConfiguration.Standalone {
+			if api().GlobalConfiguration.Standalone {
 				openToastDialog("Cannot clone to worksapce without a configured directory.", toastDialogNeutralType, "Note", func() {})
 				return
 			}
@@ -95,7 +95,7 @@ func (g *githubRepoView) init() {
 				},
 				focusList: true,
 				initial: func() ([][]string, []*core.Workspace) {
-					workspaces := getApi().Core.GetWorkspaces()
+					workspaces := api().Workspaces.GetWorkspaces()
 					rows := make([][]string, 0)
 					for _, w := range workspaces {
 						rows = append(rows, []string{
@@ -105,7 +105,7 @@ func (g *githubRepoView) init() {
 					return rows, workspaces
 				},
 				onSearch: func(s string) ([][]string, []*core.Workspace) {
-					workspaces := getApi().Core.GetWorkspaces().FilterByNameContaining(s)
+					workspaces := api().Workspaces.GetWorkspaces().FilterByNameContaining(s)
 					rows := make([][]string, 0)
 					for _, w := range workspaces {
 						rows = append(rows, []string{
@@ -130,7 +130,7 @@ func (g *githubRepoView) init() {
 						wv := getWorkspacesView()
 						tv := getTopicsView()
 						refreshMainViews()
-						getMainTabGroup().FocusTabByIndex(0)
+						ui.mainTabGroup.FocusTabByIndex(0)
 						wv.focus()
 						tv.selectTopicByName(a.Topic.Name)
 						wv.selectWorkspaceByShortPath(a.ShortPath())
@@ -187,11 +187,11 @@ func (g *githubRepoView) getSelectedRepo() *github.Repository {
 }
 
 func (g *githubRepoView) refresh() {
-	if !getApi().Github.IsAuthenticated() {
+	if !api().Github.IsAuthenticated() {
 		return
 	}
 
-	repos := getApi().Github.GetUserRepos()
+	repos := api().Github.GetUserRepos()
 
 	if g.search != "" {
 		o := make([]*github.Repository, 0)
@@ -222,7 +222,7 @@ func (g *githubRepoView) refresh() {
 func (g *githubRepoView) render() error {
 	g.view.Clear()
 	g.view.Resize(getViewPosition(g.view.Name()))
-	if !getApi().Github.IsAuthenticated() {
+	if !api().Github.IsAuthenticated() {
 		fmt.Fprintln(g.view, "Not authenticated")
 		return nil
 	}

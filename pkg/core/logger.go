@@ -1,4 +1,4 @@
-package logger
+package core
 
 import (
 	"log"
@@ -15,6 +15,6 @@ func Init(path string) {
 	logger = log.New(f, "", 0)
 }
 
-func Log() *log.Logger {
+func Logger() *log.Logger {
 	return logger
 }

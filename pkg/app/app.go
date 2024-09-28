@@ -10,7 +10,7 @@ type App struct {
 	api *core.Api
 }
 
-func NewApp() *App {
+func newApp() *App {
 	api, err := core.NewApi()
 	if err != nil {
 		log.Fatalln(err.Error())
@@ -21,6 +21,11 @@ func NewApp() *App {
 	}
 }
 
-func (app *App) Start() {
+func (app *App) start() {
+	newCli().run()
 	ui.Start(app.api)
+}
+
+func Main() {
+	newApp().start()
 }

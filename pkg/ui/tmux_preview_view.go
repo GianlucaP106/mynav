@@ -2,13 +2,13 @@ package ui
 
 import (
 	"fmt"
-	"mynav/pkg/persistence"
+	"mynav/pkg/core"
 	"mynav/pkg/tui"
 )
 
 type tmuxPreviewView struct {
 	view    *tui.View
-	content *persistence.Value[string]
+	content *core.Value[string]
 }
 
 var _ viewable = new(tmuxPreviewView)
@@ -36,7 +36,7 @@ func (t *tmuxPreviewView) init() {
 	styleView(t.view)
 	t.view.Wrap = false
 
-	t.content = persistence.NewValue("")
+	t.content = core.NewValue("")
 
 	t.refresh()
 }

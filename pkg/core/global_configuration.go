@@ -5,7 +5,6 @@ import (
 	"io"
 	"log"
 	"mynav/pkg"
-	"mynav/pkg/persistence"
 	"mynav/pkg/system"
 	"net/http"
 	"os"
@@ -26,7 +25,7 @@ type GlobalConfigurationDataSchema struct {
 }
 
 type GlobalConfiguration struct {
-	Datasource *persistence.Datasource[GlobalConfigurationDataSchema]
+	Datasource *Datasource[GlobalConfigurationDataSchema]
 	Standalone bool
 }
 
@@ -38,7 +37,7 @@ type Configuration struct {
 func NewGlobalConfiguration() (*GlobalConfiguration, error) {
 	gc := &GlobalConfiguration{}
 	gc.Standalone = system.IsCurrentProcessHomeDir()
-	ds, err := persistence.NewDatasource(gc.GetConfigFile(), &GlobalConfigurationDataSchema{})
+	ds, err := NewDatasource(gc.GetConfigFile(), &GlobalConfigurationDataSchema{})
 	if err != nil {
 		return nil, err
 	}

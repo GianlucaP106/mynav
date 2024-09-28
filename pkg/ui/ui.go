@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"errors"
+	"log"
 	"mynav/pkg/core"
 	"mynav/pkg/tui"
 
@@ -21,7 +23,43 @@ type viewable interface {
 	render() error
 }
 
-func (ui *UI) InitUI() *UI {
+const (
+	offFrameColor = gocui.AttrDim | gocui.ColorWhite
+	onFrameColor  = gocui.ColorWhite
+)
+
+var ui *UI
+
+func Start(a *core.Api) {
+	g := tui.NewTui()
+	defer g.Close()
+
+	ui = newUI(a)
+
+	if api().LocalConfiguration.IsInitialized {
+		ui.init()
+	} else if api().GlobalConfiguration.Standalone {
+		ui.initStanialone()
+	} else {
+		ui.askConfig()
+	}
+
+	err := g.MainLoop()
+	if err != nil {
+		if !errors.Is(err, gocui.ErrQuit) {
+			log.Panicln(err)
+		}
+	}
+}
+
+func newUI(a *core.Api) *UI {
+	return &UI{
+		views: make([]viewable, 0),
+		api:   a,
+	}
+}
+
+func (ui *UI) init() *UI {
 	ui.views = []viewable{
 		newHeaderView(),
 		newTopicsView(),
@@ -46,12 +84,12 @@ func (ui *UI) InitUI() *UI {
 
 	systemUpdate()
 
-	if getApi().GlobalConfiguration.GetLastTab() != "" {
-		ui.mainTabGroup.FocusTab(getApi().GlobalConfiguration.GetLastTab())
+	if api().GlobalConfiguration.GetLastTab() != "" {
+		ui.mainTabGroup.FocusTab(api().GlobalConfiguration.GetLastTab())
 	}
 
-	if getApi().GlobalConfiguration.GetLastTab() == "main" {
-		if getApi().Core.GetSelectedWorkspace() != nil {
+	if api().GlobalConfiguration.GetLastTab() == "main" {
+		if api().Workspaces.GetSelectedWorkspace() != nil {
 			getWorkspacesView().focus()
 		} else {
 			getTopicsView().focus()
@@ -63,7 +101,7 @@ func (ui *UI) InitUI() *UI {
 	return ui
 }
 
-func (ui *UI) InitStandaloneUI() {
+func (ui *UI) initStanialone() {
 	ui.views = []viewable{
 		newHeaderView(),
 		newTmuxSessionView(),
@@ -104,13 +142,13 @@ func (ui *UI) queueRefresh(f func()) {
 func (ui *UI) askConfig() {
 	openConfirmationDialog(func(b bool) {
 		if !b {
-			getApi().GlobalConfiguration.SetStandalone(true)
-			ui.InitStandaloneUI()
+			api().GlobalConfiguration.SetStandalone(true)
+			ui.initStanialone()
 			return
 		}
 
-		getApi().InitConfiguration()
-		ui.InitUI()
+		api().InitConfiguration()
+		ui.init()
 	}, "No configuration found. Would you like to initialize this directory?")
 }
 
@@ -127,12 +165,12 @@ func (ui *UI) initGlobalKeybindings() {
 		}).
 		Set(']', "Cycle tab right", func() {
 			ui.mainTabGroup.IncrementSelectedTab(func(tab *tui.Tab) {
-				getApi().GlobalConfiguration.SetLastTab(tab.Frame.Name())
+				api().GlobalConfiguration.SetLastTab(tab.Frame.Name())
 			})
 		}).
 		Set('[', "Cycle tab left", func() {
 			ui.mainTabGroup.DecrementSelectedTab(func(tab *tui.Tab) {
-				getApi().GlobalConfiguration.SetLastTab(tab.Frame.Name())
+				api().GlobalConfiguration.SetLastTab(tab.Frame.Name())
 			})
 		}).
 		Set('?', "Toggle cheatsheet", func() {
@@ -182,4 +220,80 @@ func (ui *UI) buildGithubTab() *tui.Tab {
 	tab.AddView(getHeaderView().view, tui.NoPosition)
 	tab.GenerateNavigationKeyBindings()
 	return tab
+}
+
+func getViewable[T viewable]() T {
+	for _, v := range ui.views {
+		if v, ok := v.(T); ok {
+			return v
+		}
+	}
+
+	panic("invalid view")
+}
+
+func renderView(v viewable) {
+	tui.UpdateTui(func(g *tui.Tui) error {
+		v.render()
+		return nil
+	})
+}
+
+func focusView(viewName string) {
+	tui.GetView(viewName).Focus()
+
+	views := make([]*tui.View, 0)
+	for _, v := range ui.views {
+		views = append(views, v.getView())
+	}
+
+	for _, v := range views {
+		if v.Name() == viewName {
+			v.FrameColor = onFrameColor
+		} else {
+			v.FrameColor = offFrameColor
+		}
+	}
+}
+
+func refresh(v viewable) {
+	ui.queueRefresh(func() {
+		v.refresh()
+		renderView(v)
+	})
+}
+
+func api() *core.Api {
+	return ui.api
+}
+
+func runAction(f func()) {
+	tui.Suspend()
+	f()
+	tui.Resume()
+	refreshMainViews()
+	refreshTmuxViews()
+}
+
+func styleView(v *tui.View) {
+	v.FrameRunes = tui.ThickFrame
+	v.TitleColor = gocui.AttrBold | gocui.ColorYellow
+}
+
+func systemUpdate() bool {
+	if api().LocalConfiguration.IsInitialized && !api().GlobalConfiguration.IsUpdateAsked() {
+		api().GlobalConfiguration.SetUpdateAsked()
+		update, newTag := api().GlobalConfiguration.DetectUpdate()
+		if update {
+			openConfirmationDialog(func(b bool) {
+				if b {
+					runAction(func() {
+						api().GlobalConfiguration.UpdateMynav()
+					})
+				}
+			}, "A new update of mynav is available! Would you like to update to version "+newTag+"?")
+			return true
+		}
+	}
+	return false
 }

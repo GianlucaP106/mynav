@@ -10,50 +10,45 @@ import (
 
 type (
 	Cli struct {
-		Args *CliArgs
+		args *CliArgs
 	}
 	CliArgs struct {
-		Version *bool
-		Path    *string
+		version *bool
+		path    *string
 	}
 )
 
-func NewCli() *Cli {
+func newCli() *Cli {
 	return &Cli{}
 }
 
-func (cli *Cli) Run() {
-	cli.ParseArgs()
+func (cli *Cli) run() {
+	cli.parseArgs()
 	cli.handleVersionFlag()
 	cli.handlePathFlag()
-	NewApp().Start()
 }
 
-func (cli *Cli) ParseArgs() {
+func (cli *Cli) parseArgs() {
 	version := flag.Bool("version", false, "Version of mynav")
 	path := flag.String("path", ".", "Path to open mynav in")
 	flag.Parse()
-	cli.Args = &CliArgs{
-		Version: version,
-		Path:    path,
+	cli.args = &CliArgs{
+		version: version,
+		path:    path,
 	}
 }
 
 func (cli *Cli) handleVersionFlag() {
-	if *cli.Args.Version {
+	if *cli.args.version {
 		fmt.Println(pkg.VERSION)
 		os.Exit(0)
 	}
 }
 
 func (cli *Cli) handlePathFlag() {
-	if cli.Args.Path != nil && *cli.Args.Path != "" {
-		if err := os.Chdir(*cli.Args.Path); err != nil {
+	if cli.args.path != nil && *cli.args.path != "" {
+		if err := os.Chdir(*cli.args.path); err != nil {
 			log.Fatalln(err.Error())
 		}
 	}
-}
-
-func Main() {
-	NewCli().Run()
 }

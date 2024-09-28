@@ -57,11 +57,11 @@ func (t *tmuxPaneView) init() {
 	t.view.KeyBinding().
 		Set('j', "Move down", func() {
 			t.tableRenderer.Down()
-			refreshAsync(tpv)
+			refresh(tpv)
 		}).
 		Set('k', "Move up", func() {
 			t.tableRenderer.Up()
-			refreshAsync(tpv)
+			refresh(tpv)
 		}).
 		Set('X', "Kill this pane", func() {
 			pane := t.getSelectedPane()
@@ -74,7 +74,7 @@ func (t *tmuxPaneView) init() {
 					return
 				}
 
-				err := getApi().Tmux.KillTmuxPane(pane)
+				err := api().Tmux.KillTmuxPane(pane)
 				if err != nil {
 					openToastDialogError(err.Error())
 				}

@@ -2,7 +2,6 @@ package core
 
 import (
 	"errors"
-	"mynav/pkg/persistence"
 	"mynav/pkg/system"
 	"os"
 	"path/filepath"
@@ -14,13 +13,13 @@ type WorkspaceDataSchema struct {
 }
 
 type WorkspaceRepository struct {
-	Container  *persistence.Container[Workspace]
-	Datasource *persistence.Datasource[WorkspaceDataSchema]
+	container  *Container[Workspace]
+	datasource *Datasource[WorkspaceDataSchema]
 }
 
 func NewWorkspaceRepository(topics Topics, storePath string) *WorkspaceRepository {
 	w := &WorkspaceRepository{}
-	ds, err := persistence.NewDatasource(storePath, &WorkspaceDataSchema{
+	ds, err := NewDatasource(storePath, &WorkspaceDataSchema{
 		Workspaces:        map[string]*WorkspaceMetadata{},
 		SelectedWorkspace: "",
 	})
@@ -28,28 +27,28 @@ func NewWorkspaceRepository(topics Topics, storePath string) *WorkspaceRepositor
 		return nil
 	}
 
-	w.Datasource = ds
+	w.datasource = ds
 	w.LoadContainer(topics)
 	return w
 }
 
 func (w *WorkspaceRepository) Save(workspace *Workspace) error {
-	existing := w.Container.Get(workspace.ShortPath())
+	existing := w.container.Get(workspace.ShortPath())
 	if existing == nil {
 		if err := system.CreateDir(workspace.Path); err != nil {
 			return err
 		}
 	}
 
-	w.Container.Set(workspace.ShortPath(), workspace)
-	data := w.Datasource.GetData()
+	w.container.Set(workspace.ShortPath(), workspace)
+	data := w.datasource.GetData()
 	data.Workspaces[workspace.ShortPath()] = workspace.Metadata
-	w.Datasource.SaveData(data)
+	w.datasource.SaveData(data)
 	return nil
 }
 
 func (w *WorkspaceRepository) Move(workspace *Workspace, newTopic *Topic) error {
-	w.Container.Delete(workspace.ShortPath())
+	w.container.Delete(workspace.ShortPath())
 	w.DeleteMetadata(workspace)
 	workspace.Topic = newTopic
 
@@ -62,7 +61,7 @@ func (w *WorkspaceRepository) Move(workspace *Workspace, newTopic *Topic) error 
 
 func (w *WorkspaceRepository) Rename(workspace *Workspace, newName string) error {
 	newShortPath := filepath.Join(workspace.Topic.Name, newName)
-	if w.Container.Get(newShortPath) != nil {
+	if w.container.Get(newShortPath) != nil {
 		return errors.New("another workspace has this name already")
 	}
 
@@ -71,19 +70,19 @@ func (w *WorkspaceRepository) Rename(workspace *Workspace, newName string) error
 		return err
 	}
 
-	w.Container.Delete(workspace.ShortPath())
+	w.container.Delete(workspace.ShortPath())
 	w.DeleteMetadata(workspace)
 
-	data := w.Datasource.GetData()
+	data := w.datasource.GetData()
 	if data.SelectedWorkspace == workspace.ShortPath() {
 		data.SelectedWorkspace = newShortPath
-		w.Datasource.SaveData(data)
+		w.datasource.SaveData(data)
 	}
 
 	workspace.Name = newName
 	workspace.Path = newPath
 
-	w.Container.Set(workspace.ShortPath(), workspace)
+	w.container.Set(workspace.ShortPath(), workspace)
 	w.SaveMetadata(workspace)
 
 	return nil
@@ -95,19 +94,19 @@ func (w *WorkspaceRepository) Delete(workspace *Workspace) error {
 	}
 
 	if wr := w.GetSelectedWorkspace(); wr != nil && wr.ShortPath() == workspace.ShortPath() {
-		data := w.Datasource.GetData()
+		data := w.datasource.GetData()
 		data.SelectedWorkspace = ""
-		w.Datasource.SaveData(data)
+		w.datasource.SaveData(data)
 	}
 
-	w.Container.Delete(workspace.ShortPath())
+	w.container.Delete(workspace.ShortPath())
 	w.DeleteMetadata(workspace)
 
 	return nil
 }
 
-func (wr *WorkspaceRepository) Sync(w *persistence.Container[Workspace]) {
-	data := wr.Datasource.GetData()
+func (wr *WorkspaceRepository) Sync(w *Container[Workspace]) {
+	data := wr.datasource.GetData()
 	for id, m := range data.Workspaces {
 		if w.Get(id) == nil || m.Description == "" {
 			delete(data.Workspaces, id)
@@ -119,12 +118,12 @@ func (wr *WorkspaceRepository) Sync(w *persistence.Container[Workspace]) {
 		data.SelectedWorkspace = ""
 	}
 
-	wr.Datasource.SaveData(data)
+	wr.datasource.SaveData(data)
 }
 
 func (w *WorkspaceRepository) LoadContainer(topics Topics) {
-	wc := persistence.NewContainer[Workspace]()
-	w.Container = wc
+	wc := NewContainer[Workspace]()
+	w.container = wc
 	for _, topic := range topics {
 		workspaceDirEntries := system.GetDirEntries(topic.Path)
 		for _, dirEntry := range workspaceDirEntries {
@@ -145,11 +144,11 @@ func (w *WorkspaceRepository) LoadContainer(topics Topics) {
 }
 
 func (w *WorkspaceRepository) Find(shortPath string) *Workspace {
-	return w.Container.Get(shortPath)
+	return w.container.Get(shortPath)
 }
 
 func (w *WorkspaceRepository) FindByPath(path string) *Workspace {
-	for _, w := range w.Container.All() {
+	for _, w := range w.container.All() {
 		if w.Path == path {
 			return w
 		}
@@ -159,12 +158,12 @@ func (w *WorkspaceRepository) FindByPath(path string) *Workspace {
 }
 
 func (w *WorkspaceRepository) GetSelectedWorkspace() *Workspace {
-	shortPath := w.Datasource.GetData().SelectedWorkspace
+	shortPath := w.datasource.GetData().SelectedWorkspace
 	return w.Find(shortPath)
 }
 
 func (wr *WorkspaceRepository) SetSelectedWorkspace(workspace *Workspace) error {
-	data := wr.Datasource.GetData()
+	data := wr.datasource.GetData()
 	data.SelectedWorkspace = workspace.ShortPath()
 	if err := wr.Save(workspace); err != nil {
 		return err
@@ -173,17 +172,17 @@ func (wr *WorkspaceRepository) SetSelectedWorkspace(workspace *Workspace) error 
 }
 
 func (wr *WorkspaceRepository) SaveMetadata(w *Workspace) {
-	data := wr.Datasource.GetData()
+	data := wr.datasource.GetData()
 	data.Workspaces[w.ShortPath()] = w.Metadata
-	wr.Datasource.SaveData(data)
+	wr.datasource.SaveData(data)
 }
 
 func (wr *WorkspaceRepository) DeleteMetadata(w *Workspace) {
-	data := wr.Datasource.GetData()
+	data := wr.datasource.GetData()
 	delete(data.Workspaces, w.ShortPath())
-	wr.Datasource.SaveData(data)
+	wr.datasource.SaveData(data)
 }
 
 func (wr *WorkspaceRepository) GetMetadata(w *Workspace) *WorkspaceMetadata {
-	return wr.Datasource.GetData().Workspaces[w.ShortPath()]
+	return wr.datasource.GetData().Workspaces[w.ShortPath()]
 }

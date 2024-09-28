@@ -41,14 +41,14 @@ func (hv *headerView) render() error {
 		return nil
 	}
 
-	selectedTabName := getMainTabGroup().GetSelectedTab().Frame.Name()
+	selectedTabName := ui.mainTabGroup.GetSelectedTab().Frame.Name()
 	isMainTab := selectedTabName == "main"
 	sep := tui.WithSurroundingSpaces("- ")
 	line := ""
 	line += "Tab: " + selectedTabName
 
 	if isMainTab {
-		if w := getApi().Core.GetSelectedWorkspace(); w != nil {
+		if w := api().Workspaces.GetSelectedWorkspace(); w != nil {
 			line += " " + sep
 			line += "Last workspace: " + w.ShortPath()
 		}
