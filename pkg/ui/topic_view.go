@@ -27,11 +27,11 @@ func (tv *topicsView) getView() *tui.View {
 }
 
 func (tv *topicsView) focus() {
-	ui.focusView(tv.getView().Name())
+	tv.view.Focus()
 }
 
 func (tv *topicsView) init() {
-	tv.view = getViewPosition(TopicView).Set()
+	tv.view = viewPosition(TopicView).Set()
 
 	tv.view.Title = tui.WithSurroundingSpaces("Topics")
 	ui.styleView(tv.view)
@@ -240,7 +240,7 @@ func (tv *topicsView) selectTopicByName(name string) {
 func (tv *topicsView) render() error {
 	currentViewSelected := tv.view.IsFocused()
 	tv.view.Clear()
-	tv.view.Resize(getViewPosition(tv.view.Name()))
+	tv.view.Resize(viewPosition(tv.view.Name()))
 
 	tv.tableRenderer.RenderWithSelectCallBack(tv.view, func(_ int, _ *tui.TableRow[*core.Topic]) bool {
 		return currentViewSelected

@@ -30,7 +30,7 @@ func (tv *tmuxSessionView) Focus() {
 }
 
 func (tv *tmuxSessionView) init() {
-	tv.view = getViewPosition(TmuxSessionView).Set()
+	tv.view = viewPosition(TmuxSessionView).Set()
 
 	tv.view.Title = tui.WithSurroundingSpaces("Tmux Sessions")
 	ui.styleView(tv.view)
@@ -232,7 +232,7 @@ func (ts *tmuxSessionView) refreshDown() {
 func (tv *tmuxSessionView) render() error {
 	isViewFocused := tv.view.IsFocused()
 	tv.view.Clear()
-	tv.view.Resize(getViewPosition(tv.view.Name()))
+	tv.view.Resize(viewPosition(tv.view.Name()))
 	tv.tableRenderer.RenderWithSelectCallBack(tv.view, func(_ int, _ *tui.TableRow[*gotmux.Session]) bool {
 		return isViewFocused
 	})

@@ -3,6 +3,7 @@ package core
 import (
 	"errors"
 	"mynav/pkg/system"
+	"path/filepath"
 	"strings"
 
 	"github.com/GianlucaP106/gotmux/gotmux"
@@ -36,6 +37,25 @@ func (wc *WorkspaceController) CreateWorkspace(name string, topic *Topic) (*Work
 	}
 
 	return workspace, nil
+}
+
+func (wc *WorkspaceController) CreateSubworkspace(name string, parent *Workspace) (*Workspace, error) {
+	if err := wc.periodValidation(name); err != nil {
+		return nil, err
+	}
+
+	name = filepath.Join(parent.Name, name)
+	w := NewWorkspace(name, parent.Topic)
+
+	if err := wc.workspaceRepository.SetSelectedWorkspace(w); err != nil {
+		return nil, err
+	}
+
+	if err := parent.Config.addSubworkspace(w); err != nil {
+		return nil, err
+	}
+
+	return w, nil
 }
 
 func (wc *WorkspaceController) DeleteWorkspace(w *Workspace) error {
@@ -86,6 +106,20 @@ func (wc *WorkspaceController) RenameWorkspace(w *Workspace, newName string) err
 	}
 
 	return nil
+}
+
+func (wc *WorkspaceController) GetSubworkspaces(parent *Workspace) ([]*Workspace, error) {
+	all := wc.workspaceRepository.container.All()
+	out := make([]*Workspace, 0)
+	for _, w := range all {
+		parts := filepath.SplitList(w.Name)
+		logger.Println(parts)
+		if len(parts) == 2 {
+			out = append(out, w)
+		}
+	}
+
+	return out, nil
 }
 
 func (wc *WorkspaceController) GetWorkspaceTmuxSessionCount() int {

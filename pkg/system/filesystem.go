@@ -55,7 +55,9 @@ func WriteFile(path string, b []byte) error {
 
 func SaveJson[T any](data *T, store string) error {
 	if !Exists(store) {
-		os.Create(store)
+		if _, err := os.Create(store); err != nil {
+			return err
+		}
 	}
 
 	json, err := json.Marshal(data)

@@ -33,7 +33,7 @@ func (g *githubRepoView) focus() {
 }
 
 func (g *githubRepoView) init() {
-	g.view = getViewPosition(GithubRepoView).Set()
+	g.view = viewPosition(GithubRepoView).Set()
 
 	g.view.Title = tui.WithSurroundingSpaces("Repositories")
 
@@ -217,7 +217,7 @@ func (g *githubRepoView) refresh() {
 
 func (g *githubRepoView) render() error {
 	g.view.Clear()
-	g.view.Resize(getViewPosition(g.view.Name()))
+	g.view.Resize(viewPosition(g.view.Name()))
 	if !api().Github.IsAuthenticated() {
 		fmt.Fprintln(g.view, "Not authenticated")
 		return nil

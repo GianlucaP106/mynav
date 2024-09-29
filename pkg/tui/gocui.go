@@ -74,7 +74,7 @@ func newView(v *gocui.View) *View {
 	}
 }
 
-func NewTui() *Tui {
+func InitTui() {
 	g, err := gocui.NewGui(gocui.OutputNormal, true)
 	if err != nil {
 		log.Panicln(err)
@@ -83,7 +83,14 @@ func NewTui() *Tui {
 		Gui:                  g,
 		globalKeybindingInfo: make(KeybindingMap),
 	}
-	return _tui
+}
+
+func MainLoop() error {
+	return _tui.MainLoop()
+}
+
+func Close() {
+	_tui.Close()
 }
 
 func ScreenSize() (x int, y int) {

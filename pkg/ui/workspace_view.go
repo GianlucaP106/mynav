@@ -32,7 +32,7 @@ func (wv *workspacesView) focus() {
 }
 
 func (wv *workspacesView) init() {
-	wv.view = getViewPosition(WorkspacesView).Set()
+	wv.view = viewPosition(WorkspacesView).Set()
 
 	wv.view.Title = tui.WithSurroundingSpaces("Workspaces")
 	ui.styleView(wv.getView())
@@ -87,11 +87,12 @@ func (wv *workspacesView) init() {
 			tv.focus()
 		}).
 		Set('s', "See workspace information", func() {
-			curWorkspace := wv.getSelectedWorkspace()
-			if curWorkspace == nil {
+			w := wv.getSelectedWorkspace()
+			if w == nil {
 				return
 			}
-			openWorkspaceInfoDialog(curWorkspace, func() {})
+
+			openSubworkspaceDialog(w)
 		}).
 		Set('L', "Open lazygit at this workspace (if there is a git repository)", func() {
 			w := wv.getSelectedWorkspace()
@@ -420,7 +421,7 @@ func (wv *workspacesView) getSelectedWorkspace() *core.Workspace {
 func (wv *workspacesView) render() error {
 	isFocused := wv.view.IsFocused()
 	wv.view.Clear()
-	wv.view.Resize(getViewPosition(wv.view.Name()))
+	wv.view.Resize(viewPosition(wv.view.Name()))
 
 	wv.tableRenderer.RenderWithSelectCallBack(wv.view, func(_ int, _ *tui.TableRow[*core.Workspace]) bool {
 		return isFocused

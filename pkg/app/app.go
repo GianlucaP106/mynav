@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"log"
 	"mynav/pkg/core"
 	"mynav/pkg/ui"
@@ -23,6 +24,12 @@ func newApp() *App {
 
 func (app *App) start() {
 	newCli().run()
+
+	ws := app.api.Workspaces.GetWorkspaces()
+	w := ws[0]
+	w2, err := app.api.Workspaces.CreateSubworkspace("ss", w)
+	fmt.Println(w2, err)
+
 	ui.Start(app.api)
 }
 

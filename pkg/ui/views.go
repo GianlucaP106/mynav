@@ -26,9 +26,10 @@ const (
 	SearchListDialog1View = "SearchListDialog1"
 	SearchListDialog2View = "SearchListDialog2"
 	SettingsDialog        = "SettingsDialog"
+	SubworkspaceDialog    = "SubworkspaceDialog"
 )
 
-func getViewPosition(viewName string) *tui.ViewPosition {
+func viewPosition(viewName string) *tui.ViewPosition {
 	maxX, maxY := tui.ScreenSize()
 	positionMap := map[string]*tui.ViewPosition{}
 

@@ -24,7 +24,7 @@ func newGithubProfileView() *githubProfileView {
 func (g *githubProfileView) refresh() {}
 
 func (g *githubProfileView) init() {
-	g.view = getViewPosition(GithubProfileView).Set()
+	g.view = viewPosition(GithubProfileView).Set()
 
 	g.view.Title = tui.WithSurroundingSpaces("Profile")
 
@@ -135,7 +135,7 @@ func (g *githubProfileView) refetchData() {
 
 func (g *githubProfileView) render() error {
 	g.view.Clear()
-	g.view.Resize(getViewPosition(g.view.Name()))
+	g.view.Resize(viewPosition(g.view.Name()))
 	if !api().Github.IsAuthenticated() {
 		fmt.Fprintln(g.view, "Not authenticated")
 		fmt.Fprintln(g.view, "Press:")

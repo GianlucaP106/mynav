@@ -26,7 +26,7 @@ func (t *tmuxPreviewView) getView() *tui.View {
 }
 
 func (t *tmuxPreviewView) init() {
-	t.view = getViewPosition(TmuxPreviewView).Set()
+	t.view = viewPosition(TmuxPreviewView).Set()
 
 	t.view.Title = tui.WithSurroundingSpaces("Tmux Preview")
 	ui.styleView(t.view)
@@ -54,7 +54,7 @@ func (t *tmuxPreviewView) refresh() {
 
 func (t *tmuxPreviewView) render() error {
 	t.view.Clear()
-	t.view.Resize(getViewPosition(t.view.Name()))
+	t.view.Resize(viewPosition(t.view.Name()))
 	fmt.Fprintln(t.view, t.content.Get())
 	return nil
 }

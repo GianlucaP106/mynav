@@ -40,7 +40,7 @@ func (t *tmuxWindowView) getSelectedWindow() *gotmux.Window {
 }
 
 func (t *tmuxWindowView) init() {
-	t.view = getViewPosition(TmuxWindowView).Set()
+	t.view = viewPosition(TmuxWindowView).Set()
 
 	t.view.Title = tui.WithSurroundingSpaces("Tmux Windows")
 	ui.styleView(t.view)
@@ -178,8 +178,8 @@ func (t *tmuxWindowView) refreshDown() {
 func (t *tmuxWindowView) render() error {
 	isFocused := t.view.IsFocused()
 	t.view.Clear()
-	t.view = getViewPosition(t.view.Name()).Set()
-	t.view.Resize(getViewPosition(t.view.Name()))
+	t.view = viewPosition(t.view.Name()).Set()
+	t.view.Resize(viewPosition(t.view.Name()))
 	t.tableRenderer.RenderWithSelectCallBack(t.view, func(i int, tr *tui.TableRow[*gotmux.Window]) bool {
 		return isFocused
 	})

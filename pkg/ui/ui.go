@@ -31,8 +31,8 @@ const (
 var ui *UI
 
 func Start(a *core.Api) {
-	g := tui.NewTui()
-	defer g.Close()
+	tui.InitTui()
+	defer tui.Close()
 
 	ui = newUI(a)
 
@@ -44,7 +44,7 @@ func Start(a *core.Api) {
 		ui.askConfig()
 	}
 
-	err := g.MainLoop()
+	err := tui.MainLoop()
 	if err != nil {
 		if !errors.Is(err, gocui.ErrQuit) {
 			log.Panicln(err)

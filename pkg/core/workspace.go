@@ -16,6 +16,7 @@ type Workspace struct {
 	Topic     *Topic
 	GitRemote *string
 	Metadata  *WorkspaceMetadata
+	Config    *WorkspaceConfiguration
 	Name      string
 	Path      string
 }

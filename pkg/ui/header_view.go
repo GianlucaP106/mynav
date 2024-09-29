@@ -24,13 +24,13 @@ func (hv *headerView) getView() *tui.View {
 func (h *headerView) refresh() {}
 
 func (hv *headerView) init() {
-	hv.view = getViewPosition(HeaderView).Set()
+	hv.view = viewPosition(HeaderView).Set()
 	hv.view.Frame = false
 }
 
 func (hv *headerView) render() error {
 	hv.view.Clear()
-	hv.view.Resize(getViewPosition(hv.view.Name()))
+	hv.view.Resize(viewPosition(hv.view.Name()))
 	screenX, screenY := tui.ScreenSize()
 	if screenY < 50 || screenX < 50 {
 		hv.view.Clear()

@@ -30,7 +30,7 @@ func (g *githubPrView) Focus() {
 }
 
 func (g *githubPrView) init() {
-	g.view = getViewPosition(GithubPrView).Set()
+	g.view = viewPosition(GithubPrView).Set()
 
 	g.view.Title = tui.WithSurroundingSpaces("Pull Requests")
 
@@ -125,7 +125,7 @@ func (g *githubPrView) refresh() {
 
 func (g *githubPrView) render() error {
 	g.view.Clear()
-	g.view.Resize(getViewPosition(g.view.Name()))
+	g.view.Resize(viewPosition(g.view.Name()))
 	if !api().Github.IsAuthenticated() {
 		fmt.Fprintln(g.view, "Not authenticated")
 		return nil

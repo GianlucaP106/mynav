@@ -15,6 +15,7 @@ type Api struct {
 }
 
 func NewApi() (*Api, error) {
+	initLogger("debug.log")
 	api := &Api{}
 	api.LocalConfiguration = NewLocalConfiguration()
 	gc, err := NewGlobalConfiguration()

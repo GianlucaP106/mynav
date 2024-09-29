@@ -19,7 +19,7 @@ func NewDatasource[T any](path string, defaultValue *T) (*Datasource[T], error) 
 	}
 
 	ds.LoadData()
-	if ds.GetData() == nil {
+	if ds.GetData() == nil && defaultValue != nil {
 		err := ds.SaveData(defaultValue)
 		if err != nil {
 			return nil, err
