@@ -22,6 +22,7 @@ type GlobalConfigurationDataSchema struct {
 	LastTab                 string                     `json:"last-tab"`
 	CustomWorspaceOpenerCmd []string                   `json:"custom-workspace-openner"`
 	TerminalOpenerCmd       []string                   `json:"terminal-opener-command"`
+	EnableGithubTab         bool                       `json:"enable-github-tab"`
 }
 
 type GlobalConfiguration struct {
@@ -143,6 +144,16 @@ func (c *GlobalConfiguration) SetTerminalOpenerCmd(cmd string) {
 	}
 
 	data.TerminalOpenerCmd = command
+	c.Datasource.SaveData(data)
+}
+
+func (c *GlobalConfiguration) GetGithubTabEnabled() bool {
+	return c.Datasource.GetData().EnableGithubTab
+}
+
+func (c *GlobalConfiguration) SetGithubTabEnabled(enabled bool) {
+	data := c.Datasource.GetData()
+	data.EnableGithubTab = enabled
 	c.Datasource.SaveData(data)
 }
 

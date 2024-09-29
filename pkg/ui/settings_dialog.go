@@ -12,6 +12,11 @@ type settingsDialog struct {
 	view          *tui.View
 	tableRenderer *tui.TableRenderer[string]
 }
+type setting struct {
+	set      func(string)
+	clear    func()
+	isToggle bool
+}
 
 func openSettingsDialog() *settingsDialog {
 	s := &settingsDialog{}
@@ -32,6 +37,34 @@ func openSettingsDialog() *settingsDialog {
 		0.5,
 	})
 
+	settings := map[string]*setting{
+		"CustomWorkspaceOpener": {
+			set: func(s string) {
+				api().GlobalConfiguration.SetCustomWorkspaceOpenerCmd(s)
+			},
+			clear: func() {
+				api().GlobalConfiguration.SetCustomWorkspaceOpenerCmd("")
+			},
+		},
+		"TerminalOpener": {
+			set: func(s string) {
+				api().GlobalConfiguration.SetTerminalOpenerCmd(s)
+			},
+			clear: func() {
+				api().GlobalConfiguration.SetTerminalOpenerCmd("")
+			},
+		},
+		"EnableGithubTab": {
+			set: func(s string) {
+				api().GlobalConfiguration.SetGithubTabEnabled(s == "true")
+			},
+			clear: func() {
+				api().GlobalConfiguration.SetGithubTabEnabled(false)
+			},
+			isToggle: true,
+		},
+	}
+
 	prevView := tui.GetFocusedView()
 	s.view.KeyBinding().
 		Set('j', "Move down", func() {
@@ -45,20 +78,30 @@ func openSettingsDialog() *settingsDialog {
 		Set(gocui.KeyEnter, "Change setting", func() {
 			cmd := api().GlobalConfiguration.GetCustomWorkspaceOpenerCmd()
 			cmdStr := strings.Join(cmd, " ")
-			openEditorDialogWithDefaultValue(func(str string) {
-				if str == "" {
-					return
-				}
+			setting := settings[s.getSelectedSetting()]
+			if setting == nil {
+				return
+			}
 
-				switch s.getSelectedSetting() {
-				case "CustomWorkspaceOpener":
-					api().GlobalConfiguration.SetCustomWorkspaceOpenerCmd(str)
-				case "TerminalOpener":
-					api().GlobalConfiguration.SetTerminalOpenerCmd(str)
-				}
+			if setting.isToggle {
+				openConfirmationDialog(func(b bool) {
+					if b {
+						setting.set("true")
+					} else {
+						setting.set("false")
+					}
+					s.refresh()
+				}, "Would you like to enable this setting? (Confirm to enable and cancel to disable)")
+			} else {
+				openEditorDialogWithDefaultValue(func(str string) {
+					if str == "" {
+						return
+					}
 
-				s.refresh()
-			}, func() {}, "Change setting", smallEditorSize, cmdStr)
+					setting.set(str)
+					s.refresh()
+				}, func() {}, "Change setting", smallEditorSize, cmdStr)
+			}
 		}).
 		Set('D', "Set back to default", func() {
 			openConfirmationDialog(func(b bool) {
@@ -66,11 +109,9 @@ func openSettingsDialog() *settingsDialog {
 					return
 				}
 
-				switch s.getSelectedSetting() {
-				case "CustomWorkspaceOpener":
-					api().GlobalConfiguration.SetCustomWorkspaceOpenerCmd("")
-				case "TerminalOpener":
-					api().GlobalConfiguration.SetTerminalOpenerCmd("")
+				setting := settings[s.getSelectedSetting()]
+				if setting != nil {
+					setting.clear()
 				}
 
 				s.refresh()
@@ -117,6 +158,11 @@ func (s *settingsDialog) refresh() {
 		terminalOpenerStr = terminalOpenerStr + " (Default)"
 	}
 
+	githubEnabled := "No"
+	if api().GlobalConfiguration.GetGithubTabEnabled() {
+		githubEnabled = "Yes"
+	}
+
 	rows := make([][]string, 0)
 	rowValues := make([]string, 0)
 
@@ -131,6 +177,12 @@ func (s *settingsDialog) refresh() {
 		terminalOpenerStr,
 	})
 	rowValues = append(rowValues, "TerminalOpener")
+
+	rows = append(rows, []string{
+		"Enable Github tab",
+		githubEnabled,
+	})
+	rowValues = append(rowValues, "EnableGithubTab")
 
 	s.tableRenderer.FillTable(rows, rowValues)
 	s.render()
