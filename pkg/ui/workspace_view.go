@@ -23,23 +23,19 @@ func newWorkspcacesView() *workspacesView {
 	return &workspacesView{}
 }
 
-func getWorkspacesView() *workspacesView {
-	return getViewable[*workspacesView]()
-}
-
 func (wv *workspacesView) getView() *tui.View {
 	return wv.view
 }
 
 func (wv *workspacesView) focus() {
-	focusView(wv.getView().Name())
+	ui.focusView(wv.getView().Name())
 }
 
 func (wv *workspacesView) init() {
 	wv.view = getViewPosition(WorkspacesView).Set()
 
 	wv.view.Title = tui.WithSurroundingSpaces("Workspaces")
-	styleView(wv.getView())
+	ui.styleView(wv.getView())
 
 	sizeX, sizeY := wv.view.Size()
 
@@ -72,7 +68,7 @@ func (wv *workspacesView) init() {
 		displayedWorkspaceOpenerCmdStr = strings.Join(displayedWorkspaceOpenerCmd, " ")
 	}
 
-	tv := getTopicsView()
+	tv := ui.getTopicsView()
 	wv.view.KeyBinding().
 		Set('j', "Move down", func() {
 			wv.tableRenderer.Down()
@@ -112,7 +108,7 @@ func (wv *workspacesView) init() {
 				return
 			}
 
-			runAction(func() {
+			ui.runAction(func() {
 				system.OpenLazygit(w.Path)
 			})
 		}).
@@ -174,7 +170,7 @@ func (wv *workspacesView) init() {
 			}
 
 			var error error = nil
-			runAction(func() {
+			ui.runAction(func() {
 				error = api().Workspaces.OpenWorkspace(curWorkspace)
 			})
 
@@ -188,7 +184,7 @@ func (wv *workspacesView) init() {
 				return
 			}
 
-			runAction(func() {
+			ui.runAction(func() {
 				api().Workspaces.OpenNeovimInWorkspace(curWorkspace)
 			})
 		}).
@@ -200,7 +196,7 @@ func (wv *workspacesView) init() {
 
 			terminalOpenCmd := api().GlobalConfiguration.GetTerminalOpenerCmd()
 			var error error = nil
-			runAction(func() {
+			ui.runAction(func() {
 				if len(terminalOpenCmd) > 0 {
 					err := exec.Command(terminalOpenCmd[0], terminalOpenCmd[1:]...).Run()
 					if err != nil {
@@ -318,7 +314,7 @@ func (wv *workspacesView) init() {
 			}, func() {}, "Description", largeEditorSize)
 		}).
 		Set('a', "Create a workspace", func() {
-			curTopic := getTopicsView().getSelectedTopic()
+			curTopic := ui.getTopicsView().getSelectedTopic()
 			if curTopic == nil {
 				openToastDialog("You must create a topic first", toastDialogNeutralType, "Note", func() {})
 				return
@@ -367,7 +363,7 @@ func (wv *workspacesView) selectWorkspaceByShortPath(shortPath string) {
 
 func (wv *workspacesView) refresh() {
 	var workspaces core.Workspaces
-	if selectedTopic := getTopicsView().getSelectedTopic(); selectedTopic != nil {
+	if selectedTopic := ui.getTopicsView().getSelectedTopic(); selectedTopic != nil {
 		workspaces = api().Workspaces.GetWorkspaces().FilterByTopic(selectedTopic)
 	} else {
 		workspaces = make(core.Workspaces, 0)

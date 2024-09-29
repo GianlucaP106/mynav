@@ -19,7 +19,7 @@ func openConfirmationDialog(onConfirm func(bool), title string) *confirmationDia
 	cd.view.Wrap = true
 	cd.view.Editable = true
 	cd.view.FrameColor = onFrameColor
-	styleView(cd.view)
+	ui.styleView(cd.view)
 
 	cd.view.Editor = tui.NewConfirmationEditor(func() {
 		cd.close()

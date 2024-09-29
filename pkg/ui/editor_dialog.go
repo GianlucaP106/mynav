@@ -36,7 +36,7 @@ func openEditorDialogWithDefaultValue(onEnter func(string), onEsc func(), title 
 	ed.view.Title = tui.WithSurroundingSpaces(title)
 	ed.view.Wrap = true
 	ed.view.FrameColor = onFrameColor
-	styleView(ed.view)
+	ui.styleView(ed.view)
 	tui.ToggleCursor(true)
 
 	if defaultValue != "" {

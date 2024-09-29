@@ -17,10 +17,6 @@ func newHeaderView() *headerView {
 	return &headerView{}
 }
 
-func getHeaderView() *headerView {
-	return getViewable[*headerView]()
-}
-
 func (hv *headerView) getView() *tui.View {
 	return hv.view
 }

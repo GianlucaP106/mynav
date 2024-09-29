@@ -25,7 +25,7 @@ func openToastDialog(message string, dialogType toastDialogType, title string, e
 	td.view = tui.SetCenteredView(ToastDialog, max(len(message), len(title))+5, 3, 0)
 	td.view.Title = tui.WithSurroundingSpaces(title)
 	td.view.Editable = true
-	styleView(td.view)
+	ui.styleView(td.view)
 	switch dialogType {
 	case toastDialogErrType:
 		td.view.FrameColor = gocui.ColorRed

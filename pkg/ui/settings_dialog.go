@@ -20,7 +20,7 @@ func openSettingsDialog() *settingsDialog {
 
 	s.view.Title = tui.WithSurroundingSpaces("Settings")
 	s.view.FrameColor = onFrameColor
-	styleView(s.view)
+	ui.styleView(s.view)
 
 	viewX, viewY := s.view.Size()
 	s.tableRenderer = tui.NewTableRenderer[string]()

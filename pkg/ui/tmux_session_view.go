@@ -21,23 +21,19 @@ func newTmuxSessionView() *tmuxSessionView {
 	return &tmuxSessionView{}
 }
 
-func getTmuxSessionView() *tmuxSessionView {
-	return getViewable[*tmuxSessionView]()
-}
-
 func (tv *tmuxSessionView) getView() *tui.View {
 	return tv.view
 }
 
 func (tv *tmuxSessionView) Focus() {
-	focusView(tv.getView().Name())
+	ui.focusView(tv.getView().Name())
 }
 
 func (tv *tmuxSessionView) init() {
 	tv.view = getViewPosition(TmuxSessionView).Set()
 
 	tv.view.Title = tui.WithSurroundingSpaces("Tmux Sessions")
-	styleView(tv.view)
+	ui.styleView(tv.view)
 
 	sizeX, sizeY := tv.view.Size()
 	tv.tableRenderer = tui.NewTableRenderer[*gotmux.Session]()
@@ -68,7 +64,7 @@ func (tv *tmuxSessionView) init() {
 			}
 
 			var error error = nil
-			runAction(func() {
+			ui.runAction(func() {
 				err := api().Tmux.AttachTmuxSession(session)
 				if err != nil {
 					error = err
@@ -80,7 +76,7 @@ func (tv *tmuxSessionView) init() {
 			}
 		}).
 		Set(gocui.KeyEnter, "Focus window view", func() {
-			getTmuxWindowView().focus()
+			ui.getTmuxWindowView().focus()
 		}).
 		Set('D', "Delete session", func() {
 			session := tv.getSelectedSession()
@@ -149,7 +145,7 @@ func (tv *tmuxSessionView) init() {
 			}
 
 			var err error = nil
-			runAction(func() {
+			ui.runAction(func() {
 				err = api().Tmux.OpenTmuxSessionChooseTree(session)
 			})
 			if err != nil {
@@ -162,7 +158,7 @@ func (tv *tmuxSessionView) init() {
 			}
 
 			openEditorDialog(func(s string) {
-				runAction(func() {
+				ui.runAction(func() {
 					api().Tmux.CreateAndAttachTmuxSession(s, "~")
 				})
 			}, func() {}, "New session name", smallEditorSize)
@@ -210,26 +206,26 @@ func (ts *tmuxSessionView) refresh() {
 
 func refreshTmuxViews() {
 	ui.queueRefresh(func() {
-		ts := getTmuxSessionView()
+		ts := ui.getTmuxSessionView()
 		ts.refresh()
-		renderView(ts)
+		ui.renderView(ts)
 		ts.refreshDown()
 	})
 }
 
 func (ts *tmuxSessionView) refreshDown() {
 	go func() {
-		twv := getTmuxWindowView()
+		twv := ui.getTmuxWindowView()
 		twv.refresh()
-		renderView(twv)
+		ui.renderView(twv)
 
-		tpv := getTmuxPaneView()
+		tpv := ui.getTmuxPaneView()
 		tpv.refresh()
-		renderView(tpv)
+		ui.renderView(tpv)
 
-		tpvv := getTmuxPreviewView()
+		tpvv := ui.getTmuxPreviewView()
 		tpvv.refresh()
-		renderView(tpvv)
+		ui.renderView(tpvv)
 	}()
 }
 

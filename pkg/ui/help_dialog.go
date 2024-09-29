@@ -40,7 +40,7 @@ func openHelpDialog(mappings []*tui.KeyBindingInfo, exit func()) *helpDialog {
 	hv.view.Editable = true
 	hv.view.FrameColor = onFrameColor
 	hv.view.Title = tui.WithSurroundingSpaces("Cheatsheet")
-	styleView(hv.view)
+	ui.styleView(hv.view)
 
 	prevView := tui.GetFocusedView()
 	hv.view.Editor = newHelpViewEditor(func() {

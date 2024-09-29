@@ -24,16 +24,12 @@ func newGithubRepoView() *githubRepoView {
 	return &githubRepoView{}
 }
 
-func getGithubRepoView() *githubRepoView {
-	return getViewable[*githubRepoView]()
-}
-
 func (g *githubRepoView) getView() *tui.View {
 	return g.view
 }
 
 func (g *githubRepoView) focus() {
-	focusView(g.getView().Name())
+	ui.focusView(g.getView().Name())
 }
 
 func (g *githubRepoView) init() {
@@ -41,7 +37,7 @@ func (g *githubRepoView) init() {
 
 	g.view.Title = tui.WithSurroundingSpaces("Repositories")
 
-	styleView(g.view)
+	ui.styleView(g.view)
 
 	g.tableRenderer = tui.NewTableRenderer[*github.Repository]()
 	sizeX, sizeY := g.view.Size()
@@ -62,7 +58,7 @@ func (g *githubRepoView) init() {
 	g.refresh()
 
 	moveRight := func() {
-		getGithubPrView().Focus()
+		ui.getGithubPrView().Focus()
 	}
 
 	g.view.KeyBinding().
@@ -127,8 +123,8 @@ func (g *githubRepoView) init() {
 					}
 
 					go func() {
-						wv := getWorkspacesView()
-						tv := getTopicsView()
+						wv := ui.getWorkspacesView()
+						tv := ui.getTopicsView()
 						refreshMainViews()
 						ui.mainTabGroup.FocusTabByIndex(0)
 						wv.focus()
@@ -147,7 +143,7 @@ func (g *githubRepoView) init() {
 			system.OpenBrowser(repo.GetHTMLURL())
 		}).
 		Set('R', "Refetch all github data", func() {
-			getGithubProfileView().refetchData()
+			ui.getGithubProfileView().refetchData()
 		}).
 		Set('u', "Copy repo url to clipboard", func() {
 			repo := g.getSelectedRepo()
@@ -232,7 +228,7 @@ func (g *githubRepoView) render() error {
 		return isFocused
 	})
 
-	if getGithubProfileView().isFetchingData.Get() {
+	if ui.getGithubProfileView().isFetchingData.Get() {
 		fmt.Fprintln(g.view, "Loading...")
 	} else if g.tableRenderer.GetTableSize() == 0 {
 		fmt.Fprintln(g.view, "No repos to display")
