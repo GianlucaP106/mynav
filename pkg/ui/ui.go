@@ -92,7 +92,10 @@ func (ui *UI) init() *UI {
 	ui.mainTabGroup = tui.NewTabGroup(ui.focusView)
 	ui.buildMainTab()
 	ui.buildTmuxTab()
-	ui.buildGithubTab()
+
+	if api().GlobalConfiguration.GetGithubTabEnabled() {
+		ui.buildGithubTab()
+	}
 
 	ui.mainTabGroup.FocusTabByIndex(0)
 
@@ -131,7 +134,11 @@ func (ui *UI) initStanialone() {
 
 	ui.mainTabGroup = tui.NewTabGroup(ui.focusView)
 	ui.buildTmuxTab()
-	ui.buildGithubTab()
+
+	if api().GlobalConfiguration.GetGithubTabEnabled() {
+		ui.buildGithubTab()
+	}
+
 	ui.mainTabGroup.FocusTabByIndex(0)
 
 	ui.systemUpdate()
