@@ -39,12 +39,12 @@ func openSearchListDialog[T any](params searchDialogConfig[T]) *searchListDialog
 	}, func() {
 	})
 
-	styleView(s.searchView)
+	ui.styleView(s.searchView)
 
 	s.tableView = tui.SetCenteredView(SearchListDialog2View, 80, 10, 0)
 	s.tableView.Title = params.tableViewTitle
 	tableViewX, tableViewY := s.tableView.Size()
-	styleView(s.tableView)
+	ui.styleView(s.tableView)
 
 	s.tableRenderer = tui.NewTableRenderer[T]()
 	s.tableRenderer.InitTable(tableViewX, tableViewY, params.tableTitles, params.tableProportions)

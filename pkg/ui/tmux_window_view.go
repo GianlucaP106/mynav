@@ -22,16 +22,12 @@ func newTmuxWindowView() *tmuxWindowView {
 	return &tmuxWindowView{}
 }
 
-func getTmuxWindowView() *tmuxWindowView {
-	return getViewable[*tmuxWindowView]()
-}
-
 func (t *tmuxWindowView) getView() *tui.View {
 	return t.view
 }
 
 func (t *tmuxWindowView) focus() {
-	focusView(t.getView().Name())
+	ui.focusView(t.getView().Name())
 }
 
 func (t *tmuxWindowView) getSelectedWindow() *gotmux.Window {
@@ -47,7 +43,7 @@ func (t *tmuxWindowView) init() {
 	t.view = getViewPosition(TmuxWindowView).Set()
 
 	t.view.Title = tui.WithSurroundingSpaces("Tmux Windows")
-	styleView(t.view)
+	ui.styleView(t.view)
 
 	sizeX, sizeY := t.view.Size()
 	t.tableRenderer = tui.NewTableRenderer[*gotmux.Window]()
@@ -65,8 +61,8 @@ func (t *tmuxWindowView) init() {
 
 	t.refresh()
 
-	tv := getTmuxSessionView()
-	tpv := getTmuxPaneView()
+	tv := ui.getTmuxSessionView()
+	tpv := ui.getTmuxPaneView()
 	t.view.KeyBinding().
 		Set('j', "Move down", func() {
 			t.tableRenderer.Down()
@@ -82,13 +78,13 @@ func (t *tmuxWindowView) init() {
 				return
 			}
 
-			session := getTmuxSessionView().getSelectedSession()
+			session := ui.getTmuxSessionView().getSelectedSession()
 			if session == nil {
 				return
 			}
 
 			var error error = nil
-			runAction(func() {
+			ui.runAction(func() {
 				err := api().Tmux.AttachTmuxSession(session)
 				if err != nil {
 					error = err
@@ -136,7 +132,7 @@ func (t *tmuxWindowView) init() {
 }
 
 func (t *tmuxWindowView) refresh() {
-	selectedSession := getTmuxSessionView().getSelectedSession()
+	selectedSession := ui.getTmuxSessionView().getSelectedSession()
 	if selectedSession == nil {
 		t.tableRenderer.ClearTable()
 		return
@@ -170,12 +166,12 @@ func (t *tmuxWindowView) refresh() {
 
 func (t *tmuxWindowView) refreshDown() {
 	go func() {
-		tpv := getTmuxPaneView()
+		tpv := ui.getTmuxPaneView()
 		tpv.refresh()
-		renderView(tpv)
-		tpv2 := getTmuxPreviewView()
+		ui.renderView(tpv)
+		tpv2 := ui.getTmuxPreviewView()
 		tpv2.refresh()
-		renderView(tpv2)
+		ui.renderView(tpv2)
 	}()
 }
 

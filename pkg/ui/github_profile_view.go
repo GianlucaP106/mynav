@@ -21,10 +21,6 @@ func newGithubProfileView() *githubProfileView {
 	}
 }
 
-func getGithubProfileView() *githubProfileView {
-	return getViewable[*githubProfileView]()
-}
-
 func (g *githubProfileView) refresh() {}
 
 func (g *githubProfileView) init() {
@@ -32,7 +28,7 @@ func (g *githubProfileView) init() {
 
 	g.view.Title = tui.WithSurroundingSpaces("Profile")
 
-	styleView(g.view)
+	ui.styleView(g.view)
 
 	isAuthenticated := api().Github.IsAuthenticated()
 	if isAuthenticated {
@@ -118,20 +114,20 @@ func (g *githubProfileView) fetchData() {
 	go func() {
 		g.isFetchingData.Set(true)
 		api().Github.LoadProfile()
-		refresh(g)
+		ui.refresh(g)
 
 		api().Github.LoadUserRepos()
-		refresh(getGithubRepoView())
+		ui.refresh(ui.getGithubRepoView())
 
 		api().Github.LoadUserPullRequests()
-		refresh(getGithubPrView())
+		ui.refresh(ui.getGithubPrView())
 		g.isFetchingData.Set(false)
 	}()
 }
 
 func (g *githubProfileView) refetchData() {
-	repoView := getGithubRepoView()
-	prView := getGithubPrView()
+	repoView := ui.getGithubRepoView()
+	prView := ui.getGithubPrView()
 	repoView.tableRenderer.ClearTable()
 	prView.tableRenderer.ClearTable()
 	g.fetchData()
@@ -162,5 +158,5 @@ func (g *githubProfileView) getView() *tui.View {
 }
 
 func (g *githubProfileView) Focus() {
-	focusView(g.getView().Name())
+	ui.focusView(g.getView().Name())
 }

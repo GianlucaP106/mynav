@@ -21,16 +21,12 @@ func newGithubPrView() *githubPrView {
 	return &githubPrView{}
 }
 
-func getGithubPrView() *githubPrView {
-	return getViewable[*githubPrView]()
-}
-
 func (g *githubPrView) getView() *tui.View {
 	return g.view
 }
 
 func (g *githubPrView) Focus() {
-	focusView(g.getView().Name())
+	ui.focusView(g.getView().Name())
 }
 
 func (g *githubPrView) init() {
@@ -38,7 +34,7 @@ func (g *githubPrView) init() {
 
 	g.view.Title = tui.WithSurroundingSpaces("Pull Requests")
 
-	styleView(g.view)
+	ui.styleView(g.view)
 
 	sizeX, sizeY := g.view.Size()
 	g.tableRenderer = tui.NewTableRenderer[*github.PullRequest]()
@@ -84,13 +80,13 @@ func (g *githubPrView) init() {
 			openToastDialog(url, toastDialogNeutralType, "Copied PR URL to clipboard", func() {})
 		}).
 		Set('R', "Refetch all github data", func() {
-			getGithubProfileView().refetchData()
+			ui.getGithubProfileView().refetchData()
 		}).
 		Set(gocui.KeyCtrlL, "Focus "+GithubRepoView, func() {
-			getGithubRepoView().focus()
+			ui.getGithubRepoView().focus()
 		}).
 		Set(gocui.KeyArrowRight, "Focus "+GithubRepoView, func() {
-			getGithubRepoView().focus()
+			ui.getGithubRepoView().focus()
 		}).
 		Set('?', "Toggle cheatsheet", func() {
 			openHelpDialog(g.view.GetKeybindings(), func() {})
@@ -140,7 +136,7 @@ func (g *githubPrView) render() error {
 		return isFocused
 	})
 
-	if getGithubProfileView().isFetchingData.Get() {
+	if ui.getGithubProfileView().isFetchingData.Get() {
 		fmt.Fprintln(g.view, "Loading...")
 	} else if g.tableRenderer.GetTableSize() == 0 {
 		fmt.Fprintln(g.view, "Nothing to show")

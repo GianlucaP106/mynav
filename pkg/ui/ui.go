@@ -59,6 +59,20 @@ func newUI(a *core.Api) *UI {
 	}
 }
 
+func api() *core.Api {
+	return ui.api
+}
+
+func getViewable[T viewable]() T {
+	for _, v := range ui.views {
+		if v, ok := v.(T); ok {
+			return v
+		}
+	}
+
+	panic("invalid view")
+}
+
 func (ui *UI) init() *UI {
 	ui.views = []viewable{
 		newHeaderView(),
@@ -75,14 +89,14 @@ func (ui *UI) init() *UI {
 
 	ui.sealViews()
 
-	ui.mainTabGroup = tui.NewTabGroup(focusView)
+	ui.mainTabGroup = tui.NewTabGroup(ui.focusView)
 	ui.buildMainTab()
 	ui.buildTmuxTab()
 	ui.buildGithubTab()
 
 	ui.mainTabGroup.FocusTabByIndex(0)
 
-	systemUpdate()
+	ui.systemUpdate()
 
 	if api().GlobalConfiguration.GetLastTab() != "" {
 		ui.mainTabGroup.FocusTab(api().GlobalConfiguration.GetLastTab())
@@ -90,9 +104,9 @@ func (ui *UI) init() *UI {
 
 	if api().GlobalConfiguration.GetLastTab() == "main" {
 		if api().Workspaces.GetSelectedWorkspace() != nil {
-			getWorkspacesView().focus()
+			ui.getWorkspacesView().focus()
 		} else {
-			getTopicsView().focus()
+			ui.getTopicsView().focus()
 		}
 	}
 
@@ -115,12 +129,12 @@ func (ui *UI) initStanialone() {
 
 	ui.sealViews()
 
-	ui.mainTabGroup = tui.NewTabGroup(focusView)
+	ui.mainTabGroup = tui.NewTabGroup(ui.focusView)
 	ui.buildTmuxTab()
 	ui.buildGithubTab()
 	ui.mainTabGroup.FocusTabByIndex(0)
 
-	systemUpdate()
+	ui.systemUpdate()
 	ui.initGlobalKeybindings()
 	ui.initRefreshExecutor()
 }
@@ -193,53 +207,43 @@ func (ui *UI) sealViews() {
 }
 
 func (ui *UI) buildMainTab() *tui.Tab {
-	tab := ui.mainTabGroup.NewTab("main", getTopicsView().getView().Name())
-	tab.AddView(getHeaderView().view, tui.NoPosition)
-	tab.AddView(getTopicsView().view, tui.TopLeftPosition)
-	tab.AddView(getWorkspacesView().view, tui.TopRightPosition)
+	tab := ui.mainTabGroup.NewTab("main", ui.getTopicsView().getView().Name())
+	tab.AddView(ui.getHeaderView().view, tui.NoPosition)
+	tab.AddView(ui.getTopicsView().view, tui.TopLeftPosition)
+	tab.AddView(ui.getWorkspacesView().view, tui.TopRightPosition)
 	tab.GenerateNavigationKeyBindings()
 	return tab
 }
 
 func (ui *UI) buildTmuxTab() *tui.Tab {
-	tab := ui.mainTabGroup.NewTab("tmux", getTmuxSessionView().getView().Name())
-	tab.AddView(getTmuxSessionView().view, tui.TopLeftPosition)
-	tab.AddView(getTmuxWindowView().view, tui.TopRightPosition)
-	tab.AddView(getTmuxPreviewView().view, tui.NoPosition)
-	tab.AddView(getTmuxPaneView().view, tui.NoPosition)
-	tab.AddView(getHeaderView().view, tui.NoPosition)
+	tab := ui.mainTabGroup.NewTab("tmux", ui.getTmuxSessionView().getView().Name())
+	tab.AddView(ui.getTmuxSessionView().view, tui.TopLeftPosition)
+	tab.AddView(ui.getTmuxWindowView().view, tui.TopRightPosition)
+	tab.AddView(ui.getTmuxPreviewView().view, tui.NoPosition)
+	tab.AddView(ui.getTmuxPaneView().view, tui.NoPosition)
+	tab.AddView(ui.getHeaderView().view, tui.NoPosition)
 	tab.GenerateNavigationKeyBindings()
 	return tab
 }
 
 func (ui *UI) buildGithubTab() *tui.Tab {
-	tab := ui.mainTabGroup.NewTab("github", getGithubProfileView().getView().Name())
-	tab.AddView(getGithubProfileView().view, tui.TopLeftPosition)
-	tab.AddView(getGithubRepoView().view, tui.TopRightPosition)
-	tab.AddView(getGithubPrView().view, tui.BottomLeftPosition)
-	tab.AddView(getHeaderView().view, tui.NoPosition)
+	tab := ui.mainTabGroup.NewTab("github", ui.getGithubProfileView().getView().Name())
+	tab.AddView(ui.getGithubProfileView().view, tui.TopLeftPosition)
+	tab.AddView(ui.getGithubRepoView().view, tui.TopRightPosition)
+	tab.AddView(ui.getGithubPrView().view, tui.BottomLeftPosition)
+	tab.AddView(ui.getHeaderView().view, tui.NoPosition)
 	tab.GenerateNavigationKeyBindings()
 	return tab
 }
 
-func getViewable[T viewable]() T {
-	for _, v := range ui.views {
-		if v, ok := v.(T); ok {
-			return v
-		}
-	}
-
-	panic("invalid view")
-}
-
-func renderView(v viewable) {
+func (ui *UI) renderView(v viewable) {
 	tui.UpdateTui(func(g *tui.Tui) error {
 		v.render()
 		return nil
 	})
 }
 
-func focusView(viewName string) {
+func (ui *UI) focusView(viewName string) {
 	tui.GetView(viewName).Focus()
 
 	views := make([]*tui.View, 0)
@@ -256,18 +260,14 @@ func focusView(viewName string) {
 	}
 }
 
-func refresh(v viewable) {
+func (ui *UI) refresh(v viewable) {
 	ui.queueRefresh(func() {
 		v.refresh()
-		renderView(v)
+		ui.renderView(v)
 	})
 }
 
-func api() *core.Api {
-	return ui.api
-}
-
-func runAction(f func()) {
+func (ui *UI) runAction(f func()) {
 	tui.Suspend()
 	f()
 	tui.Resume()
@@ -275,19 +275,19 @@ func runAction(f func()) {
 	refreshTmuxViews()
 }
 
-func styleView(v *tui.View) {
+func (ui *UI) styleView(v *tui.View) {
 	v.FrameRunes = tui.ThickFrame
 	v.TitleColor = gocui.AttrBold | gocui.ColorYellow
 }
 
-func systemUpdate() bool {
+func (ui *UI) systemUpdate() bool {
 	if api().LocalConfiguration.IsInitialized && !api().GlobalConfiguration.IsUpdateAsked() {
 		api().GlobalConfiguration.SetUpdateAsked()
 		update, newTag := api().GlobalConfiguration.DetectUpdate()
 		if update {
 			openConfirmationDialog(func(b bool) {
 				if b {
-					runAction(func() {
+					ui.runAction(func() {
 						api().GlobalConfiguration.UpdateMynav()
 					})
 				}
@@ -296,4 +296,44 @@ func systemUpdate() bool {
 		}
 	}
 	return false
+}
+
+func (ui *UI) getGithubPrView() *githubPrView {
+	return getViewable[*githubPrView]()
+}
+
+func (ui *UI) getGithubProfileView() *githubProfileView {
+	return getViewable[*githubProfileView]()
+}
+
+func (ui *UI) getGithubRepoView() *githubRepoView {
+	return getViewable[*githubRepoView]()
+}
+
+func (ui *UI) getHeaderView() *headerView {
+	return getViewable[*headerView]()
+}
+
+func (ui *UI) getTmuxPaneView() *tmuxPaneView {
+	return getViewable[*tmuxPaneView]()
+}
+
+func (ui *UI) getTmuxPreviewView() *tmuxPreviewView {
+	return getViewable[*tmuxPreviewView]()
+}
+
+func (ui *UI) getTmuxSessionView() *tmuxSessionView {
+	return getViewable[*tmuxSessionView]()
+}
+
+func (ui *UI) getTmuxWindowView() *tmuxWindowView {
+	return getViewable[*tmuxWindowView]()
+}
+
+func (ui *UI) getTopicsView() *topicsView {
+	return getViewable[*topicsView]()
+}
+
+func (ui *UI) getWorkspacesView() *workspacesView {
+	return getViewable[*workspacesView]()
 }

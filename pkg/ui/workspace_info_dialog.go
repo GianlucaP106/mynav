@@ -22,7 +22,7 @@ func openWorkspaceInfoDialog(w *core.Workspace, exit func()) *workspaceInfoDialo
 
 	wd.view.Title = tui.WithSurroundingSpaces(wd.workspace.Name)
 	wd.view.FrameColor = onFrameColor
-	styleView(wd.view)
+	ui.styleView(wd.view)
 	wd.view.Editable = true
 
 	prevView := tui.GetFocusedView()

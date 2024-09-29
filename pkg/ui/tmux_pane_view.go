@@ -20,23 +20,19 @@ func newTmuxPaneView() *tmuxPaneView {
 	return &tmuxPaneView{}
 }
 
-func getTmuxPaneView() *tmuxPaneView {
-	return getViewable[*tmuxPaneView]()
-}
-
 func (t *tmuxPaneView) getView() *tui.View {
 	return t.view
 }
 
 func (t *tmuxPaneView) focus() {
-	focusView(t.view.Name())
+	ui.focusView(t.view.Name())
 }
 
 func (t *tmuxPaneView) init() {
 	t.view = getViewPosition(TmuxPaneView).Set()
 
 	t.view.Title = tui.WithSurroundingSpaces("Tmux Panes")
-	styleView(t.view)
+	ui.styleView(t.view)
 
 	sizeX, sizeY := t.view.Size()
 	t.tableRenderer = tui.NewTableRenderer[*gotmux.Pane]()
@@ -52,16 +48,16 @@ func (t *tmuxPaneView) init() {
 
 	t.refresh()
 
-	tpv := getTmuxPreviewView()
-	twv := getTmuxWindowView()
+	tpv := ui.getTmuxPreviewView()
+	twv := ui.getTmuxWindowView()
 	t.view.KeyBinding().
 		Set('j', "Move down", func() {
 			t.tableRenderer.Down()
-			refresh(tpv)
+			ui.refresh(tpv)
 		}).
 		Set('k', "Move up", func() {
 			t.tableRenderer.Up()
-			refresh(tpv)
+			ui.refresh(tpv)
 		}).
 		Set('X', "Kill this pane", func() {
 			pane := t.getSelectedPane()
@@ -97,7 +93,7 @@ func (t *tmuxPaneView) init() {
 }
 
 func (t *tmuxPaneView) refresh() {
-	window := getTmuxWindowView().getSelectedWindow()
+	window := ui.getTmuxWindowView().getSelectedWindow()
 	if window == nil {
 		t.tableRenderer.ClearTable()
 		return

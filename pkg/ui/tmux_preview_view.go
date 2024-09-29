@@ -17,12 +17,8 @@ func newTmuxPreviewView() *tmuxPreviewView {
 	return &tmuxPreviewView{}
 }
 
-func getTmuxPreviewView() *tmuxPreviewView {
-	return getViewable[*tmuxPreviewView]()
-}
-
 func (t *tmuxPreviewView) Focus() {
-	focusView(t.getView().Name())
+	ui.focusView(t.getView().Name())
 }
 
 func (t *tmuxPreviewView) getView() *tui.View {
@@ -33,7 +29,7 @@ func (t *tmuxPreviewView) init() {
 	t.view = getViewPosition(TmuxPreviewView).Set()
 
 	t.view.Title = tui.WithSurroundingSpaces("Tmux Preview")
-	styleView(t.view)
+	ui.styleView(t.view)
 	t.view.Wrap = false
 
 	t.content = core.NewValue("")
@@ -42,7 +38,7 @@ func (t *tmuxPreviewView) init() {
 }
 
 func (t *tmuxPreviewView) refresh() {
-	pane := getTmuxPaneView().getSelectedPane()
+	pane := ui.getTmuxPaneView().getSelectedPane()
 	if pane == nil {
 		t.content.Set("")
 		return

@@ -22,23 +22,19 @@ func newTopicsView() *topicsView {
 	}
 }
 
-func getTopicsView() *topicsView {
-	return getViewable[*topicsView]()
-}
-
 func (tv *topicsView) getView() *tui.View {
 	return tv.view
 }
 
 func (tv *topicsView) focus() {
-	focusView(tv.getView().Name())
+	ui.focusView(tv.getView().Name())
 }
 
 func (tv *topicsView) init() {
 	tv.view = getViewPosition(TopicView).Set()
 
 	tv.view.Title = tui.WithSurroundingSpaces("Topics")
-	styleView(tv.view)
+	ui.styleView(tv.view)
 
 	sizeX, sizeY := tv.view.Size()
 	tv.tableRenderer = tui.NewTableRenderer[*core.Topic]()
@@ -60,19 +56,19 @@ func (tv *topicsView) init() {
 
 	moveRight := func() {
 		if api().Topics.GetTopicCount() > 0 {
-			getWorkspacesView().focus()
+			ui.getWorkspacesView().focus()
 		}
 	}
 
-	wv := getWorkspacesView()
+	wv := ui.getWorkspacesView()
 	tv.view.KeyBinding().
 		Set('j', "Move down", func() {
 			tv.tableRenderer.Down()
-			refresh(wv)
+			ui.refresh(wv)
 		}).
 		Set('k', "Move up", func() {
 			tv.tableRenderer.Up()
-			refresh(wv)
+			ui.refresh(wv)
 		}).
 		Set(gocui.KeyEnter, "Open topic", moveRight).
 		Set('/', "Search by name", func() {
@@ -147,7 +143,7 @@ func (tv *topicsView) init() {
 				},
 				onSelect: func(w *core.Workspace) {
 					tv.selectTopicByName(w.Topic.Name)
-					wv := getWorkspacesView()
+					wv := ui.getWorkspacesView()
 					wv.refresh()
 					wv.selectWorkspaceByShortPath(w.ShortPath())
 
@@ -216,13 +212,13 @@ func (tv *topicsView) refresh() {
 func refreshMainViews() {
 	if !api().GlobalConfiguration.Standalone {
 		ui.queueRefresh(func() {
-			t := getTopicsView()
+			t := ui.getTopicsView()
 			t.refresh()
-			renderView(t)
+			ui.renderView(t)
 
-			wv := getWorkspacesView()
+			wv := ui.getWorkspacesView()
 			wv.refresh()
-			renderView(wv)
+			ui.renderView(wv)
 		})
 	}
 }
