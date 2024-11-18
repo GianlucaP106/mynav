@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func GetOpenTerminalCmd() ([]string, error) {
+func OpenTerminalCmd(path string) (*exec.Cmd, error) {
 	cmds := map[uint]func() string{
 		Linux: func() string {
 			return "xdg-open terminal"
@@ -30,8 +30,8 @@ func GetOpenTerminalCmd() ([]string, error) {
 	}
 
 	command := strings.Split(cmd(), " ")
-
-	return command, nil
+	command = append(command, path)
+	return exec.Command(command[0], command[1:]...), nil
 }
 
 func CommandWithRedirect(command ...string) *exec.Cmd {

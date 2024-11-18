@@ -1,4 +1,4 @@
-package core
+package system
 
 import (
 	"log"
@@ -7,7 +7,7 @@ import (
 
 var logger *log.Logger
 
-func Init(path string) {
+func InitLogger(path string) {
 	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		log.Panicln(err)

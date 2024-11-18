@@ -1,0 +1,170 @@
+package app
+
+import (
+	"fmt"
+	"mynav/pkg/core"
+	"mynav/pkg/tui"
+	"strconv"
+
+	"github.com/awesome-gocui/gocui"
+	"github.com/gookit/color"
+)
+
+type Topics struct {
+	view  *tui.View
+	table *tui.TableRenderer[*core.Topic]
+}
+
+func newTopicsView() *Topics {
+	t := &Topics{}
+	return t
+}
+
+func (tv *Topics) focus() {
+	a.focusView(tv.view)
+}
+
+func (tv *Topics) refresh() {
+	topics := a.api.AllTopics().Sorted()
+
+	workspaces := a.api.AllWorkspaces()
+	rows := make([][]string, 0)
+	rowValues := make([]*core.Topic, 0)
+	for _, topic := range topics {
+		rowValues = append(rowValues, topic)
+		topicWorkspaces := workspaces.ByTopic(topic)
+		rows = append(rows, []string{
+			topic.Name,
+			strconv.Itoa(len(topicWorkspaces)),
+			topic.LastModifiedTimeFormatted(),
+		})
+	}
+
+	tv.table.Fill(rows, rowValues)
+}
+
+func (tv *Topics) selected() *core.Topic {
+	_, t := tv.table.SelectedRow()
+	if t != nil {
+		return *t
+	}
+	return nil
+}
+
+func (tv *Topics) selectTopic(t *core.Topic) {
+	tv.table.SelectRowByValue(func(t2 *core.Topic) bool {
+		return t2.Name == t.Name
+	})
+}
+
+func (tv *Topics) render() {
+	currentViewSelected := a.ui.IsFocused(tv.view)
+	tv.view.Clear()
+	a.ui.Resize(tv.view, getViewPosition(tv.view.Name()))
+
+	// update row marker
+	row, _ := tv.table.SelectedRow()
+	size := tv.table.Size()
+	tv.view.Subtitle = fmt.Sprintf(" %d / %d ", min(row+1, size), size)
+
+	tv.table.RenderSelect(tv.view, func(_ int, _ *tui.TableRow[*core.Topic]) bool {
+		return currentViewSelected
+	})
+}
+
+func (tv *Topics) init() {
+	tv.view = a.ui.SetView(getViewPosition(TopicView))
+	tv.view.Title = " Topics "
+	a.styleView(tv.view)
+
+	sizeX, sizeY := tv.view.Size()
+	tv.table = tui.NewTableRenderer[*core.Topic]()
+	titles := []string{
+		"Name",
+		"Workspaces",
+		"Last Modified",
+	}
+	colProportions := []float64{
+		0.4,
+		0.2,
+		0.4,
+	}
+	styles := []color.Style{
+		color.New(color.FgYellow, color.Bold),
+		color.Success.Style,
+		color.New(color.FgDarkGray, color.OpItalic),
+	}
+	tv.table.Init(sizeX, sizeY, titles, colProportions)
+	tv.table.SetStyles(styles)
+
+	moveRight := func() {
+		if a.api.TopicCount() > 0 {
+			a.workspaces.focus()
+		}
+	}
+
+	a.ui.KeyBinding(tv.view).
+		Set('j', "Move down", func() {
+			tv.table.Down()
+			a.refreshWorkspaces()
+		}).
+		Set('k', "Move up", func() {
+			tv.table.Up()
+			a.refreshWorkspaces()
+		}).
+		Set(gocui.KeyEnter, "Open topic", moveRight).
+		Set('a', "Create a topic", func() {
+			editor(func(s string) {
+				topic, err := a.api.NewTopic(s)
+				if err != nil {
+					toast(err.Error(), toastError)
+					return
+				}
+
+				a.refresh(topic, nil, true, false)
+				toast("Created topic "+topic.Name, toastInfo)
+			}, func() {}, "Topic name", smallEditorSize, "")
+		}).
+		Set('r', "Rename topic", func() {
+			t := tv.selected()
+			if t == nil {
+				return
+			}
+
+			editor(func(s string) {
+				if err := a.api.RenameTopic(t, s); err != nil {
+					toast(err.Error(), toastError)
+					return
+				}
+
+				a.refresh(t, nil, true, false)
+				toast("Renamed topic "+t.Name, toastInfo)
+			}, func() {}, "New topic name", smallEditorSize, t.Name)
+		}).
+		Set('D', "Delete topic", func() {
+			if a.api.TopicCount() <= 0 {
+				return
+			}
+			alert(func(b bool) {
+				if !b {
+					return
+				}
+				t := tv.selected()
+				if err := a.api.DeleteTopic(t); err != nil {
+					toast(err.Error(), toastError)
+				}
+
+				a.refreshAll()
+				toast("Deleted topic "+t.Name, toastInfo)
+			}, "Are you sure you want to delete this topic? All its content will be deleted.")
+		}).
+		Set('l', "Focus workspace view", func() {
+			a.workspaces.focus()
+		}).
+		Set(gocui.KeyArrowRight, "Focus workspace view", func() {
+			a.workspaces.focus()
+		}).
+		Set('?', "Toggle cheatsheet", func() {
+			help(tv.view)
+		})
+}

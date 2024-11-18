@@ -49,10 +49,6 @@ func CreateDir(path string) error {
 	return nil
 }
 
-func WriteFile(path string, b []byte) error {
-	return os.WriteFile(path, b, 0644)
-}
-
 func SaveJson[T any](data *T, store string) error {
 	if !Exists(store) {
 		os.Create(store)
@@ -62,8 +58,7 @@ func SaveJson[T any](data *T, store string) error {
 	if err != nil {
 		return err
 	}
-
-	return WriteFile(store, json)
+	return os.WriteFile(store, json, 0644)
 }
 
 func LoadJson[T any](store string) (*T, error) {
