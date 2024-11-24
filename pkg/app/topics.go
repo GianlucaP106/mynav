@@ -103,15 +103,19 @@ func (tv *Topics) init() {
 		}
 	}
 
+	down := func() {
+		tv.table.Down()
+		a.refreshWorkspaces()
+	}
+	up := func() {
+		tv.table.Up()
+		a.refreshWorkspaces()
+	}
 	a.ui.KeyBinding(tv.view).
-		Set('j', "Move down", func() {
-			tv.table.Down()
-			a.refreshWorkspaces()
-		}).
-		Set('k', "Move up", func() {
-			tv.table.Up()
-			a.refreshWorkspaces()
-		}).
+		Set('j', "Move down", down).
+		Set('k', "Move up", up).
+		Set(gocui.KeyArrowDown, "Move down", down).
+		Set(gocui.KeyArrowUp, "Move up", up).
 		Set(gocui.KeyEnter, "Open topic", moveRight).
 		Set('a', "Create a topic", func() {
 			editor(func(s string) {

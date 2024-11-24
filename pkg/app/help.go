@@ -60,8 +60,20 @@ func help(v *tui.View) {
 	}
 	h.table.Fill(globalRows, all)
 
+	down := func() {
+		h.table.Down()
+		h.show()
+	}
+	up := func() {
+		h.table.Up()
+		h.show()
+	}
 	prevView := a.ui.FocusedView()
 	a.ui.KeyBinding(h.view).
+		Set('j', "Move down", down).
+		Set('k', "Move up", up).
+		Set(gocui.KeyArrowDown, "Move down", down).
+		Set(gocui.KeyArrowUp, "Move up", up).
 		Set('?', "Close cheatsheet", func() {
 			a.ui.DeleteView(h.view)
 			if prevView != nil {
@@ -73,14 +85,6 @@ func help(v *tui.View) {
 			if prevView != nil {
 				a.ui.FocusView(prevView)
 			}
-		}).
-		Set('j', "Move down", func() {
-			h.table.Down()
-			h.show()
-		}).
-		Set('k', "Move up", func() {
-			h.table.Up()
-			h.show()
 		})
 
 	h.show()

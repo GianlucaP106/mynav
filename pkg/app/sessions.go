@@ -126,15 +126,19 @@ func (s *Sessions) init() {
 	s.table.Init(sizeX, sizeY, titles, proportions)
 	s.table.SetStyles(styles)
 
+	down := func() {
+		s.table.Down()
+		s.show()
+	}
+	up := func() {
+		s.table.Up()
+		s.show()
+	}
 	a.ui.KeyBinding(s.view).
-		Set('j', "Move down", func() {
-			s.table.Down()
-			s.show()
-		}).
-		Set('k', "Move up", func() {
-			s.table.Up()
-			s.show()
-		}).
+		Set('j', "Move down", down).
+		Set('k', "Move up", up).
+		Set(gocui.KeyArrowDown, "Move down", down).
+		Set(gocui.KeyArrowUp, "Move up", up).
 		Set(gocui.KeyEnter, "Open Session", func() {
 			session := s.selected()
 			if session == nil {
