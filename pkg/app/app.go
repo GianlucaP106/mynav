@@ -456,6 +456,12 @@ func (a *App) initGlobalKeys() {
 		SetWithQuit('q', quit, "Quit").
 		Set('?', "Toggle cheatsheet", func() {
 		}).
+		Set('<', "Cycle preview left", func() {
+			a.preview.decrement()
+		}).
+		Set('>', "Cycle preview right", func() {
+			a.preview.increment()
+		}).
 		Set('s', "Search for a workspace", func() {
 			sd := new(*Search[*core.Workspace])
 			*sd = search(searchDialogConfig[*core.Workspace]{

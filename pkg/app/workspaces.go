@@ -57,21 +57,18 @@ func (wv *Workspaces) focus() {
 }
 
 func (wv *Workspaces) show() {
-	def := "No preview"
 	w := wv.selected()
 	if w == nil {
-		a.preview.show(def)
+		a.preview.show(nil)
+		a.info.show(nil)
 		return
 	}
 
+	// show info
 	a.info.show(w)
 
-	s := a.api.WorkspacePreview(w)
-	if s == "" {
-		a.preview.show(def)
-		return
-	}
-
+	// show preview session
+	s := a.api.Session(w)
 	a.preview.show(s)
 }
 
@@ -266,7 +263,7 @@ func (wv *Workspaces) init() {
 				toast("Detached from session "+curWorkspace.Name, toastInfo)
 			}
 
-			a.refreshAll()
+			a.refresh(curWorkspace.Topic, curWorkspace, nil)
 		}).
 		Set('m', "Move workspace", func() {
 			curWorkspace := wv.selected()
