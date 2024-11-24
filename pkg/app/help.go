@@ -48,7 +48,7 @@ func help(v *tui.View) {
 	}
 
 	sort.Slice(all, func(i, j int) bool {
-		return all[i].Key < all[j].Key
+		return all[i].Description < all[j].Description
 	})
 
 	globalRows := make([][]string, 0)
