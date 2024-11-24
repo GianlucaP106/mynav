@@ -5,6 +5,7 @@ import (
 	"mynav/pkg/tui"
 	"sort"
 
+	"github.com/awesome-gocui/gocui"
 	"github.com/gookit/color"
 )
 
@@ -59,9 +60,19 @@ func help(v *tui.View) {
 	}
 	h.table.Fill(globalRows, all)
 
+	prevView := a.ui.FocusedView()
 	a.ui.KeyBinding(h.view).
 		Set('?', "Close cheatsheet", func() {
 			a.ui.DeleteView(h.view)
+			if prevView != nil {
+				a.ui.FocusView(prevView)
+			}
+		}).
+		Set(gocui.KeyEsc, "Close cheatsheet", func() {
+			a.ui.DeleteView(h.view)
+			if prevView != nil {
+				a.ui.FocusView(prevView)
+			}
 		}).
 		Set('j', "Move down", func() {
 			h.table.Down()
