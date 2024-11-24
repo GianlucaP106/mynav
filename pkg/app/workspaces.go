@@ -30,7 +30,7 @@ func newWorkspcacesView() *Workspaces {
 
 func (wv *Workspaces) selectWorkspace(w *core.Workspace) {
 	wv.table.SelectRowByValue(func(w2 *core.Workspace) bool {
-		return w.ShortPath() == w2.ShortPath()
+		return w.Path() == w2.Path()
 	})
 }
 
@@ -301,7 +301,7 @@ func (wv *Workspaces) init() {
 						(*sd).close()
 					}
 
-					a.refresh(curWorkspace.Topic, nil, true, false)
+					a.refresh(curWorkspace.Topic, nil, nil)
 					toast("Moved workspace "+curWorkspace.Name, toastInfo)
 					wv.focus()
 				},
@@ -327,7 +327,7 @@ func (wv *Workspaces) init() {
 				if b {
 					t := curWorkspace.Topic
 					a.api.DeleteWorkspace(curWorkspace)
-					a.refresh(t, nil, true, false)
+					a.refresh(t, nil, nil)
 					toast("Deleted workspace "+curWorkspace.Name, toastInfo)
 				}
 			}, "Are you sure you want to delete this workspace?")
@@ -344,7 +344,7 @@ func (wv *Workspaces) init() {
 					return
 				}
 
-				a.refresh(curWorkspace.Topic, curWorkspace, true, false)
+				a.refresh(curWorkspace.Topic, curWorkspace, nil)
 				toast("Renamed workspace "+curWorkspace.Name, toastInfo)
 			}, func() {}, "New workspace name", smallEditorSize, curWorkspace.Name)
 		}).
@@ -362,7 +362,7 @@ func (wv *Workspaces) init() {
 					return
 				}
 
-				a.refresh(curTopic, w, true, false)
+				a.refresh(curTopic, w, nil)
 				toast("Created workspace "+w.Name, toastInfo)
 			}, func() {}, "Workspace name ", smallEditorSize, "")
 		}).
