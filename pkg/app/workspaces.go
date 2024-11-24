@@ -152,16 +152,21 @@ func (wv *Workspaces) init() {
 	wv.table.Init(sizeX, sizeY, titles, proportions)
 	wv.table.SetStyles(styles)
 
+	down := func() {
+		wv.table.Down()
+		wv.show()
+	}
+
+	up := func() {
+		wv.table.Up()
+		wv.show()
+	}
 	tv := a.topics
 	a.ui.KeyBinding(wv.view).
-		Set('j', "Move down", func() {
-			wv.table.Down()
-			wv.show()
-		}).
-		Set('k', "Move up", func() {
-			wv.table.Up()
-			wv.show()
-		}).
+		Set('j', "Move down", down).
+		Set('k', "Move up", up).
+		Set(gocui.KeyArrowDown, "Move down", down).
+		Set(gocui.KeyArrowUp, "Move up", up).
 		Set(gocui.KeyEsc, "Go back", func() {
 			tv.focus()
 		}).
