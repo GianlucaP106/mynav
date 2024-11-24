@@ -91,10 +91,11 @@ func (wv *Workspaces) refresh() {
 		if s != nil {
 			tmux = "Yes"
 		}
+		timeStr := system.TimeAgo(w.LastModifiedTime())
 		rows = append(rows, []string{
 			w.Name,
 			tmux,
-			w.LastModifiedTimeFormatted(),
+			timeStr,
 		})
 	}
 
@@ -123,8 +124,11 @@ func (wv *Workspaces) render() {
 	}
 
 	isFocused := a.ui.IsFocused(wv.view)
-	wv.table.RenderSelect(wv.view, func(_ int, _ *tui.TableRow[*core.Workspace]) bool {
+	wv.table.RenderTable(wv.view, func(_ int, _ *tui.TableRow[*core.Workspace]) bool {
 		return isFocused
+	}, func(i int, tr *tui.TableRow[*core.Workspace]) {
+		newTime := system.TimeAgo(tr.Value.LastModifiedTime())
+		tr.Cols[len(tr.Cols)-1] = newTime
 	})
 }
 
@@ -144,9 +148,9 @@ func (wv *Workspaces) init() {
 		0.40,
 	}
 	styles := []color.Style{
-		color.New(color.FgBlue, color.Bold),
-		color.Success.Style,
-		color.New(color.FgDarkGray, color.OpItalic),
+		workspaceNameColor,
+		sessionMarkerColor,
+		timestampColor,
 	}
 	wv.table = tui.NewTableRenderer[*core.Workspace]()
 	wv.table.Init(sizeX, sizeY, titles, proportions)

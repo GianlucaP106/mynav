@@ -32,21 +32,33 @@ type App struct {
 	worker *Worker
 }
 
+// worker magic numbers
 const (
 	// size of the worker queue
 	defaultWorkerSize = 100
 
 	// time to debounce for worker
 	defaultWorkerDebounce = 200 * time.Millisecond
+)
 
-	// default styles
+// view styles
+const (
 	onFrameColor  = gocui.ColorWhite
 	offFrameColor = gocui.AttrDim | gocui.ColorWhite
 	onTitleColor  = gocui.AttrBold | gocui.ColorGreen
 	offTitleColor = gocui.AttrBold | gocui.ColorCyan
 )
 
-// global a instance.
+// text styles
+var (
+	topicNameColor              = color.New(color.FgYellow, color.Bold)
+	workspaceNameColor          = color.New(color.FgBlue, color.Bold)
+	timestampColor              = color.New(color.FgDarkGray, color.OpItalic)
+	sessionMarkerColor          = color.New(color.FgGreen, color.Bold)
+	alternateSessionMarkerColor = color.New(color.Magenta, color.Bold)
+)
+
+// global a instance
 var a *App
 
 // Inits and starts the app.
@@ -502,9 +514,9 @@ func (a *App) initGlobalKeys() {
 					0.2,
 				},
 				colStyles: []color.Style{
-					color.Primary.Style,
-					color.Secondary.Style,
-					color.Success.Style,
+					workspaceNameColor,
+					topicNameColor,
+					sessionMarkerColor,
 				},
 			})
 		})

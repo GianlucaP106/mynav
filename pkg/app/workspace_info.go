@@ -38,13 +38,13 @@ func (w *WorkspaceInfo) init() {
 	}, []float64{
 		0.20,
 		0.20,
-		0.20,
 		0.40,
+		0.20,
 	})
 	w.workspaceInfo.SetStyles([]color.Style{
-		color.Primary.Style,
-		color.Secondary.Style,
-		color.Comment.Style,
+		workspaceNameColor,
+		topicNameColor,
+		timestampColor,
 		color.Question.Style,
 	})
 
@@ -66,12 +66,12 @@ func (w *WorkspaceInfo) init() {
 		0.20,
 	})
 	w.sessionInfo.SetStyles([]color.Style{
-		color.Success.Style,
-		color.New(color.Magenta, color.Bold),
-		color.Success.Style,
-		color.Comment.Style,
-		color.Comment.Style,
-		color.Secondary.Style,
+		sessionMarkerColor,
+		alternateSessionMarkerColor,
+		sessionMarkerColor,
+		timestampColor,
+		timestampColor,
+		topicNameColor,
 	})
 }
 
@@ -85,16 +85,18 @@ func (w *WorkspaceInfo) show(workspace *core.Workspace) {
 	if remote == "" {
 		remote = "None"
 	}
+
+	timeStr := fmt.Sprintf("%s (%s)", workspace.LastModifiedTimeFormatted(), system.TimeAgo(workspace.LastModifiedTime()))
 	row := [][]string{{
 		workspace.Name,
 		workspace.Topic.Name,
-		workspace.LastModifiedTimeFormatted(),
+		timeStr,
 		remote,
 	}}
 	w.workspaceInfo.Fill(row, []*core.Workspace{workspace})
-	w.workspaceInfo.RenderSelect(w.view, func(i int, tr *tui.TableRow[*core.Workspace]) bool {
+	w.workspaceInfo.RenderTable(w.view, func(i int, tr *tui.TableRow[*core.Workspace]) bool {
 		return false
-	})
+	}, nil)
 
 	session := a.api.Session(workspace)
 	if session == nil {
@@ -111,16 +113,18 @@ func (w *WorkspaceInfo) show(workspace *core.Workspace) {
 	}
 
 	// session info
+	lastAttached := system.UnixTime(session.LastAttached)
+	created := system.UnixTime(session.Created)
 	row2 := [][]string{{
 		"Yes",
 		strconv.Itoa(session.Windows),
 		strconv.Itoa(len(panes)),
-		system.UnixTime(session.LastAttached).Format(system.TimeFormat()),
-		system.UnixTime(session.Created).Format(system.TimeFormat()),
+		system.TimeAgo(lastAttached),
+		created.Format(system.TimeFormat()),
 		strings.Join(commands, ","),
 	}}
 	w.sessionInfo.Fill(row2, []*core.Session{session})
-	w.sessionInfo.RenderSelect(w.view, func(i int, tr *tui.TableRow[*core.Session]) bool {
+	w.sessionInfo.RenderTable(w.view, func(i int, tr *tui.TableRow[*core.Session]) bool {
 		return false
-	})
+	}, nil)
 }

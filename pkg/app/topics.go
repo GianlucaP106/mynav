@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"mynav/pkg/core"
+	"mynav/pkg/system"
 	"mynav/pkg/tui"
 	"strconv"
 
@@ -33,10 +34,11 @@ func (tv *Topics) refresh() {
 	for _, topic := range topics {
 		rowValues = append(rowValues, topic)
 		topicWorkspaces := workspaces.ByTopic(topic)
+		timeStr := system.TimeAgo(topic.LastModifiedTime())
 		rows = append(rows, []string{
 			topic.Name,
 			strconv.Itoa(len(topicWorkspaces)),
-			topic.LastModifiedTimeFormatted(),
+			timeStr,
 		})
 	}
 
@@ -67,8 +69,12 @@ func (tv *Topics) render() {
 	size := tv.table.Size()
 	tv.view.Subtitle = fmt.Sprintf(" %d / %d ", min(row+1, size), size)
 
-	tv.table.RenderSelect(tv.view, func(_ int, _ *tui.TableRow[*core.Topic]) bool {
+	// renders table and updates the last modified time
+	tv.table.RenderTable(tv.view, func(_ int, _ *tui.TableRow[*core.Topic]) bool {
 		return currentViewSelected
+	}, func(i int, tr *tui.TableRow[*core.Topic]) {
+		newTime := system.TimeAgo(tr.Value.LastModifiedTime())
+		tr.Cols[len(tr.Cols)-1] = newTime
 	})
 }
 
@@ -90,9 +96,9 @@ func (tv *Topics) init() {
 		0.4,
 	}
 	styles := []color.Style{
-		color.New(color.FgYellow, color.Bold),
-		color.Success.Style,
-		color.New(color.FgDarkGray, color.OpItalic),
+		topicNameColor,
+		sessionMarkerColor,
+		timestampColor,
 	}
 	tv.table.Init(sizeX, sizeY, titles, colProportions)
 	tv.table.SetStyles(styles)

@@ -84,10 +84,11 @@ func (s *Sessions) refresh() {
 	// fill table
 	rows := make([][]string, 0)
 	for _, s := range sessions {
+		timeStr := system.TimeAgo(system.UnixTime(s.LastAttached))
 		rows = append(rows, []string{
 			s.Workspace.Name,
 			strconv.Itoa(s.Windows),
-			system.UnixTime(s.LastAttached).Format(system.TimeFormat()),
+			timeStr,
 		})
 	}
 	s.table.Fill(rows, sessions)
@@ -107,9 +108,13 @@ func (s *Sessions) render() {
 		return
 	}
 
+	// renders table and updates the last modified time
 	isFocused := a.ui.IsFocused(s.view)
-	s.table.RenderSelect(s.view, func(i int, tr *tui.TableRow[*core.Session]) bool {
+	s.table.RenderTable(s.view, func(i int, tr *tui.TableRow[*core.Session]) bool {
 		return isFocused
+	}, func(i int, tr *tui.TableRow[*core.Session]) {
+		newTime := system.TimeAgo(system.UnixTime(tr.Value.LastAttached))
+		tr.Cols[len(tr.Cols)-1] = newTime
 	})
 }
 
@@ -130,9 +135,9 @@ func (s *Sessions) init() {
 		0.40,
 	}
 	styles := []color.Style{
-		color.New(color.FgBlue, color.Bold),
-		color.New(color.Magenta, color.Bold),
-		color.New(color.FgDarkGray, color.OpItalic),
+		workspaceNameColor,
+		alternateSessionMarkerColor,
+		timestampColor,
 	}
 	s.table = tui.NewTableRenderer[*core.Session]()
 	s.table.Init(sizeX, sizeY, titles, proportions)

@@ -3,8 +3,6 @@ package system
 import (
 	"os/exec"
 	"runtime"
-	"strconv"
-	"time"
 
 	"github.com/atotto/clipboard"
 )
@@ -61,10 +59,6 @@ func CopyToClip(s string) error {
 	return clipboard.WriteAll(s)
 }
 
-func TimeFormat() string {
-	return "Mon, 02 Jan 15:04:05"
-}
-
 func DoesProgramExist(program string) bool {
 	_, err := exec.LookPath(program)
 	return err == nil
@@ -72,13 +66,4 @@ func DoesProgramExist(program string) bool {
 
 func OpenLazygit(path string) error {
 	return exec.Command("lazygit", "-p", path).Run()
-}
-
-func UnixTime(t string) time.Time {
-	activityInt, err := strconv.Atoi(t)
-	if err != nil {
-	}
-
-	time := time.Unix(int64(activityInt), 0)
-	return time
 }
