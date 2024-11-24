@@ -49,21 +49,18 @@ func (s *Sessions) setLoading(b bool) {
 }
 
 func (s *Sessions) show() {
-	def := "No preview"
 	session := s.selected()
 	if session == nil {
-		a.preview.show(def)
+		a.info.show(nil)
+		a.preview.show(nil)
 		return
 	}
 
-	p := a.api.WorkspacePreview(session.Workspace)
-	if p == "" {
-		a.preview.show(def)
-		return
-	}
-
-	a.preview.show(p)
+	// show info
 	a.info.show(session.Workspace)
+
+	// show preview
+	a.preview.show(session)
 }
 
 func (s *Sessions) focus() {

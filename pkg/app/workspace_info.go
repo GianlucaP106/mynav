@@ -80,6 +80,10 @@ func (w *WorkspaceInfo) show(workspace *core.Workspace) {
 	w.view.Clear()
 	w.view = a.ui.SetView(getViewPosition(w.view.Name()))
 
+	if workspace == nil {
+		return
+	}
+
 	// workspace info
 	remote, _ := workspace.GitRemote()
 	if remote == "" {
