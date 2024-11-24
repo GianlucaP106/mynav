@@ -167,6 +167,8 @@ func (s *Sessions) init() {
 			})
 			if err != nil {
 				toast(err.Error(), toastError)
+			} else {
+				toast("Detached from session "+session.Workspace.Name, toastInfo)
 			}
 			a.refresh(nil, nil, session)
 		}).
