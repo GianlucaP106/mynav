@@ -28,6 +28,7 @@ type (
 
 	TableTitle struct {
 		Titles []string
+		Styles []color.Style
 	}
 
 	TableRow[T any] struct {
@@ -41,14 +42,21 @@ func NewTableRenderer[T any]() *TableRenderer[T] {
 	return &TableRenderer[T]{}
 }
 
-func (tr *TableRenderer[T]) InitTable(width int, height int, titles []string, colProportions []float64) {
+func (tr *TableRenderer[T]) Init(width int, height int, titles []string, colProportions []float64) {
 	if len(titles) != len(colProportions) {
 		log.Panicln("the number of titles and col proportions should be the same")
 	}
 	tr.listRenderer = NewListRenderer(0, height-1, 0)
+
+	defaultStyles := []color.Style{}
+	for range titles {
+		defaultStyles = append(defaultStyles, color.Secondary.Style)
+	}
+
 	tr.table = &Table[T]{
 		Title: &TableTitle{
 			Titles: titles,
+			Styles: defaultStyles,
 		},
 		ColProportions: colProportions,
 		Rows:           make([]*TableRow[T], 0),
@@ -58,13 +66,17 @@ func (tr *TableRenderer[T]) InitTable(width int, height int, titles []string, co
 	}
 }
 
-func (tr *TableRenderer[T]) GetTableSize() int {
+func (tr *TableRenderer[T]) SetStyles(colors []color.Style) {
+	tr.table.Title.Styles = colors
+}
+
+func (tr *TableRenderer[T]) Size() int {
 	tr.mu.RLock()
 	defer tr.mu.RUnlock()
 	return len(tr.table.Rows)
 }
 
-func (tr *TableRenderer[T]) GetSelectedRow() (idx int, value *T) {
+func (tr *TableRenderer[T]) SelectedRow() (idx int, value *T) {
 	tr.mu.RLock()
 	defer tr.mu.RUnlock()
 	if len(tr.table.Rows) == 0 {
@@ -103,14 +115,14 @@ func (tr *TableRenderer[T]) Down() {
 	tr.listRenderer.Increment()
 }
 
-func (tr *TableRenderer[T]) ClearTable() {
+func (tr *TableRenderer[T]) Clear() {
 	tr.mu.Lock()
 	defer tr.mu.Unlock()
 	tr.table.clear()
 	tr.listRenderer.ResetSize(0)
 }
 
-func (tr *TableRenderer[T]) FillTable(rows [][]string, rowValues []T) {
+func (tr *TableRenderer[T]) Fill(rows [][]string, rowValues []T) {
 	tr.mu.Lock()
 	defer tr.mu.Unlock()
 
@@ -126,7 +138,7 @@ func (tr *TableRenderer[T]) FillTable(rows [][]string, rowValues []T) {
 	tr.listRenderer.ResetSize(len(rows))
 }
 
-func (tr *TableRenderer[T]) RenderWithSelectCallBack(w io.Writer, onSelected func(int, *TableRow[T]) bool) {
+func (tr *TableRenderer[T]) RenderSelect(w io.Writer, onSelected func(int, *TableRow[T]) bool) {
 	tr.render(w, onSelected)
 }
 
@@ -151,18 +163,17 @@ func (tr *TableRenderer[T]) render(w io.Writer, onSelected func(int, *TableRow[T
 		for i, col := range currentRow.Cols {
 			proportion := tr.table.ColProportions[i]
 			colSize := proportion * float64(tr.table.Width)
-			colLine := WithSpaces(col, int(math.Ceil(colSize)))
-			line += colLine
+			colLine := Pad(col, int(math.Floor(colSize)))
+
+			var style color.Style
+			if currentRow.Selected {
+				style = color.New(color.FgBlack, color.BgCyan)
+			} else {
+				style = tr.table.Title.Styles[i]
+			}
+			line += style.Sprint(colLine)
 		}
 
-		var c color.Style
-		if currentRow.Selected {
-			c = color.New(color.Black, color.BgCyan)
-		} else {
-			c = color.New(color.White)
-		}
-
-		line = c.Sprint(line)
 		fmt.Fprintln(w, line)
 	})
 }
@@ -172,12 +183,12 @@ func (tr *TableRenderer[T]) renderTitle(w io.Writer) {
 	for i, title := range tr.table.Title.Titles {
 		proportion := tr.table.ColProportions[i]
 		colSize := proportion * float64(tr.table.Width)
-		colLine := WithSpaces(title, int(math.Ceil(colSize)))
+		colLine := Pad(title, int(math.Floor(colSize)))
 
 		line += colLine
 	}
 
-	s := color.New(color.Blue)
+	s := color.Note.Style
 	line = s.Sprint(line)
 	fmt.Fprintln(w, line)
 }

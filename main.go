@@ -3,5 +3,5 @@ package main
 import "mynav/pkg/app"
 
 func main() {
-	app.Main()
+	app.Start()
 }

@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"mynav/pkg"
+	"mynav/pkg/core"
 	"os"
 )
 
@@ -40,7 +40,7 @@ func (cli *Cli) parseArgs() {
 
 func (cli *Cli) handleVersionFlag() {
 	if *cli.args.version {
-		fmt.Println(pkg.VERSION)
+		fmt.Println(core.Version)
 		os.Exit(0)
 	}
 }

@@ -12,15 +12,15 @@ type Datasource[T any] struct {
 	Path string
 }
 
-func NewDatasource[T any](path string, defaultValue *T) (*Datasource[T], error) {
+func newDatasource[T any](path string, defaultValue *T) (*Datasource[T], error) {
 	ds := &Datasource[T]{
 		Path: path,
 		mu:   &sync.RWMutex{},
 	}
 
-	ds.LoadData()
-	if ds.GetData() == nil {
-		err := ds.SaveData(defaultValue)
+	ds.Load()
+	if ds.Get() == nil {
+		err := ds.Save(defaultValue)
 		if err != nil {
 			return nil, err
 		}
@@ -29,7 +29,7 @@ func NewDatasource[T any](path string, defaultValue *T) (*Datasource[T], error) 
 	return ds, nil
 }
 
-func (d *Datasource[T]) LoadData() error {
+func (d *Datasource[T]) Load() error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	data, err := system.LoadJson[T](d.Path)
@@ -41,14 +41,14 @@ func (d *Datasource[T]) LoadData() error {
 	return nil
 }
 
-func (d *Datasource[T]) SaveData(data *T) error {
+func (d *Datasource[T]) Save(data *T) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	d.data = data
 	return system.SaveJson(d.data, d.Path)
 }
 
-func (d *Datasource[T]) GetData() *T {
+func (d *Datasource[T]) Get() *T {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	return d.data
