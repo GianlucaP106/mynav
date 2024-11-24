@@ -122,6 +122,7 @@ func (tr *TableRenderer[T]) Clear() {
 	tr.listRenderer.ResetSize(0)
 }
 
+// Fills the table.
 func (tr *TableRenderer[T]) Fill(rows [][]string, rowValues []T) {
 	tr.mu.Lock()
 	defer tr.mu.Unlock()
@@ -138,27 +139,45 @@ func (tr *TableRenderer[T]) Fill(rows [][]string, rowValues []T) {
 	tr.listRenderer.ResetSize(len(rows))
 }
 
-func (tr *TableRenderer[T]) RenderSelect(w io.Writer, onSelected func(int, *TableRow[T]) bool) {
-	tr.render(w, onSelected)
-}
-
+// Wrapper over RenderTable that passes default call backs.
 func (tr *TableRenderer[T]) Render(w io.Writer) {
-	tr.render(w, func(i int, tr *TableRow[T]) bool { return true })
+	tr.RenderTable(w, nil, nil)
 }
 
-func (tr *TableRenderer[T]) render(w io.Writer, onSelected func(int, *TableRow[T]) bool) {
-	tr.mu.RLock()
-	defer tr.mu.RUnlock()
+// Renders the table to the Writer with the passed callbacks as optional.
+// onSelected will be called with the selected row if passed.
+// update will be called at every row if passed
+func (tr *TableRenderer[T]) RenderTable(w io.Writer, onSelected func(int, *TableRow[T]) bool, update func(int, *TableRow[T])) {
+	if update != nil {
+		// if update function is not nil, we Lock for a write since the row might be updated during render
+		tr.mu.Lock()
+		defer tr.mu.Unlock()
+	} else {
+		// otherwise no updates are done so we RLock
+		tr.mu.RLock()
+		defer tr.mu.RUnlock()
+	}
 
+	// render col table
 	tr.renderTitle(w)
 
+	// for each element that should be shown in the list
 	tr.listRenderer.forEach(func(idx int) {
+		// get row
 		currentRow := tr.table.Rows[idx]
+
+		// set selected by checking if the selected is this row
+		// but a call back can be passed to modify this
 		currentRow.Selected = tr.listRenderer.selected == idx
-		if currentRow.Selected {
+		if currentRow.Selected && onSelected != nil {
 			currentRow.Selected = onSelected(idx, currentRow)
 		}
 
+		if update != nil {
+			update(idx, currentRow)
+		}
+
+		// render cols of this row
 		var line string
 		for i, col := range currentRow.Cols {
 			proportion := tr.table.ColProportions[i]

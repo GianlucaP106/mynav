@@ -22,8 +22,7 @@ func alert(onConfirm func(bool), title string) *Alert {
 	cd.view.FrameColor = gocui.ColorWhite
 
 	cd.view.Title = " Confirm "
-	cd.view.TitleColor = gocui.ColorCyan | gocui.AttrBold
-	cd.view.FrameRunes = tui.ThinFrame
+	a.styleView(cd.view)
 
 	// set key bindings
 	prevView := a.ui.FocusedView()

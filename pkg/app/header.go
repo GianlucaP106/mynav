@@ -5,8 +5,6 @@ import (
 	"mynav/pkg/tui"
 	"strconv"
 	"sync/atomic"
-
-	"github.com/gookit/color"
 )
 
 type Header struct {
@@ -83,8 +81,7 @@ func (hv *Header) renderLastWorkspace() {
 	}
 
 	line := lastWorkspace
-	s := color.New(color.Yellow, color.Bold)
-	line = s.Sprint(line)
+	line = topicNameColor.Sprint(line)
 	fmt.Fprintln(hv.lwv, line)
 }
 
@@ -94,8 +91,7 @@ func (hv *Header) renderTopicCount() {
 	hv.tcv = a.ui.SetView(getViewPosition(hv.tcv.Name()))
 
 	count := " " + strconv.Itoa(int(hv.topicCount.Load()))
-	style := color.New(color.Blue, color.Bold)
-	count = style.Sprint(count)
+	count = workspaceNameColor.Sprint(count)
 	fmt.Fprintln(hv.tcv, count)
 }
 
@@ -105,7 +101,7 @@ func (hv *Header) renderWorkspaceCount() {
 	hv.wcv = a.ui.SetView(getViewPosition(hv.wcv.Name()))
 
 	count := " " + strconv.Itoa(int(hv.workspaceCount.Load()))
-	style := color.New(color.Magenta, color.Bold)
+	style := alternateSessionMarkerColor
 	count = style.Sprint(count)
 	fmt.Fprintln(hv.wcv, count)
 }
@@ -116,7 +112,7 @@ func (hv *Header) renderSessionCount() {
 	hv.scv = a.ui.SetView(getViewPosition(hv.scv.Name()))
 
 	count := " " + strconv.Itoa(int(hv.sessionCount.Load()))
-	s := color.New(color.Green, color.Bold)
+	s := sessionMarkerColor
 	count = s.Sprint(count)
 	fmt.Fprintln(hv.scv, count)
 }
