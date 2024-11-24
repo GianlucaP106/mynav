@@ -125,7 +125,7 @@ func (tv *Topics) init() {
 					return
 				}
 
-				a.refresh(topic, nil, true, false)
+				a.refresh(topic, nil, nil)
 				toast("Created topic "+topic.Name, toastInfo)
 			}, func() {}, "Topic name", smallEditorSize, "")
 		}).
@@ -141,7 +141,7 @@ func (tv *Topics) init() {
 					return
 				}
 
-				a.refresh(t, nil, true, false)
+				a.refresh(t, nil, nil)
 				toast("Renamed topic "+t.Name, toastInfo)
 			}, func() {}, "New topic name", smallEditorSize, t.Name)
 		}).

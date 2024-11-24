@@ -257,10 +257,9 @@ func (a *App) styleView(v *tui.View) {
 	v.FrameRunes = tui.ThinFrame
 }
 
-// Refreshes all the data views.
-// Small wrap over refresh to convienently showing workspace preview and info.
+// Wrapper over refresh function that doesnt select anything.
 func (a *App) refreshAll() {
-	a.refresh(nil, nil, true, false)
+	a.refresh(nil, nil, nil)
 }
 
 // Refreshes the workspace view only, can be called several times in a row.
@@ -286,10 +285,10 @@ func (a *App) refreshWorkspaces() {
 
 // Refreshes all the views.
 // Ensures the refresh or topics is done before workspaces but everything else in async.
-// if selectTopic or selectWorkspace are not nil, they will be selected in the views.
-// if showSelectedSession or showSelectedWorkspace is true, it will show the selected workspace/session in the preview and info.
+// if selectTopic, selectWorkspace are not nil, they will be selected in the views.
+// if selectSession is not nil, current session will be shown in preview/info, otherwise current workspace will be shown.
 // This is a generalized function to allow for refreshing the entire UI.
-func (a *App) refresh(selectTopic *core.Topic, selectWorkspace *core.Workspace, showSelectedWorkspace, showSelectedSession bool) {
+func (a *App) refresh(selectTopic *core.Topic, selectWorkspace *core.Workspace, selectSession *core.Session) {
 	a.worker.Queue(func() {
 		// header in async
 		go func() {
@@ -302,8 +301,12 @@ func (a *App) refresh(selectTopic *core.Topic, selectWorkspace *core.Workspace, 
 		// sessions in async
 		go func() {
 			a.sessions.refresh()
+			if selectSession != nil {
+				a.sessions.selectSession(selectSession)
+			}
 			a.ui.Update(func() {
-				if showSelectedSession {
+				// if selectSession is not nil we show sessions
+				if selectSession != nil {
 					a.sessions.show()
 				}
 				a.sessions.render()
@@ -332,7 +335,8 @@ func (a *App) refresh(selectTopic *core.Topic, selectWorkspace *core.Workspace, 
 
 		// render workspaces
 		a.ui.Update(func() {
-			if showSelectedWorkspace {
+			// if selectSession is nil we show workspace (if it was not nil sessions are shown above)
+			if selectSession == nil {
 				a.workspaces.show()
 			}
 			a.workspaces.render()

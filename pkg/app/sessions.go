@@ -5,6 +5,7 @@ import (
 	"mynav/pkg/core"
 	"mynav/pkg/system"
 	"mynav/pkg/tui"
+	"sort"
 	"strconv"
 
 	"github.com/awesome-gocui/gocui"
@@ -31,6 +32,12 @@ func (s *Sessions) selected() *core.Session {
 		return *session
 	}
 	return nil
+}
+
+func (s *Sessions) selectSession(session *core.Session) {
+	s.table.SelectRowByValue(func(session2 *core.Session) bool {
+		return session2.Name == session.Name
+	})
 }
 
 func (s *Sessions) getLoading() bool {
@@ -64,13 +71,18 @@ func (s *Sessions) focus() {
 	s.show()
 }
 
-func (s *Sessions) refreshAll() {
-	a.refresh(nil, nil, false, true)
-}
-
 func (s *Sessions) refresh() {
-	rows := make([][]string, 0)
 	sessions := a.api.AllSessions()
+
+	// sort by last attached
+	sort.Slice(sessions, func(i, j int) bool {
+		t1 := system.UnixTime(sessions[i].LastAttached)
+		t2 := system.UnixTime(sessions[j].LastAttached)
+		return t1.After(t2)
+	})
+
+	// fill table
+	rows := make([][]string, 0)
 	for _, s := range sessions {
 		rows = append(rows, []string{
 			s.Workspace.Name,
@@ -151,7 +163,7 @@ func (s *Sessions) init() {
 			if err != nil {
 				toast(err.Error(), toastError)
 			}
-			s.refreshAll()
+			a.refresh(nil, nil, session)
 		}).
 		Set('D', "Kill session", func() {
 			session := s.selected()
@@ -168,7 +180,7 @@ func (s *Sessions) init() {
 					return
 				}
 
-				s.refreshAll()
+				a.refresh(nil, nil, session)
 				toast("Killed session "+session.Workspace.Name, toastInfo)
 			}, "Are you sure you want to delete the session?")
 		}).
