@@ -11,7 +11,7 @@ import (
 
 type updater struct{}
 
-const Version = "v1.0.3"
+const Version = "v2.0.0"
 
 // Updates mynav by running update script.
 func (u *updater) UpdateMynav() error {
