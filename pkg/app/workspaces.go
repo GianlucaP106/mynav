@@ -262,7 +262,10 @@ func (wv *Workspaces) init() {
 			})
 			if error != nil {
 				toast(error.Error(), toastError)
+			} else {
+				toast("Detached from session "+curWorkspace.Name, toastInfo)
 			}
+
 			a.refreshAll()
 		}).
 		Set('m', "Move workspace", func() {

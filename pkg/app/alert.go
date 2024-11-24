@@ -48,9 +48,15 @@ func alert(onConfirm func(bool), title string) *Alert {
 	cd.view.Clear()
 	fmt.Fprintln(cd.view, color.Note.Sprint(" "+cd.title))
 	fmt.Fprintln(cd.view)
-	cancel := color.Danger.Sprint("[esc]")
-	confirm := color.Success.Sprint("[enter]")
-	fmt.Fprintln(cd.view, " "+cancel+"   "+confirm)
+
+	line := fmt.Sprintf(" %s %s %s %s %s ",
+		timestampColor.Sprint("Press"),
+		sessionMarkerColor.Sprint("Enter"),
+		timestampColor.Sprint("to confirm,"),
+		color.Danger.Sprint("Esc"),
+		timestampColor.Sprint("to cancel"),
+	)
+	fmt.Fprintln(cd.view, line)
 
 	return cd
 }
