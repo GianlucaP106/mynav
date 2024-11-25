@@ -76,11 +76,9 @@ func (w *WorkspaceInfo) init() {
 }
 
 func (w *WorkspaceInfo) show(workspace *core.Workspace) {
-	// clear and resize
-	w.view.Clear()
-	w.view = a.ui.SetView(getViewPosition(w.view.Name()))
-
 	if workspace == nil {
+		w.workspaceInfo.Clear()
+		w.sessionInfo.Clear()
 		return
 	}
 
@@ -98,17 +96,11 @@ func (w *WorkspaceInfo) show(workspace *core.Workspace) {
 		remote,
 	}}
 	w.workspaceInfo.Fill(row, []*core.Workspace{workspace})
-	w.workspaceInfo.RenderTable(w.view, func(i int, tr *tui.TableRow[*core.Workspace]) bool {
-		return false
-	}, nil)
 
 	session := a.api.Session(workspace)
 	if session == nil {
 		return
 	}
-
-	// seperate with newline
-	fmt.Fprintln(w.view)
 
 	panes, _ := session.ListPanes()
 	commands := []string{}
@@ -128,6 +120,25 @@ func (w *WorkspaceInfo) show(workspace *core.Workspace) {
 		strings.Join(commands, ","),
 	}}
 	w.sessionInfo.Fill(row2, []*core.Session{session})
+}
+
+func (w *WorkspaceInfo) render() {
+	w.view.Clear()
+	a.ui.Resize(w.view, getViewPosition(w.view.Name()))
+
+	if w.workspaceInfo.Size() == 0 {
+		return
+	}
+
+	w.workspaceInfo.RenderTable(w.view, func(i int, tr *tui.TableRow[*core.Workspace]) bool {
+		return false
+	}, nil)
+
+	if w.sessionInfo.Size() == 0 {
+		return
+	}
+
+	fmt.Fprintln(w.view)
 	w.sessionInfo.RenderTable(w.view, func(i int, tr *tui.TableRow[*core.Session]) bool {
 		return false
 	}, nil)
