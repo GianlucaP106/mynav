@@ -32,7 +32,6 @@ func (p *Preview) show(session *core.Session) {
 	// if session is nil we set a list of 1
 	if session == nil {
 		p.setPreviews(nil)
-		p.render()
 		return
 	}
 
@@ -50,7 +49,6 @@ func (p *Preview) show(session *core.Session) {
 	}
 
 	p.setPreviews(previews)
-	p.render()
 }
 
 func (p *Preview) render() {
@@ -86,7 +84,6 @@ func (p *Preview) increment() {
 	} else {
 		p.idx++
 	}
-	p.render()
 }
 
 func (p *Preview) decrement() {
@@ -95,5 +92,4 @@ func (p *Preview) decrement() {
 	} else {
 		p.idx--
 	}
-	p.render()
 }

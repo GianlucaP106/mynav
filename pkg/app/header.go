@@ -74,7 +74,7 @@ func (hv *Header) render() {
 func (hv *Header) renderLastWorkspace() {
 	// last workspace header section
 	hv.lwv.Clear()
-	hv.lwv = a.ui.SetView(getViewPosition(hv.lwv.Name()))
+	a.ui.Resize(hv.lwv, getViewPosition(hv.lwv.Name()))
 	lastWorkspace := hv.lastWorkspace.Load().(string)
 	if lastWorkspace == "" {
 		return
@@ -88,7 +88,7 @@ func (hv *Header) renderLastWorkspace() {
 func (hv *Header) renderTopicCount() {
 	// topic count count header section
 	hv.tcv.Clear()
-	hv.tcv = a.ui.SetView(getViewPosition(hv.tcv.Name()))
+	a.ui.Resize(hv.tcv, getViewPosition(hv.tcv.Name()))
 
 	count := " " + strconv.Itoa(int(hv.topicCount.Load()))
 	count = workspaceNameColor.Sprint(count)
@@ -98,7 +98,7 @@ func (hv *Header) renderTopicCount() {
 func (hv *Header) renderWorkspaceCount() {
 	// workspace count count header section
 	hv.wcv.Clear()
-	hv.wcv = a.ui.SetView(getViewPosition(hv.wcv.Name()))
+	a.ui.Resize(hv.wcv, getViewPosition(hv.wcv.Name()))
 
 	count := " " + strconv.Itoa(int(hv.workspaceCount.Load()))
 	style := alternateSessionMarkerColor
@@ -109,7 +109,7 @@ func (hv *Header) renderWorkspaceCount() {
 func (hv *Header) renderSessionCount() {
 	// session count header section
 	hv.scv.Clear()
-	hv.scv = a.ui.SetView(getViewPosition(hv.scv.Name()))
+	a.ui.Resize(hv.scv, getViewPosition(hv.scv.Name()))
 
 	count := " " + strconv.Itoa(int(hv.sessionCount.Load()))
 	s := sessionMarkerColor

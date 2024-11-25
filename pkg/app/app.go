@@ -203,12 +203,13 @@ func (a *App) initUI() {
 	a.info = wiv
 
 	// set manager functions that render the views
-	// preview and info do not render, they are lazy
 	a.ui.SetManager(func(t *tui.Tui) error {
 		hv.render()
 		tv.render()
 		wv.render()
 		sv.render()
+		wiv.render()
+		pv.render()
 		return nil
 	})
 
@@ -217,8 +218,8 @@ func (a *App) initUI() {
 	tv.init()
 	wv.init()
 	sv.init()
-	pv.init()
 	wiv.init()
+	pv.init()
 
 	// set global key bindings
 	a.initGlobalKeys()
