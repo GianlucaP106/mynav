@@ -83,7 +83,7 @@ func (s *Sessions) refresh() {
 	for _, s := range sessions {
 		timeStr := system.TimeAgo(system.UnixTime(s.LastAttached))
 		rows = append(rows, []string{
-			s.Workspace.Name,
+			s.Workspace.ShortPath(),
 			strconv.Itoa(s.Windows),
 			timeStr,
 		})
@@ -122,7 +122,7 @@ func (s *Sessions) init() {
 
 	sizeX, sizeY := s.view.Size()
 	titles := []string{
-		"Workspace Name",
+		"Workspace",
 		"Windows",
 		"Last Attached",
 	}

@@ -81,7 +81,7 @@ func (hv *Header) renderLastWorkspace() {
 	}
 
 	line := lastWorkspace
-	line = topicNameColor.Sprint(line)
+	line = workspaceNameColor.Sprint(line)
 	fmt.Fprintln(hv.lwv, line)
 }
 
@@ -91,7 +91,7 @@ func (hv *Header) renderTopicCount() {
 	a.ui.Resize(hv.tcv, getViewPosition(hv.tcv.Name()))
 
 	count := " " + strconv.Itoa(int(hv.topicCount.Load()))
-	count = workspaceNameColor.Sprint(count)
+	count = topicNameColor.Sprint(count)
 	fmt.Fprintln(hv.tcv, count)
 }
 
