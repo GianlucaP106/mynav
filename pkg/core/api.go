@@ -2,7 +2,6 @@ package core
 
 import (
 	"errors"
-	"mynav/pkg/system"
 	"os"
 	"path/filepath"
 	"strings"
@@ -254,62 +253,16 @@ func (a *Api) SelectWorkspace(w *Workspace) error {
 	return nil
 }
 
-// Opens neovim in the provided workspace.
-func (a *Api) OpenWorkspaceNvim(w *Workspace) error {
-	a.SelectWorkspace(w)
-	return system.CommandWithRedirect("nvim", w.Path()).Run()
-}
-
-// Opens terminal in the provided workspace.
-func (a *Api) OpenWorkspaceTerminal(w *Workspace) error {
-	cmd, err := system.OpenTerminalCmd(w.Path())
-	if err != nil {
-		return err
-	}
-	return cmd.Run()
-}
+// // Opens neovim in the provided workspace.
+// func (a *Api) OpenWorkspaceNvim(w *Workspace) error {
+// 	a.SelectWorkspace(w)
+// 	return system.CommandWithRedirect("nvim", w.Path()).Run()
+// }
 
 // Clones repo into workspace.
 func (a *Api) CloneWorkspaceRepo(w *Workspace, url string) error {
 	a.SelectWorkspace(w)
 	return w.CloneRepo(url)
-}
-
-// Opens the workspace with either the command in settings or the default.
-func (a *Api) OpenWorkspace(w *Workspace) error {
-	if IsTmuxSession() {
-		err := a.OpenWorkspaceNvim(w)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := a.OpenSession(w)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// Returns the preview for a given workspace (looks for its session).
-func (a *Api) WorkspacePreview(w *Workspace) string {
-	s := a.Session(w)
-	if s == nil {
-		return ""
-	}
-
-	ws, _ := s.ListWindows()
-	if len(ws) == 0 {
-		return ""
-	}
-
-	ps, _ := ws[0].ListPanes()
-	if len(ps) == 0 {
-		return ""
-	}
-
-	p, _ := ps[0].Capture()
-	return p
 }
 
 // Wraps a workspace and tmux session together.

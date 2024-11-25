@@ -158,15 +158,22 @@ func (s *Sessions) init() {
 			if session == nil {
 				return
 			}
+
+			if core.IsTmuxSession() {
+				toast("A tmux session is already active", toastWarn)
+				return
+			}
+
 			var err error
 			a.runAction(func() {
-				err = a.api.OpenWorkspace(session.Workspace)
+				err = a.api.OpenSession(session.Workspace)
 			})
 			if err != nil {
 				toast(err.Error(), toastError)
 			} else {
 				toast("Detached from session "+session.Workspace.Name, toastInfo)
 			}
+
 			a.refresh(nil, nil, session)
 		}).
 		Set('D', "Kill session", func() {
