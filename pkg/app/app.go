@@ -98,7 +98,7 @@ func (a *App) start() {
 // Inits the app (api, tui, views).
 func (a *App) init() {
 	// define small helper functions
-	postConfirm := func() {
+	initApp := func() {
 		// initialize UI
 		a.initUI()
 
@@ -116,24 +116,26 @@ func (a *App) init() {
 		a.closeAfter(6, 3*time.Second)
 	}
 
-	// init api
-	api, err := core.NewApi("")
-	if err != nil {
-		a.ui.Close()
-		log.Fatal(err)
-	}
-	a.api = api
-
 	// init tui
 	a.ui = tui.NewTui()
 
-	if a.api != nil {
-		postConfirm()
+	// init temp ui to ask for initialization and report errors
+	a.tempUI()
+
+	// init api
+	var err error
+	a.api, err = core.NewApi("")
+	if err != nil {
+		toast(err.Error(), toastError)
+		close()
 		return
 	}
 
-	// init temp ui to ask for initialization
-	a.tempUI()
+	// if api is initialized then we can initialize the app
+	if a.api != nil {
+		initApp()
+		return
+	}
 
 	// get current dir
 	curDir, err := os.Getwd()
@@ -165,7 +167,7 @@ func (a *App) init() {
 		}
 
 		// reinit the api in this dir
-		api, err := core.NewApi(curDir)
+		a.api, err = core.NewApi(curDir)
 		if err != nil {
 			toast(err.Error(), toastError)
 			close()
@@ -173,17 +175,14 @@ func (a *App) init() {
 		}
 
 		// handle nil just in case (should not be nil again)
-		if api == nil {
+		if a.api == nil {
 			toast("Could not initialize mynav", toastError)
 			close()
 			return
 		}
 
-		// set api
-		a.api = api
-
 		// finally initialize
-		postConfirm()
+		initApp()
 	}, "No configuration found. Would you like to initialize this directory?")
 }
 

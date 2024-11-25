@@ -253,9 +253,14 @@ func (wv *Workspaces) init() {
 				return
 			}
 
+			if core.IsTmuxSession() {
+				toast("A tmux session is already active", toastWarn)
+				return
+			}
+
 			var error error
 			a.runAction(func() {
-				error = a.api.OpenWorkspace(curWorkspace)
+				error = a.api.OpenSession(curWorkspace)
 			})
 			if error != nil {
 				toast(error.Error(), toastError)
