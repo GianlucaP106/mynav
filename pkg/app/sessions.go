@@ -133,7 +133,7 @@ func (s *Sessions) init() {
 	}
 	styles := []color.Style{
 		workspaceNameColor,
-		alternateSessionMarkerColor,
+		sessionMarkerColor,
 		timestampColor,
 	}
 	s.table = tui.NewTableRenderer[*core.Session]()

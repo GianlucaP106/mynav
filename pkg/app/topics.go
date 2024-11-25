@@ -97,7 +97,7 @@ func (tv *Topics) init() {
 	}
 	styles := []color.Style{
 		topicNameColor,
-		sessionMarkerColor,
+		alternateSessionMarkerColor,
 		timestampColor,
 	}
 	tv.table.Init(sizeX, sizeY, titles, colProportions)
