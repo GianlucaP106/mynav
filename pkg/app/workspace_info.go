@@ -99,6 +99,7 @@ func (w *WorkspaceInfo) show(workspace *core.Workspace) {
 
 	session := a.api.Session(workspace)
 	if session == nil {
+		w.sessionInfo.Clear()
 		return
 	}
 
