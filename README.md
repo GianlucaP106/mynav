@@ -2,7 +2,7 @@
 
 A TUI workspace and session manager, aiming to allow for an easy view of all your workspaces and sessions in a terminal environment.
 
-![demo](https://github.com/user-attachments/assets/5308ca7c-6344-4762-995e-8fa4c1fbac13)
+![demo](https://github.com/user-attachments/assets/c2482080-6c1d-4fda-a3d5-e0ae6d8a916b)
 
 ## Elevator pitch
 
