@@ -373,7 +373,7 @@ func (wv *Workspaces) init() {
 
 				a.refresh(curTopic, w, nil)
 				toast("Created workspace "+w.Name, toastInfo)
-			}, func() {}, "Workspace name ", smallEditorSize, "")
+			}, func() {}, "Name", smallEditorSize, "")
 		}).
 		Set('X', "Kill session", func() {
 			curWorkspace := wv.selected()
