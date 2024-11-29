@@ -75,8 +75,6 @@ func search[T any](params searchDialogConfig[T]) *Search[T] {
 		}).
 		Set(gocui.KeyTab, "Toggle focus", func() {
 			s.focusList()
-		}).
-		Set('?', "Toggle cheatsheet", func() {
 		})
 
 	a.ui.KeyBinding(s.tableView).
@@ -91,9 +89,15 @@ func search[T any](params searchDialogConfig[T]) *Search[T] {
 		}).
 		Set(gocui.KeyEnter, params.onSelectDescription, func() {
 			_, v := s.table.SelectedRow()
-			params.onSelect(*v)
+			if v != nil {
+				params.onSelect(*v)
+			}
 		}).
 		Set('j', "Move down", func() {
+			s.table.Down()
+			s.renderTable()
+		}).
+		Set(gocui.KeyArrowDown, "Move down", func() {
 			s.table.Down()
 			s.renderTable()
 		}).
@@ -101,7 +105,12 @@ func search[T any](params searchDialogConfig[T]) *Search[T] {
 			s.table.Up()
 			s.renderTable()
 		}).
+		Set(gocui.KeyArrowUp, "Move up", func() {
+			s.table.Up()
+			s.renderTable()
+		}).
 		Set('?', "Toggle cheatsheet", func() {
+			help(s.tableView)
 		})
 
 	if params.focusList {
