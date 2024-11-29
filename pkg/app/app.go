@@ -488,7 +488,7 @@ func (a *App) initGlobalKeys() {
 							sessionStr = "Yes"
 						}
 						rows = append(rows, []string{
-							w.ShortPath(),
+							w.Name,
 							w.Topic.Name,
 							sessionStr,
 						})
