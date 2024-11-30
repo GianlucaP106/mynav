@@ -53,23 +53,44 @@ func (w *Workspaces) getLoading() bool {
 
 func (wv *Workspaces) focus() {
 	a.focusView(wv.view)
-	wv.show()
+	wv.showInfo()
+	a.worker.Queue(func() {
+		wv.refreshPreview()
+		a.ui.Update(func() {
+			a.preview.render()
+		})
+	})
 }
 
-func (wv *Workspaces) show() {
+func (wv *Workspaces) showInfo() {
 	w := wv.selected()
 	if w == nil {
-		a.preview.show(nil)
 		a.info.show(nil)
 		return
 	}
 
-	// show info
 	a.info.show(w)
+}
 
-	// show preview session
+func (wv *Workspaces) refreshPreview() {
+	w := wv.selected()
+	if w == nil {
+		a.preview.refresh(nil)
+		return
+	}
+
 	s := a.api.Session(w)
-	a.preview.show(s)
+	a.preview.refresh(s)
+}
+
+func (wv *Workspaces) refreshDown() {
+	wv.showInfo()
+	a.worker.Queue(func() {
+		wv.refreshPreview()
+		a.ui.Update(func() {
+			a.preview.render()
+		})
+	})
 }
 
 func (wv *Workspaces) refresh() {
@@ -155,12 +176,12 @@ func (wv *Workspaces) init() {
 
 	down := func() {
 		wv.table.Down()
-		wv.show()
+		wv.refreshDown()
 	}
 
 	up := func() {
 		wv.table.Up()
-		wv.show()
+		wv.refreshDown()
 	}
 	tv := a.topics
 	a.ui.KeyBinding(wv.view).
@@ -277,7 +298,7 @@ func (wv *Workspaces) init() {
 			}
 
 			sd := new(*Search[*core.Topic])
-			*sd = search(searchDialogConfig[*core.Topic]{
+			*sd = search(SearchDialogConfig[*core.Topic]{
 				onSearch: func(s string) ([][]string, []*core.Topic) {
 					rows := make([][]string, 0)
 					topics := a.api.AllTopics().ByNameContaining(s)

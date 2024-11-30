@@ -16,7 +16,7 @@ type Search[T any] struct {
 }
 
 // Params of the search dialog.
-type searchDialogConfig[T any] struct {
+type SearchDialogConfig[T any] struct {
 	onSearch            func(s string) ([][]string, []T)
 	onSelect            func(a T)
 	initial             func() ([][]string, []T)
@@ -30,7 +30,7 @@ type searchDialogConfig[T any] struct {
 }
 
 // Opens the search dialog with the given params.
-func search[T any](params searchDialogConfig[T]) *Search[T] {
+func search[T any](params SearchDialogConfig[T]) *Search[T] {
 	// build search view
 	s := &Search[T]{}
 	s.searchView = a.ui.SetCenteredView(SearchListDialog1View, 80, 3, -7)

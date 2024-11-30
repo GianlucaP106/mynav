@@ -25,6 +25,33 @@ func (tv *Topics) focus() {
 	a.focusView(tv.view)
 }
 
+func (tv *Topics) refreshDown() {
+	a.worker.DebounceLoad(func() {
+		// run refresh continuously
+		a.workspaces.refresh()
+	}, func() {
+		// once refresh is done and no more events are in we update the preview and info
+		// show preview in the worker
+		a.workspaces.refreshPreview()
+		a.ui.Update(func() {
+			// in the main routine we set loading to false
+			a.workspaces.setLoading(false)
+
+			// show info
+			a.workspaces.showInfo()
+
+			// render workspaces and preview
+			a.workspaces.render()
+			a.preview.render()
+		})
+	}, func() {
+		a.ui.Update(func() {
+			// if refresh takes long, we set loading to true
+			a.workspaces.setLoading(true)
+		})
+	})
+}
+
 func (tv *Topics) refresh() {
 	topics := a.api.AllTopics().Sorted()
 
@@ -111,11 +138,11 @@ func (tv *Topics) init() {
 
 	down := func() {
 		tv.table.Down()
-		a.refreshWorkspaces()
+		tv.refreshDown()
 	}
 	up := func() {
 		tv.table.Up()
-		a.refreshWorkspaces()
+		tv.refreshDown()
 	}
 	a.ui.KeyBinding(tv.view).
 		Set('j', "Move down", down).
