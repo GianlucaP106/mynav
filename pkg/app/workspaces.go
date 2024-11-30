@@ -98,7 +98,7 @@ func (wv *Workspaces) refresh() {
 	sMap := a.api.SessionMap()
 	rows := make([][]string, 0)
 	for _, w := range workspaces.Sorted() {
-		tmux := "-"
+		tmux := ""
 		s := sMap.Get(w)
 		if s != nil {
 			tmux = "Yes"

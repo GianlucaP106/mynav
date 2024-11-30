@@ -472,7 +472,7 @@ func (a *App) initGlobalKeys() {
 					rows := make([][]string, 0)
 					for _, w := range workspaces {
 						session := a.api.Session(w)
-						sessionStr := "-"
+						sessionStr := ""
 						if session != nil {
 							sessionStr = "Yes"
 						}
