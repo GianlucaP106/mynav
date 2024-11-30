@@ -53,13 +53,7 @@ func (w *Workspaces) getLoading() bool {
 
 func (wv *Workspaces) focus() {
 	a.focusView(wv.view)
-	wv.showInfo()
-	a.worker.Queue(func() {
-		wv.refreshPreview()
-		a.ui.Update(func() {
-			a.preview.render()
-		})
-	})
+	wv.refreshDown()
 }
 
 func (wv *Workspaces) showInfo() {
@@ -360,7 +354,7 @@ func (wv *Workspaces) init() {
 					a.refresh(t, nil, nil)
 					toast("Deleted workspace "+curWorkspace.Name, toastInfo)
 				}
-			}, "Are you sure you want to delete this workspace?")
+			}, fmt.Sprintf("Are you sure you want to delete workspace %s?", curWorkspace.Name))
 		}).
 		Set('r', "Rename workspace", func() {
 			curWorkspace := wv.selected()
@@ -415,7 +409,7 @@ func (wv *Workspaces) init() {
 
 					a.refreshAll()
 					toast("Killed session "+curWorkspace.Name, toastInfo)
-				}, "Are you sure you want to delete the session?")
+				}, fmt.Sprintf("Are you sure you want to kill session for %s?", curWorkspace.Name))
 			}
 		}).
 		Set('h', "Focus topics view", func() {

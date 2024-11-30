@@ -208,7 +208,7 @@ func (s *Sessions) init() {
 
 				a.refresh(nil, nil, session)
 				toast("Killed session "+session.Workspace.Name, toastInfo)
-			}, "Are you sure you want to delete the session?")
+			}, fmt.Sprintf("Are you sure you want to delete session for %s?", session.Workspace.Name))
 		}).
 		Set('h', "Focus workspaces view", func() {
 			a.workspaces.focus()
