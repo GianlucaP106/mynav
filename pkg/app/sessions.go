@@ -48,24 +48,39 @@ func (s *Sessions) setLoading(b bool) {
 	s.loading = b
 }
 
-func (s *Sessions) show() {
+func (s *Sessions) showInfo() {
 	session := s.selected()
 	if session == nil {
 		a.info.show(nil)
-		a.preview.show(nil)
 		return
 	}
 
-	// show info
 	a.info.show(session.Workspace)
+}
 
-	// show preview
-	a.preview.show(session)
+func (s *Sessions) refreshPreview() {
+	session := s.selected()
+	if session == nil {
+		a.preview.refresh(nil)
+		return
+	}
+
+	a.preview.refresh(session)
 }
 
 func (s *Sessions) focus() {
 	a.focusView(s.view)
-	s.show()
+	s.refreshDown()
+}
+
+func (s *Sessions) refreshDown() {
+	s.showInfo()
+	a.worker.Queue(func() {
+		s.refreshPreview()
+		a.ui.Update(func() {
+			a.preview.render()
+		})
+	})
 }
 
 func (s *Sessions) refresh() {
@@ -142,11 +157,11 @@ func (s *Sessions) init() {
 
 	down := func() {
 		s.table.Down()
-		s.show()
+		s.refreshDown()
 	}
 	up := func() {
 		s.table.Up()
-		s.show()
+		s.refreshDown()
 	}
 	a.ui.KeyBinding(s.view).
 		Set('j', "Move down", down).

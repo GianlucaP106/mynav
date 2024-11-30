@@ -28,8 +28,7 @@ func (p *Preview) init() {
 	p.setPreviews(nil)
 }
 
-func (p *Preview) show(session *core.Session) {
-	// if session is nil we set a list of 1
+func (p *Preview) refresh(session *core.Session) {
 	if session == nil {
 		p.setPreviews(nil)
 		return

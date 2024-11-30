@@ -274,27 +274,6 @@ func (a *App) refreshAll() {
 	a.refresh(nil, nil, nil)
 }
 
-// Refreshes the workspace view only, can be called several times in a row.
-// Uses debounce loading to avoid unecessary renders/layout shifts and call a loading function after a delay.
-// Workspaces will be continuously refreshed and render will only be called after the last refresh.
-// In sum, if refresh is quick, workspaces are rendered right away. If refreshWorkspaces is called several times in a row, render will
-// only run at the end. If refresh is slow a load will be called.
-func (a *App) refreshWorkspaces() {
-	a.worker.DebounceLoad(func() {
-		a.workspaces.refresh()
-	}, func() {
-		a.ui.Update(func() {
-			a.workspaces.setLoading(false)
-			a.workspaces.render()
-			a.workspaces.show()
-		})
-	}, func() {
-		a.ui.Update(func() {
-			a.workspaces.setLoading(true)
-		})
-	})
-}
-
 // Refreshes all the views.
 // Ensures the refresh or topics is done before workspaces but everything else in async.
 // if selectTopic, selectWorkspace are not nil, they will be selected in the views.
@@ -314,21 +293,23 @@ func (a *App) refresh(selectTopic *core.Topic, selectWorkspace *core.Workspace, 
 		go func() {
 			a.sessions.refresh()
 			if selectSession != nil {
+				// if selectSession is passed, we select session and refresh preview
 				a.sessions.selectSession(selectSession)
+				a.sessions.refreshPreview()
 			}
 			a.ui.Update(func() {
-				// if selectSession is not nil we show sessions
 				if selectSession != nil {
-					a.sessions.show()
+					a.sessions.showInfo()
+					a.preview.render()
 				}
 				a.sessions.render()
 			})
 		}()
 
-		// topics and workspaces, not in goroutine as we are already in the worker
+		// topics and workspaces, not in a seperate goroutine as we are already in the worker
 		a.topics.refresh()
-		// select topic if passed
 		if selectTopic != nil {
+			// select topic if passed
 			a.topics.selectTopic(selectTopic)
 		}
 
@@ -345,11 +326,17 @@ func (a *App) refresh(selectTopic *core.Topic, selectWorkspace *core.Workspace, 
 			a.workspaces.selectWorkspace(selectWorkspace)
 		}
 
+		if selectSession == nil {
+			// if selectSession was not passed we show the workspace
+			a.workspaces.refreshPreview()
+		}
+
 		// render workspaces
 		a.ui.Update(func() {
 			// if selectSession is nil we show workspace (if it was not nil sessions are shown above)
 			if selectSession == nil {
-				a.workspaces.show()
+				a.workspaces.showInfo()
+				a.preview.render()
 			}
 			a.workspaces.render()
 		})
@@ -406,10 +393,12 @@ func (a *App) refreshInit() {
 		if selected != nil {
 			wv.selectWorkspace(selected)
 		}
+		wv.refreshPreview()
 		a.ui.Update(func() {
 			// render workspaces
 			wv.render()
-			wv.show()
+			wv.showInfo()
+			a.preview.render()
 
 			// initial focus
 			if selected != nil {
@@ -464,7 +453,7 @@ func (a *App) initGlobalKeys() {
 		}).
 		Set('s', "Search for a workspace", func() {
 			sd := new(*Search[*core.Workspace])
-			*sd = search(searchDialogConfig[*core.Workspace]{
+			*sd = search(SearchDialogConfig[*core.Workspace]{
 				onSearch: func(s string) ([][]string, []*core.Workspace) {
 					// get all workspaces by name containing
 					allWorkspaces := a.api.AllWorkspaces()
