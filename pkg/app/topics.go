@@ -179,21 +179,21 @@ func (tv *Topics) init() {
 			}, func() {}, "New topic name", smallEditorSize, t.Name)
 		}).
 		Set('D', "Delete topic", func() {
-			if a.api.TopicCount() <= 0 {
+			t := tv.selected()
+			if t == nil {
 				return
 			}
 			alert(func(b bool) {
 				if !b {
 					return
 				}
-				t := tv.selected()
 				if err := a.api.DeleteTopic(t); err != nil {
 					toast(err.Error(), toastError)
 				}
 
 				a.refreshAll()
 				toast("Deleted topic "+t.Name, toastInfo)
-			}, "Are you sure you want to delete this topic? All its content will be deleted.")
+			}, fmt.Sprintf("Are you sure you want to delete topic %s? All its content will be deleted.", t.Name))
 		}).
 		Set('l', "Focus workspace view", func() {
 			a.workspaces.focus()
