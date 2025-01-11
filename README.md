@@ -1,86 +1,165 @@
-# mynav
+# MyNav 🧭
 
-A TUI workspace and session manager, aiming to allow for an easy view of all your workspaces and sessions in a terminal environment.
+A powerful terminal-based workspace navigator and session manager built in Go. MyNav helps developers organize and manage multiple projects through an intuitive interface, seamlessly integrating with tmux sessions.
+
+![Version](https://img.shields.io/badge/version-v2.0.0-blue)
+![Go Version](https://img.shields.io/badge/go-1.22.3+-00ADD8?logo=go)
+![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 ![demo](https://github.com/user-attachments/assets/c2482080-6c1d-4fda-a3d5-e0ae6d8a916b)
 
-## Elevator pitch
+## 🎤 Elevator Pitch
 
-Before mynav, I would often get annoyed when working on multiple projects using tmux, I would manually navigate from project directory to project directory. Of course, if you have tmux sessions active, you can use choose tree to bounce from session to session, but this persists only if the tmux server is alive and is not what I had hoped for as a workspace manager. With mynav, I can combine the features of tmux, with a workspace management system, allowing for a effecient development workflow in a terminal environment.
+Before creating mynav, I often found myself frustrated when working on multiple projects using tmux, as I had to manually navigate between project directories. While tmux’s choose-tree feature allows jumping between active sessions, it relies on the tmux server staying alive and doesn't fully meet the needs of a robust workspace manager. mynav bridges this gap by combining tmux's powerful features with a workspace management system, enabling a more efficient and streamlined development workflow in a terminal environment.
 
-## Installation
+## ✨ Features
 
-### Try with docker first
+- 📁 **Smart Workspace Organization**
+  - Group projects into topics for better organization
+  - Automatic git repository detection and status
+  - Quick workspace creation and navigation
+  - Customizable workspace hierarchy
+
+- 💻 **Advanced Session Management**
+  - Seamless tmux session creation and switching
+  - Live session preview with window/pane information
+  - Bulk session operations (kill, detach)
+
+- 🎯 **Modern Interface**
+  - Clean, intuitive terminal UI
+  - Vim-style navigation
+  - Quick updates and notifications
+  - Fuzzy search functionality
+
+- 🔧 **Developer Experience**
+  - Git integration with repository status
+  - Built with tmux (uses tmux for sessions)
+  - Cross-platform support (macOS & Linux)
+  - Extensive keyboard shortcuts
+
+## 🚀 Quick Start
+
+### One-Line Installation
 
 ```bash
-docker run -it --name mynav --rm ubuntu bash -c '
-        apt update &&
-        apt install -y git golang-go neovim tmux curl unzip &&
-        cd &&
-        (curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.bash | bash) &&
-        export PATH="$PATH:$HOME/.mynav" &&
-        mkdir nav && cd nav &&
-        mynav
-    '
+curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.sh | bash
 ```
 
-### Binary installation
+### Manual Installation
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.bash | bash
+# Clone the repository
+git clone https://github.com/GianlucaP106/mynav.git
+
+# Navigate to project directory
+cd mynav
+
+# Build project
+go build
 ```
 
-> **See all binaries on the [latest release](https://github.com/GianlucaP106/mynav/releases/latest) page.**
+### Prerequisites
 
-### Build from source
+- Tmux 3.0+
+- Git (optional, for repository features)
+- Terminal with UTF-8 support
 
-```bash
-# go to mynav's configuration directory
-mkdir ~/.mynav/ 2>/dev/null | true
-cd ~/.mynav
+## 📖 Usage
 
-# clone the repo
-git clone https://github.com/GianlucaP106/mynav src
-cd src
-
-# build the project
-go build -o ~/.mynav/mynav
-
-# add to path
-export PATH="$PATH:$HOME/.mynav"
-
-# optionally delete the source code
-cd ~/.mynav
-rm -rf src
-```
-
-#### Supported platforms
-
-mynav is only supported for Linux and MacOS.
-
-## Usage
+### Basic Commands
 
 ```bash
+# Launch mynav in current directory
 mynav
+
+# Launch in specific directory
+mynav -path /your/project/path
+
+# Check version
+mynav -version
 ```
 
-#### Configuration
+### Common Workflows
 
-- mynav will look for a configuration in the current or any parent directory, otherwise will ask to initialize the current directory.
-- mynav can be initialized in multiple independant directories, but not nested.
-- mynav cannot be initialized in the user home directory.
+- **Creating a New Workspace and Session**
 
-## Features
+   ```bash
+   # Using the UI
+   mynav
+   # Press 'a' to create new topic
+   # Enter topic and press 'a' to create a workspace
+   # Enter the workspace session with 'Enter'
+   ```
 
-#### Workspace and session management
+- **Managing Sessions**
 
-- Organize workspaces by topic.
-- Create, view, update and delete workspaces and topics.
-- View information about workspaces, information about its session, preview...
-- Enter a session for each workspace, allowing to swap between workspaces easilty (uses tmux).
-- Create, view, update and delete workspace sessions.
+   ```bash
+   # Using the UI
+   mynav
+   # Navigate to workspaces
+   # Press Enter to create/attach to session
+   # Navigate to sessions
+   # Press 'X' to kill session
+   # Press 'D' to detach from session
+   ```
 
+## ⌨️ Key Bindings
 
-## Keymaps
+### Navigation
 
-#### Use '?' in the TUI to see all the key maps
+| Key | Action | Context |
+|-----|--------|---------|
+| `h/←` | Focus left panel | Global |
+| `l/→` | Focus right panel | Global |
+| `j/↓` | Move down | List views |
+| `k/↑` | Move up | List views |
+| `Tab` | Toggle focus | Search dialog |
+| `Esc` | Close/cancel | Dialogs |
+
+### Actions
+
+| Key | Action | Context |
+|-----|--------|---------|
+| `Enter` | Open/select item | Global |
+| `a` | Create new topic/workspace | Topics/Workspaces view |
+| `D` | Delete item | Topics/Workspaces/Sessions view |
+| `r` | Rename item | Topics/Workspaces view |
+| `X` | Kill session | Workspaces/Sessions view |
+| `s` | Search workspaces | Global |
+| `?` | Toggle help menu | Global |
+| `q` | Quit application | Global |
+| `<` | Cycle preview left | Global |
+| `>` | Cycle preview right | Global |
+| `Ctrl+C` | Quit application | Global |
+
+## ⚙️ Configuration
+
+- MyNav uses a configuration system that supports multiple independent workspaces
+- MyNav looks for configuration in the current or any parent directory
+- Multiple independent directories can be initialized with MyNav
+- Nested configurations are not allowed (invoking mynav nestedly will simply open the parent configuration)
+- Home directory cannot be initialized as a MyNav workspace
+
+## 🛠️ Development
+
+### Setting Up Development Environment
+
+Mynav is a straightforward, low-configuration project that only requires the Go runtime to get started in development.
+
+## 🤝 Contributing
+
+Ensure commits use conventional commits.
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+<p align="center">
+  <a href="https://github.com/GianlucaP106/mynav/stargazers">⭐ Star on GitHub</a> •
+  <a href="https://github.com/GianlucaP106/mynav/issues">📫 Report Bug</a> •
+  <a href="https://github.com/GianlucaP106/mynav/discussions">💬 Discussions</a>
+</p>
