@@ -132,7 +132,7 @@ func (s *Sessions) render() {
 
 func (s *Sessions) init() {
 	s.view = a.ui.SetView(getViewPosition(SessionsView))
-	s.view.Title = " Active Sessions "
+	s.view.Title = " Sessions "
 	a.styleView(s.view)
 
 	sizeX, sizeY := s.view.Size()
