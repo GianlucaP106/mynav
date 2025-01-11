@@ -91,6 +91,14 @@ func (tr *TableRenderer[T]) SelectRow(idx int) {
 	tr.listRenderer.SetSelected(idx)
 }
 
+func (tr *TableRenderer[T]) Top() {
+	tr.SelectRow(0)
+}
+
+func (tr *TableRenderer[T]) Bottom() {
+	tr.SelectRow(tr.Size() - 1)
+}
+
 func (tr *TableRenderer[T]) SelectRowByValue(f func(T) bool) {
 	tr.mu.Lock()
 	defer tr.mu.Unlock()
