@@ -6,6 +6,7 @@ import (
 	"mynav/pkg/system"
 	"mynav/pkg/tui"
 	"strings"
+	"time"
 
 	"github.com/awesome-gocui/gocui"
 	"github.com/gookit/color"
@@ -273,6 +274,7 @@ func (wv *Workspaces) init() {
 				return
 			}
 
+			start := time.Now()
 			var error error
 			a.runAction(func() {
 				error = a.api.OpenSession(curWorkspace)
@@ -280,7 +282,9 @@ func (wv *Workspaces) init() {
 			if error != nil {
 				toast(error.Error(), toastError)
 			} else {
-				toast("Detached from session "+curWorkspace.Name, toastInfo)
+				timeTaken := time.Since(start)
+				s := fmt.Sprintf("Detached session %s - %s active", curWorkspace.Name, system.TimeDeltaStr(timeTaken))
+				toast(s, toastInfo)
 			}
 
 			a.refresh(curWorkspace.Topic, curWorkspace, nil)
