@@ -5,6 +5,7 @@ import (
 	"mynav/pkg/core"
 	"mynav/pkg/system"
 	"mynav/pkg/tui"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -104,9 +105,22 @@ func (w *WorkspaceInfo) show(workspace *core.Workspace) {
 	}
 
 	panes, _ := session.ListPanes()
-	commands := []string{}
+	// name -> count
+	commands := map[string]int{}
 	for _, p := range panes {
-		commands = append(commands, p.CurrentCommand)
+		commands[p.CurrentCommand]++
+	}
+	commandsList := []string{}
+	for c := range commands {
+		commandsList = append(commandsList, c)
+	}
+	sort.Slice(commandsList, func(i, j int) bool {
+		return commands[commandsList[i]] < commands[commandsList[j]]
+	})
+	commandStrs := []string{}
+	for _, c := range commandsList {
+		count := commands[c]
+		commandStrs = append(commandStrs, fmt.Sprintf("%dx %s", count, c))
 	}
 
 	// session info
@@ -118,7 +132,7 @@ func (w *WorkspaceInfo) show(workspace *core.Workspace) {
 		strconv.Itoa(len(panes)),
 		system.TimeAgo(activity),
 		system.TimeAgo(created),
-		strings.Join(commands, ","),
+		strings.Join(commandStrs, ", "),
 	}}
 	w.sessionInfo.Fill(row2, []*core.Session{session})
 }
