@@ -54,8 +54,8 @@ func (w *WorkspaceInfo) init() {
 		"Active Session",
 		"Windows",
 		"Panes",
-		"Last Attached",
-		"Created",
+		"Last Active",
+		"Session Started",
 		"Running",
 	}, []float64{
 		0.20,
@@ -110,14 +110,14 @@ func (w *WorkspaceInfo) show(workspace *core.Workspace) {
 	}
 
 	// session info
-	lastAttached := system.UnixTime(session.LastAttached)
+	activity := system.UnixTime(session.Activity)
 	created := system.UnixTime(session.Created)
 	row2 := [][]string{{
 		"Yes",
 		strconv.Itoa(session.Windows),
 		strconv.Itoa(len(panes)),
-		system.TimeAgo(lastAttached),
-		created.Format(system.TimeFormat()),
+		system.TimeAgo(activity),
+		system.TimeAgo(created),
 		strings.Join(commands, ","),
 	}}
 	w.sessionInfo.Fill(row2, []*core.Session{session})
