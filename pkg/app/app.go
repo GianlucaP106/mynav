@@ -7,6 +7,7 @@ import (
 	"mynav/pkg/core"
 	"mynav/pkg/tui"
 	"os"
+	"sync/atomic"
 	"time"
 
 	"github.com/awesome-gocui/gocui"
@@ -30,6 +31,9 @@ type App struct {
 
 	// worker for processing tasks in FIFO and debouncing
 	worker *Worker
+
+	// if the app ui is first initialized
+	initialized atomic.Bool
 }
 
 // worker magic numbers
@@ -79,7 +83,7 @@ func (a *App) start() {
 	newCli().run()
 
 	// init start refresh queue
-	a.worker = newRefreshQueue(200*time.Millisecond, defaultWorkerSize)
+	a.worker = newWorker(200*time.Millisecond, defaultWorkerSize)
 	go a.worker.Start()
 
 	// init the app
@@ -406,6 +410,9 @@ func (a *App) refreshInit() {
 			} else {
 				tv.focus()
 			}
+
+			// after the initial focus we can set the initialized flag
+			a.initialized.Store(true)
 		})
 	})
 }
@@ -452,6 +459,11 @@ func (a *App) initGlobalKeys() {
 			a.preview.increment()
 		}).
 		Set('s', "Search for a workspace", func() {
+			// block if not initialized to avoid broken state
+			if !a.initialized.Load() {
+				return
+			}
+
 			sd := new(*Search[*core.Workspace])
 			*sd = search(SearchDialogConfig[*core.Workspace]{
 				onSearch: func(s string) ([][]string, []*core.Workspace) {

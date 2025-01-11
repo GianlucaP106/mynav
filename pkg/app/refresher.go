@@ -32,7 +32,7 @@ type DebounceLoad struct {
 	onLoad func()
 }
 
-func newRefreshQueue(d time.Duration, qSize int) *Worker {
+func newWorker(d time.Duration, qSize int) *Worker {
 	r := &Worker{}
 	r.q = make(chan func(), qSize)
 	r.dpq = make(chan *DebounceLoad, qSize)
