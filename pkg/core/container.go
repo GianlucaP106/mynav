@@ -5,27 +5,33 @@ import (
 )
 
 type Container[T comparable] struct {
-	container map[*T]struct{}
+	container map[string]*T
 	mu        *sync.RWMutex
 }
 
 func newContainer[T comparable]() *Container[T] {
 	return &Container[T]{
-		container: make(map[*T]struct{}),
+		container: make(map[string]*T),
 		mu:        &sync.RWMutex{},
 	}
 }
 
-func (c *Container[T]) Add(d *T) {
+func (c *Container[T]) Set(key string, d *T) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.container[d] = struct{}{}
+	c.container[key] = d
 }
 
-func (c *Container[T]) Remove(d *T) {
+func (c *Container[T]) Get(key string) *T {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.container[key]
+}
+
+func (c *Container[T]) Remove(key string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	delete(c.container, d)
+	delete(c.container, key)
 }
 
 func (c *Container[T]) Size() int {
@@ -38,13 +44,13 @@ func (c *Container[T]) All() []*T {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	out := make([]*T, 0)
-	for d := range c.container {
+	for _, d := range c.container {
 		out = append(out, d)
 	}
 	return out
 }
 
-func (c *Container[T]) Contains(d *T) bool {
-	_, exists := c.container[d]
+func (c *Container[T]) Contains(key string) bool {
+	_, exists := c.container[key]
 	return exists
 }

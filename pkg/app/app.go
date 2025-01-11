@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"mynav/pkg/core"
+	"mynav/pkg/system"
 	"mynav/pkg/tui"
 	"os"
 	"sync/atomic"
@@ -67,6 +68,7 @@ var a *App
 
 // Inits and starts the app.
 func Start() {
+	system.InitLogger("debug.log")
 	a = newApp()
 	a.start()
 }
@@ -464,39 +466,60 @@ func (a *App) initGlobalKeys() {
 				return
 			}
 
+			// TODO: move to seperate file
+
+			useFzf := false
+			if system.IsFzfInstalled() {
+				useFzf = true
+			} else {
+				toast("install fzf it for a better experience", toastWarn)
+			}
+
+			// make helper function to create rows from workspaces
+			makeRows := func(workspaces core.Workspaces) [][]string {
+				rows := make([][]string, 0)
+				for _, w := range workspaces {
+					session := a.api.Session(w)
+					sessionStr := ""
+					if session != nil {
+						sessionStr = "Yes"
+					}
+					rows = append(rows, []string{
+						w.Name,
+						w.Topic.Name,
+						sessionStr,
+					})
+				}
+				return rows
+			}
+
+			searchFor := func(s string) ([][]string, []*core.Workspace) {
+				allWorkspaces := a.api.AllWorkspaces().Sorted()
+				foundWorkspaces := make(core.Workspaces, 0)
+				if useFzf {
+					found := []string{}
+					allNames := []string{}
+					for _, w := range allWorkspaces {
+						allNames = append(allNames, w.ShortPath())
+					}
+					found = system.FuzzyFind(allNames, s)
+					for _, item := range found {
+						w := a.api.FindWorkspaceByShortPath(item)
+						if w != nil {
+							foundWorkspaces = append(foundWorkspaces, w)
+						}
+					}
+				} else {
+					foundWorkspaces = allWorkspaces.ByNameContaining(s)
+				}
+
+				return makeRows(foundWorkspaces), foundWorkspaces
+			}
+
 			sd := new(*Search[*core.Workspace])
 			*sd = search(SearchDialogConfig[*core.Workspace]{
-				onSearch: func(s string) ([][]string, []*core.Workspace) {
-					// get all workspaces by name containing
-					allWorkspaces := a.api.AllWorkspaces()
-					workspaces := allWorkspaces.ByNameContaining(s)
-
-					// get all topics with this name containing
-					topics := a.api.AllTopics().ByNameContaining(s)
-
-					// collect all workspaces for each of these topics
-					for _, t := range topics {
-						ws := allWorkspaces.ByTopic(t)
-						workspaces = append(workspaces, ws...)
-					}
-
-					workspaces = workspaces.RemoveDuplicates().SortedByTopic()
-					rows := make([][]string, 0)
-					for _, w := range workspaces {
-						session := a.api.Session(w)
-						sessionStr := ""
-						if session != nil {
-							sessionStr = "Yes"
-						}
-						rows = append(rows, []string{
-							w.Name,
-							w.Topic.Name,
-							sessionStr,
-						})
-					}
-
-					return rows, workspaces
-				},
+				onType:   searchFor,
+				onSearch: searchFor,
 				onSelect: func(w *core.Workspace) {
 					a.topics.selectTopic(w.Topic)
 					a.workspaces.refresh()
