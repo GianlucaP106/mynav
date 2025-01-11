@@ -150,6 +150,12 @@ func (tv *Topics) init() {
 		Set(gocui.KeyArrowDown, "Move down", down).
 		Set(gocui.KeyArrowUp, "Move up", up).
 		Set(gocui.KeyEnter, "Open topic", moveRight).
+		Set('g', "Go to top", func() {
+			tv.table.Top()
+		}).
+		Set('G', "Go to bottom", func() {
+			tv.table.Bottom()
+		}).
 		Set('a', "Create a topic", func() {
 			editor(func(s string) {
 				topic, err := a.api.NewTopic(s)

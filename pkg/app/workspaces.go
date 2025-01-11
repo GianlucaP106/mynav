@@ -218,7 +218,7 @@ func (wv *Workspaces) init() {
 			}, func() {}, "Command", smallEditorSize, "nvim")
 			e.view.Subtitle = " Workspace path will be appended "
 		}).
-		Set('g', "Clone git repo", func() {
+		Set('i', "Clone git repo", func() {
 			curWorkspace := wv.selected()
 			if curWorkspace == nil {
 				return
@@ -233,7 +233,7 @@ func (wv *Workspaces) init() {
 				toast("Cloned repo to workspace "+curWorkspace.Name, toastInfo)
 			}, func() {}, "Git repo URL", smallEditorSize, "")
 		}).
-		Set('G', "Open browser to git repo", func() {
+		Set('I', "Open browser to git repo", func() {
 			curWorkspace := wv.selected()
 			if curWorkspace == nil {
 				return
@@ -420,6 +420,12 @@ func (wv *Workspaces) init() {
 		}).
 		Set('l', "Focus sessions view", func() {
 			a.sessions.focus()
+		}).
+		Set('g', "Go to top", func() {
+			wv.table.Top()
+		}).
+		Set('G', "Go to bottom", func() {
+			wv.table.Bottom()
 		}).
 		Set(gocui.KeyArrowRight, "Focus sessions view", func() {
 			a.sessions.focus()

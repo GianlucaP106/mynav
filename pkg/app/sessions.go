@@ -168,6 +168,12 @@ func (s *Sessions) init() {
 		Set('k', "Move up", up).
 		Set(gocui.KeyArrowDown, "Move down", down).
 		Set(gocui.KeyArrowUp, "Move up", up).
+		Set('g', "Go to top", func() {
+			s.table.Top()
+		}).
+		Set('G', "Go to bottom", func() {
+			s.table.Bottom()
+		}).
 		Set(gocui.KeyEnter, "Open Session", func() {
 			session := s.selected()
 			if session == nil {
