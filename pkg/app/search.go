@@ -34,7 +34,7 @@ type SearchDialogConfig[T any] struct {
 func search[T any](params SearchDialogConfig[T]) *Search[T] {
 	// build search view
 	s := &Search[T]{}
-	s.searchView = a.ui.SetCenteredView(SearchListDialog1View, 120, 3, -9)
+	s.searchView = a.ui.SetCenteredView(SearchListDialog1View, 100, 3, -9)
 	s.searchView.Title = fmt.Sprintf(" %s ", params.searchViewTitle)
 	s.searchView.Subtitle = " <Enter> to filter "
 	s.searchView.Editable = true
@@ -61,7 +61,7 @@ func search[T any](params SearchDialogConfig[T]) *Search[T] {
 	}, onType)
 
 	// build table view
-	s.tableView = a.ui.SetCenteredView(SearchListDialog2View, 120, 15, 0)
+	s.tableView = a.ui.SetCenteredView(SearchListDialog2View, 100, 15, 0)
 	s.tableView.Title = fmt.Sprintf(" %s ", params.tableViewTitle)
 	s.tableView.Subtitle = " <Tab> to toggle focus "
 	tableViewX, tableViewY := s.tableView.Size()
