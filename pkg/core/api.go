@@ -118,7 +118,7 @@ func (a *Api) DeleteTopic(t *Topic) error {
 		a.KillSession(w)
 
 		// remove straight from container because parent dir has been deleted.
-		a.workspaces.container.Remove(w)
+		a.workspaces.container.Remove(w.ShortPath())
 	}
 	return nil
 }

@@ -19,6 +19,7 @@ type Search[T any] struct {
 type SearchDialogConfig[T any] struct {
 	onSearch            func(s string) ([][]string, []T)
 	onSelect            func(a T)
+	onType              func(string) ([][]string, []T)
 	initial             func() ([][]string, []T)
 	onSelectDescription string
 	searchViewTitle     string
@@ -33,21 +34,34 @@ type SearchDialogConfig[T any] struct {
 func search[T any](params SearchDialogConfig[T]) *Search[T] {
 	// build search view
 	s := &Search[T]{}
-	s.searchView = a.ui.SetCenteredView(SearchListDialog1View, 80, 3, -7)
+	s.searchView = a.ui.SetCenteredView(SearchListDialog1View, 120, 3, -9)
 	s.searchView.Title = fmt.Sprintf(" %s ", params.searchViewTitle)
 	s.searchView.Subtitle = " <Enter> to filter "
 	s.searchView.Editable = true
 	a.styleView(s.searchView)
+
+	var onType func(s string) = nil
+	if params.onType != nil {
+		onType = func(search string) {
+			a.worker.Queue(func() {
+				rows, vals := params.onType(search)
+				s.table.Fill(rows, vals)
+				a.ui.Update(func() {
+					s.renderTable()
+				})
+			})
+		}
+	}
 	s.searchView.Editor = tui.NewSimpleEditor(func(item string) {
 		rows, rowValues := params.onSearch(item)
 		s.table.Fill(rows, rowValues)
 		s.renderTable()
 		s.focusList()
 	}, func() {
-	})
+	}, onType)
 
 	// build table view
-	s.tableView = a.ui.SetCenteredView(SearchListDialog2View, 80, 10, 0)
+	s.tableView = a.ui.SetCenteredView(SearchListDialog2View, 120, 15, 0)
 	s.tableView.Title = fmt.Sprintf(" %s ", params.tableViewTitle)
 	s.tableView.Subtitle = " <Tab> to toggle focus "
 	tableViewX, tableViewY := s.tableView.Size()
@@ -107,6 +121,14 @@ func search[T any](params SearchDialogConfig[T]) *Search[T] {
 		}).
 		Set(gocui.KeyArrowUp, "Move up", func() {
 			s.table.Up()
+			s.renderTable()
+		}).
+		Set('g', "Go to top", func() {
+			s.table.Top()
+			s.renderTable()
+		}).
+		Set('G', "Go to bottom", func() {
+			s.table.Bottom()
 			s.renderTable()
 		}).
 		Set('?', "Toggle cheatsheet", func() {

@@ -161,14 +161,14 @@ func (w *WorkspaceRepository) load(topics Topics) {
 			}
 
 			workspace := newWorkspace(topic, dirEntry.Name())
-			wc.Add(workspace)
+			wc.Set(workspace.ShortPath(), workspace)
 		}
 	}
 }
 
 func (w *WorkspaceRepository) Save(workspace *Workspace) error {
 	// if this workspace doesnt exist, we create a dir
-	if !w.container.Contains(workspace) {
+	if !w.container.Contains(workspace.ShortPath()) {
 		if err := system.CreateDir(workspace.Path()); err != nil {
 			return err
 		}
@@ -186,7 +186,7 @@ func (w *WorkspaceRepository) Save(workspace *Workspace) error {
 	}
 
 	// save it to the container
-	w.container.Add(workspace)
+	w.container.Set(workspace.ShortPath(), workspace)
 	return nil
 }
 
@@ -195,26 +195,12 @@ func (w *WorkspaceRepository) Delete(workspace *Workspace) error {
 		return err
 	}
 
-	w.container.Remove(workspace)
+	w.container.Remove(workspace.ShortPath())
 	return nil
 }
 
 func (w *WorkspaceRepository) FindByShortPath(shortPath string) *Workspace {
-	for _, w := range w.container.All() {
-		if w.ShortPath() == shortPath {
-			return w
-		}
-	}
-	return nil
-}
-
-func (w *WorkspaceRepository) FindByPath(path string) *Workspace {
-	for _, w := range w.container.All() {
-		if w.Path() == path {
-			return w
-		}
-	}
-	return nil
+	return w.container.Get(shortPath)
 }
 
 func (w *WorkspaceRepository) All() Workspaces {

@@ -92,13 +92,13 @@ func (tr *TopicRepository) load(rootPath string) {
 
 		topicName := topicDirEntry.Name()
 		topic := newTopic(topicName, filepath.Join(rootPath, topicName))
-		tc.Add(topic)
+		tc.Set(topic.Name, topic)
 	}
 }
 
 func (tr *TopicRepository) Save(t *Topic) error {
 	// if this topic doesnt exist, we create a dir
-	if !tr.container.Contains(t) {
+	if !tr.container.Contains(t.Name) {
 		if err := system.CreateDir(t.path); err != nil {
 			return err
 		}
@@ -114,7 +114,7 @@ func (tr *TopicRepository) Save(t *Topic) error {
 	}
 
 	// save it to the container
-	tr.container.Add(t)
+	tr.container.Set(t.Name, t)
 	return nil
 }
 
@@ -123,17 +123,12 @@ func (tr *TopicRepository) Delete(t *Topic) error {
 		return err
 	}
 
-	tr.container.Remove(t)
+	tr.container.Remove(t.Name)
 	return nil
 }
 
 func (tr *TopicRepository) FindByName(name string) *Topic {
-	for _, t := range tr.container.All() {
-		if t.Name == name {
-			return t
-		}
-	}
-	return nil
+	return tr.container.Get(name)
 }
 
 func (tr *TopicRepository) All() Topics {

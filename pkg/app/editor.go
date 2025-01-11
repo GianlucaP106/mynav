@@ -52,7 +52,7 @@ func editor(onEnter func(string), onEsc func(), title string, size editorSize, d
 			a.ui.FocusView(prevView)
 		}
 		onEsc()
-	})
+	}, nil)
 
 	a.ui.FocusView(ed.view)
 
