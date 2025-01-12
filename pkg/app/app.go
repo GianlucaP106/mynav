@@ -68,7 +68,6 @@ var a *App
 
 // Inits and starts the app.
 func Start() {
-	system.InitLogger("debug.log")
 	a = newApp()
 	a.start()
 }
