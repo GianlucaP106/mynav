@@ -2,7 +2,7 @@
 
 A powerful terminal-based workspace navigator and session manager built in Go. MyNav helps developers organize and manage multiple projects through an intuitive interface, seamlessly integrating with tmux sessions.
 
-![Version](https://img.shields.io/badge/version-v2.0.0-blue)
+![Version](https://img.shields.io/badge/version-v2.1.0-blue)
 ![Go Version](https://img.shields.io/badge/go-1.22.3+-00ADD8?logo=go)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
