@@ -44,7 +44,7 @@ Before creating mynav, I often found myself frustrated when working on multiple 
 ### One-Line Installation
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.bash | bash
 ```
 
 ### Manual Installation
