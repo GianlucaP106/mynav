@@ -41,6 +41,20 @@ Before creating mynav, I often found myself frustrated when working on multiple 
 
 ## 🚀 Quick Start
 
+### Try with docker
+
+```bash
+docker run -it --name mynav --rm ubuntu bash -c '
+        apt update &&
+        apt install -y git golang-go neovim tmux curl unzip &&
+        cd &&
+        (curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.bash | bash) &&
+        export PATH="$PATH:$HOME/.mynav" &&
+        mkdir nav && cd nav &&
+        mynav
+    '
+```
+
 ### One-Line Installation
 
 ```bash
