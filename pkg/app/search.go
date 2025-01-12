@@ -43,13 +43,14 @@ func search[T any](params SearchDialogConfig[T]) *Search[T] {
 	var onType func(s string) = nil
 	if params.onType != nil {
 		onType = func(search string) {
-			a.worker.Queue(func() {
+			a.worker.DebounceLoad(func() {
 				rows, vals := params.onType(search)
 				s.table.Fill(rows, vals)
+			}, func() {
 				a.ui.Update(func() {
 					s.renderTable()
 				})
-			})
+			}, func() {})
 		}
 	}
 	s.searchView.Editor = tui.NewSimpleEditor(func(item string) {

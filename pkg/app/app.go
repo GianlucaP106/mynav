@@ -468,13 +468,6 @@ func (a *App) initGlobalKeys() {
 
 			// TODO: move to seperate file
 
-			useFzf := false
-			if system.IsFzfInstalled() {
-				useFzf = true
-			} else {
-				toast("install fzf it for a better experience", toastWarn)
-			}
-
 			// make helper function to create rows from workspaces
 			makeRows := func(workspaces core.Workspaces) [][]string {
 				rows := make([][]string, 0)
@@ -493,15 +486,23 @@ func (a *App) initGlobalKeys() {
 				return rows
 			}
 
+			useFzf := false
+			if system.IsFzfInstalled() {
+				useFzf = true
+			} else {
+				toast("install fzf it for a better experience", toastWarn)
+			}
+
+			allWorkspaces := a.api.AllWorkspaces().Sorted()
+			allNames := []string{}
+			for _, w := range allWorkspaces {
+				allNames = append(allNames, w.ShortPath())
+			}
+
 			searchFor := func(s string) ([][]string, []*core.Workspace) {
-				allWorkspaces := a.api.AllWorkspaces().Sorted()
 				foundWorkspaces := make(core.Workspaces, 0)
 				if useFzf {
 					found := []string{}
-					allNames := []string{}
-					for _, w := range allWorkspaces {
-						allNames = append(allNames, w.ShortPath())
-					}
 					found = system.FuzzyFind(allNames, s)
 					for _, item := range found {
 						w := a.api.FindWorkspaceByShortPath(item)
