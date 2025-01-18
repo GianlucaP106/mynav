@@ -5,6 +5,8 @@ import (
 	"mynav/pkg/core"
 	"mynav/pkg/system"
 	"mynav/pkg/tui"
+	"net/url"
+	"path"
 	"strings"
 	"time"
 
@@ -375,6 +377,37 @@ func (wv *Workspaces) init() {
 				a.refresh(curWorkspace.Topic, curWorkspace, nil)
 				toast("Renamed workspace "+curWorkspace.Name, toastInfo)
 			}, func() {}, "New workspace name", smallEditorSize, curWorkspace.Name)
+		}).
+		Set('A', "Create a workspace from git url", func() {
+			curTopic := a.topics.selected()
+			if curTopic == nil {
+				toast("You must create a topic first", toastWarn)
+				return
+			}
+
+			editor(func(uri string) {
+				_, err := url.ParseRequestURI(uri)
+				if err != nil {
+					toast("URL must be valid", toastError)
+					return
+				}
+
+				urlTrimmed := strings.TrimSuffix(uri, ".git")
+				name := path.Base(urlTrimmed)
+				w, err := a.api.NewWorkspace(curTopic, name)
+				if err != nil {
+					toast(err.Error(), toastError)
+					return
+				}
+
+				if err := a.api.CloneWorkspaceRepo(w, uri); err != nil {
+					toast(err.Error(), toastError)
+					return
+				}
+
+				a.refresh(curTopic, w, nil)
+				toast("Cloned and created workspace "+w.Name, toastInfo)
+			}, func() {}, "Git url", smallEditorSize, "")
 		}).
 		Set('a', "Create a workspace", func() {
 			curTopic := a.topics.selected()
