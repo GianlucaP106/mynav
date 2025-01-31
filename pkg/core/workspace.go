@@ -28,7 +28,9 @@ func newWorkspace(topic *Topic, name string) *Workspace {
 }
 
 func (w *Workspace) ShortPath() string {
-	return filepath.Join(w.Topic.Name, w.Name)
+	dir, last := filepath.Split(w.path)
+	dir = filepath.Base(dir)
+	return filepath.Join(dir, last)
 }
 
 func (w *Workspace) Path() string {
@@ -182,6 +184,7 @@ func (w *WorkspaceRepository) Save(workspace *Workspace) error {
 		if err := os.Rename(workspace.path, newPath); err != nil {
 			return err
 		}
+		w.container.Remove(workspace.ShortPath())
 		workspace.path = newPath
 	}
 
