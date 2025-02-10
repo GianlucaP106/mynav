@@ -116,7 +116,6 @@ mynav -version
    # Press Enter to create/attach to session
    # Navigate to sessions
    # Press 'X' to kill session
-   # Press 'D' to detach from session
    ```
 
 ## ⌨️ Key Bindings
