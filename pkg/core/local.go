@@ -3,10 +3,11 @@ package core
 import (
 	"errors"
 	"log"
-	"mynav/pkg/system"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/GianlucaP106/mynav/pkg/system"
 )
 
 // Data for the local config store.

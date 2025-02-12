@@ -2,8 +2,8 @@ package app
 
 import (
 	"fmt"
-	"mynav/pkg/tui"
 
+	"github.com/GianlucaP106/mynav/pkg/tui"
 	"github.com/awesome-gocui/gocui"
 	"github.com/gookit/color"
 )

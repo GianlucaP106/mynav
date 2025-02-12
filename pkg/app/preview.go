@@ -2,8 +2,9 @@ package app
 
 import (
 	"fmt"
-	"mynav/pkg/core"
-	"mynav/pkg/tui"
+
+	"github.com/GianlucaP106/mynav/pkg/core"
+	"github.com/GianlucaP106/mynav/pkg/tui"
 )
 
 type Preview struct {

@@ -1,6 +1,6 @@
 package main
 
-import "mynav/pkg/app"
+import "github.com/GianlucaP106/mynav/pkg/app"
 
 func main() {
 	app.Start()
