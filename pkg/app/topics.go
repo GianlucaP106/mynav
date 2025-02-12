@@ -2,11 +2,11 @@ package app
 
 import (
 	"fmt"
-	"mynav/pkg/core"
-	"mynav/pkg/system"
-	"mynav/pkg/tui"
 	"strconv"
 
+	"github.com/GianlucaP106/mynav/pkg/core"
+	"github.com/GianlucaP106/mynav/pkg/system"
+	"github.com/GianlucaP106/mynav/pkg/tui"
 	"github.com/awesome-gocui/gocui"
 	"github.com/gookit/color"
 )

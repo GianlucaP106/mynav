@@ -4,8 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"mynav/pkg/core"
 	"os"
+
+	"github.com/GianlucaP106/mynav/pkg/core"
 )
 
 type (

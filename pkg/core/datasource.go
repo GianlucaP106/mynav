@@ -2,8 +2,9 @@ package core
 
 import (
 	"errors"
-	"mynav/pkg/system"
 	"sync"
+
+	"github.com/GianlucaP106/mynav/pkg/system"
 )
 
 type Datasource[T any] struct {

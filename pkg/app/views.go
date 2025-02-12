@@ -2,7 +2,8 @@ package app
 
 import (
 	"log"
-	"mynav/pkg/tui"
+
+	"github.com/GianlucaP106/mynav/pkg/tui"
 )
 
 // Views.

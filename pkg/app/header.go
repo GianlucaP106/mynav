@@ -2,9 +2,10 @@ package app
 
 import (
 	"fmt"
-	"mynav/pkg/tui"
 	"strconv"
 	"sync/atomic"
+
+	"github.com/GianlucaP106/mynav/pkg/tui"
 )
 
 type Header struct {

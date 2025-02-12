@@ -1,4 +1,4 @@
-module mynav
+module github.com/GianlucaP106/mynav
 
 go 1.22.3
 
