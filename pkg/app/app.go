@@ -495,7 +495,7 @@ func (a *App) initGlobalKeys() {
 			allWorkspaces := a.api.AllWorkspaces().Sorted()
 			allNames := []string{}
 			for _, w := range allWorkspaces {
-				allNames = append(allNames, w.Path())
+				allNames = append(allNames, w.ShortPath())
 			}
 
 			searchFor := func(s string) ([][]string, []*core.Workspace) {
