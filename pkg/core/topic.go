@@ -98,8 +98,9 @@ func (tr *TopicRepository) load(rootPath string) {
 }
 
 func (tr *TopicRepository) Save(t *Topic) error {
+	oldName := filepath.Base(t.path)
 	// if this topic doesnt exist, we create a dir
-	if !tr.container.Contains(t.Name) {
+	if !tr.container.Contains(oldName) {
 		if err := system.CreateDir(t.path); err != nil {
 			return err
 		}
@@ -111,6 +112,7 @@ func (tr *TopicRepository) Save(t *Topic) error {
 		if err := os.Rename(t.path, newPath); err != nil {
 			return err
 		}
+		tr.container.Remove(oldName)
 		t.path = newPath
 	}
 
