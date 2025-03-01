@@ -3,7 +3,7 @@ module github.com/GianlucaP106/mynav
 go 1.22.3
 
 require (
-	github.com/GianlucaP106/gotmux v0.2.1-0.20250111211312-a5a2e886166e
+	github.com/GianlucaP106/gotmux v0.3.0
 	github.com/atotto/clipboard v0.1.4
 	github.com/awesome-gocui/gocui v1.1.0
 	github.com/gookit/color v1.5.4

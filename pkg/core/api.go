@@ -20,7 +20,7 @@ type Api struct {
 	updater    *updater
 }
 
-// Inits the Api.
+// Main initialization of the API.
 func NewApi(dir string) (*Api, error) {
 	// init global config
 	global, err := newGlobalConfig()
