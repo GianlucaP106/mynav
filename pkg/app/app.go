@@ -17,10 +17,10 @@ import (
 
 type App struct {
 	// api instance
-	api *core.Api
+	api *core.API
 
 	// ui instance (wrapper over gocui)
-	ui *tui.Tui
+	ui *tui.TUI
 
 	// views
 	header     *Header
@@ -208,7 +208,7 @@ func (a *App) initUI() {
 	a.info = wiv
 
 	// set manager functions that render the views
-	a.ui.SetManager(func(t *tui.Tui) error {
+	a.ui.SetManager(func(t *tui.TUI) error {
 		hv.render()
 		tv.render()
 		wv.render()
@@ -233,7 +233,7 @@ func (a *App) initUI() {
 // Initializes a temporary (incomplete) ui for initialization.
 func (a *App) tempUI() {
 	// set a manager that runs no renders
-	a.ui.SetManager(func(t *tui.Tui) error {
+	a.ui.SetManager(func(t *tui.TUI) error {
 		return nil
 	})
 
@@ -495,7 +495,7 @@ func (a *App) initGlobalKeys() {
 			allWorkspaces := a.api.AllWorkspaces().Sorted()
 			allNames := []string{}
 			for _, w := range allWorkspaces {
-				allNames = append(allNames, w.ShortPath())
+				allNames = append(allNames, w.Path())
 			}
 
 			searchFor := func(s string) ([][]string, []*core.Workspace) {
@@ -504,7 +504,7 @@ func (a *App) initGlobalKeys() {
 					found := []string{}
 					found = system.FuzzyFind(allNames, s)
 					for _, item := range found {
-						w := a.api.FindWorkspaceByShortPath(item)
+						w := a.api.FindWorkspace(item)
 						if w != nil {
 							foundWorkspaces = append(foundWorkspaces, w)
 						}

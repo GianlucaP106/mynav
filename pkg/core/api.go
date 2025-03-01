@@ -4,24 +4,21 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"strings"
-	"time"
 
 	"github.com/GianlucaP106/gotmux/gotmux"
 )
 
-// Api exposes all core api functions.
-type Api struct {
-	topics     *TopicRepository
-	workspaces *WorkspaceRepository
-	tmux       *gotmux.Tmux
-	local      *LocalConfig
-	global     *GlobalConfig
-	updater    *updater
+// API exposes all core api functions.
+type API struct {
+	container *Container
+	tmux      *gotmux.Tmux
+	local     *LocalConfig
+	global    *GlobalConfig
+	updater   *updater
 }
 
 // Inits the Api.
-func NewApi(dir string) (*Api, error) {
+func NewApi(dir string) (*API, error) {
 	// init global config
 	global, err := newGlobalConfig()
 	if err != nil {
@@ -44,12 +41,10 @@ func NewApi(dir string) (*Api, error) {
 		return nil, err
 	}
 
-	topics := newTopicRepository(local.path)
-	workspaces := newWorkspaceRepository(topics.All())
+	c := newContainer(local.path)
 
-	api := &Api{}
-	api.topics = topics
-	api.workspaces = workspaces
+	api := &API{}
+	api.container = c
 	api.tmux = tmux
 	api.local = local
 	api.global = global
@@ -57,145 +52,97 @@ func NewApi(dir string) (*Api, error) {
 	return api, nil
 }
 
-// Updates mynav by running update script.
-func (a *Api) UpdateMynav() error {
-	return a.updater.UpdateMynav()
-}
-
-// Sets the 'update-asked' global configuration variable to now.
-func (a *Api) AskUpdate() {
-	a.global.SetUpdateAsked(time.Now())
-}
-
 // Returns if an update is available
-func (a *Api) UpdateAvailable() (bool, string) {
+func (a *API) UpdateAvailable() (bool, string) {
 	return a.updater.UpdateAvailable()
 }
 
-// Returns LocalConfig.
-func (a *Api) LocalConfig() *LocalConfigData {
-	return a.local.ConfigData()
-}
-
-// Returns GlobalConfig.
-func (a *Api) GlobalConfig() *GlobalConfigData {
-	return a.global.ConfigData()
-}
-
 // Creates a new topic.
-func (a *Api) NewTopic(name string) (*Topic, error) {
-	topic := newTopic(name, filepath.Join(a.local.path, name))
-	if err := a.topics.Save(topic); err != nil {
-		return nil, err
-	}
-	return topic, nil
-}
-
-// Finds topic by name.
-func (a *Api) FindTopicByName(name string) *Topic {
-	return a.topics.FindByName(name)
+func (a *API) NewTopic(name string) (*Topic, error) {
+	return a.container.CreateTopic(name)
 }
 
 // Returns all topics.
-func (a *Api) AllTopics() Topics {
-	return a.topics.All()
+func (a *API) AllTopics() Topics {
+	return a.container.AllTopics()
 }
 
 // Returns topic count.
-func (a *Api) TopicCount() int {
-	return a.topics.Count()
+func (a *API) TopicCount() int {
+	return a.container.TopicsCount()
 }
 
 // Deletes a topic.
-func (a *Api) DeleteTopic(t *Topic) error {
-	workspaces := a.workspaces.All().ByTopic(t)
-
-	if err := a.topics.Delete(t); err != nil {
-		return err
-	}
-
-	for _, w := range workspaces {
+func (a *API) DeleteTopic(t *Topic) error {
+	for _, w := range t.workspaces {
 		a.KillSession(w)
-
-		// remove straight from container because parent dir has been deleted.
-		a.workspaces.container.Remove(w.ShortPath())
 	}
-	return nil
+	// TODO: selected
+	return a.container.DeleteTopic(t)
 }
 
 // Renames a topic.
-func (a *Api) RenameTopic(t *Topic, name string) error {
-	workspaces := a.workspaces.All().ByTopic(t)
-	t.Name = name
-	if err := a.topics.Save(t); err != nil {
+func (a *API) RenameTopic(t *Topic, name string) error {
+	// store topic path for session rename
+	oldTopicPath := t.Path()
+
+	if err := a.container.RenameTopic(t, name); err != nil {
 		return err
 	}
 
-	for _, w := range workspaces {
-		newPath := filepath.Join(w.Topic.path, w.Name)
-		session := a.Session(w)
-		if session != nil {
-			session.Rename(newPath)
+	// rename all sessions
+	for _, w := range t.workspaces {
+		session, err := a.tmux.GetSessionByName(filepath.Join(oldTopicPath, w.Name))
+		if err != nil {
+			return err
 		}
-		w.path = newPath
+
+		if session != nil {
+			if err := session.Rename(w.Path()); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
 }
 
 // Creates a new workspace.
-func (a *Api) NewWorkspace(t *Topic, name string) (*Workspace, error) {
-	name = strings.ReplaceAll(name, ".", "_")
-	w := newWorkspace(t, name)
-	if err := a.workspaces.Save(w); err != nil {
+func (a *API) NewWorkspace(t *Topic, name string) (*Workspace, error) {
+	w, err := a.container.CreateWorkspace(t, name)
+	if err != nil {
 		return nil, err
 	}
-
 	a.SelectWorkspace(w)
 	return w, nil
 }
 
-// Finds workspace by name.
-func (a *Api) FindWorkspaceByShortPath(shortPath string) *Workspace {
-	return a.workspaces.FindByShortPath(shortPath)
-}
-
 // Returns all workspaces.
-func (a *Api) AllWorkspaces() Workspaces {
-	return a.workspaces.All()
+func (a *API) AllWorkspaces() Workspaces {
+	return a.container.AllWorkspaces()
 }
 
 // Returns the workspace count.
-func (a *Api) WorkspacesCount() int {
-	return a.workspaces.Count()
+func (a *API) WorkspacesCount() int {
+	return a.container.WorkspacesCount()
 }
 
 // Deletes this workspace.
-func (a *Api) DeleteWorkspace(w *Workspace) error {
+func (a *API) DeleteWorkspace(w *Workspace) error {
 	a.KillSession(w)
 	selected := a.SelectedWorkspace()
 	if selected == w {
 		a.SelectWorkspace(nil)
 	}
 
-	return a.workspaces.Delete(w)
+	return a.container.DeleteWorkspace(w)
 }
 
 // Renames the workspace.
-func (a *Api) RenameWorkspace(w *Workspace, name string) error {
-	name = strings.ReplaceAll(name, ".", "_")
-
-	// if there exists a workspace with this name in the same topic
-	if len(a.AllWorkspaces().ByTopic(w.Topic).ByName(name)) > 0 {
-		return errors.New("workspace with this name already exists")
-	}
-
-	// store session before rename
+func (a *API) RenameWorkspace(w *Workspace, name string) error {
 	s := a.Session(w)
 
-	// rename and save
-	w.Name = name
-	if err := a.workspaces.Save(w); err != nil {
+	if err := a.container.RenameWorkspace(w, name); err != nil {
 		return err
 	}
 
@@ -208,42 +155,28 @@ func (a *Api) RenameWorkspace(w *Workspace, name string) error {
 }
 
 // Moves the workspace to a different topic.
-func (a *Api) MoveWorkspace(w *Workspace, topic *Topic) error {
-	if w.Topic.Name == topic.Name {
-		return errors.New("workspace is already in this topic")
-	}
-
-	// if there exists a workspace with this name in the same topic
-	if len(a.AllWorkspaces().ByTopic(topic).ByName(w.Name)) > 0 {
-		return errors.New("workspace with this name already exists")
-	}
-
-	// get session if this workspace
+func (a *API) MoveWorkspace(w *Workspace, topic *Topic) error {
 	s := a.Session(w)
-
-	// change topic and save
-	w.Topic = topic
-	err := a.workspaces.Save(w)
-	if err != nil {
+	if err := a.container.MoveWorkspace(w, topic); err != nil {
 		return err
 	}
 
 	// rename session to new path
 	if s != nil {
-		s.Rename(w.path)
+		s.Rename(w.Path())
 	}
 
 	return a.SelectWorkspace(w)
 }
 
 // Gets the persisted selected workspace.
-func (a *Api) SelectedWorkspace() *Workspace {
-	workspaceShortPath := a.LocalConfig().SelectedWorkspace
-	return a.FindWorkspaceByShortPath(workspaceShortPath)
+func (a *API) SelectedWorkspace() *Workspace {
+	lcd := a.local.ConfigData()
+	return a.FindWorkspace(lcd.SelectedWorkspace)
 }
 
 // Sets the persisted selected workspace.
-func (a *Api) SelectWorkspace(w *Workspace) error {
+func (a *API) SelectWorkspace(w *Workspace) error {
 	set := a.local.SetSelectedWorkspace
 	if w != nil {
 		set(w.ShortPath())
@@ -253,14 +186,19 @@ func (a *Api) SelectWorkspace(w *Workspace) error {
 	return nil
 }
 
-// // Opens neovim in the provided workspace.
-// func (a *Api) OpenWorkspaceNvim(w *Workspace) error {
-// 	a.SelectWorkspace(w)
-// 	return system.CommandWithRedirect("nvim", w.Path()).Run()
-// }
+func (s *API) FindWorkspace(shortPath string) *Workspace {
+	topicName, workspaceName := filepath.Dir(shortPath), filepath.Base(shortPath)
+	topic := s.container.topics[topicName]
+
+	if topic == nil {
+		return nil
+	}
+
+	return topic.workspaces[workspaceName]
+}
 
 // Clones repo into workspace.
-func (a *Api) CloneWorkspaceRepo(w *Workspace, url string) error {
+func (a *API) CloneWorkspaceRepo(w *Workspace, url string) error {
 	a.SelectWorkspace(w)
 	return w.CloneRepo(url)
 }
@@ -293,7 +231,7 @@ func (s SessionMap) Get(w *Workspace) *Session {
 }
 
 // Returns the session associated to this workspace, nil if doesnt exist.
-func (a *Api) Session(w *Workspace) *Session {
+func (a *API) Session(w *Workspace) *Session {
 	s, _ := a.tmux.GetSessionByName(w.Path())
 	if s == nil {
 		return nil
@@ -302,7 +240,7 @@ func (a *Api) Session(w *Workspace) *Session {
 }
 
 // Creates and/or attaches to the workspace session.
-func (a *Api) OpenSession(w *Workspace) error {
+func (a *API) OpenSession(w *Workspace) error {
 	// select the workspace
 	a.SelectWorkspace(w)
 
@@ -313,9 +251,10 @@ func (a *Api) OpenSession(w *Workspace) error {
 	}
 
 	// create a new session
+	p := w.Path()
 	session, err := a.tmux.NewSession(&gotmux.SessionOptions{
-		Name:           w.path,
-		StartDirectory: w.Path(),
+		Name:           p,
+		StartDirectory: p,
 	})
 	if err != nil {
 		return err
@@ -325,7 +264,7 @@ func (a *Api) OpenSession(w *Workspace) error {
 }
 
 // Kills the workspace session.
-func (a *Api) KillSession(w *Workspace) error {
+func (a *API) KillSession(w *Workspace) error {
 	session := a.Session(w)
 	if session == nil {
 		return errors.New("session does not exist")
@@ -334,12 +273,12 @@ func (a *Api) KillSession(w *Workspace) error {
 }
 
 // Returns the number of workspaces active workspace sessions.
-func (a *Api) SessionCount() int {
+func (a *API) SessionCount() int {
 	return len(a.AllSessions())
 }
 
 // Returns all workspace sessions.
-func (a *Api) AllSessions() []*Session {
+func (a *API) AllSessions() []*Session {
 	// build map of sessions to lookup by name
 	sMap := a.SessionMap()
 
@@ -356,7 +295,7 @@ func (a *Api) AllSessions() []*Session {
 }
 
 // Returns a session map to allow look up by its name.
-func (a *Api) SessionMap() SessionMap {
+func (a *API) SessionMap() SessionMap {
 	sMap := make(SessionMap)
 	sessions, _ := a.tmux.ListSessions()
 	for _, s := range sessions {

@@ -11,7 +11,7 @@ type View struct {
 	Keybindings []*KeybindingInfo
 }
 
-type Tui struct {
+type TUI struct {
 	*gocui.Gui
 	Keybindings []*KeybindingInfo
 }
@@ -43,12 +43,12 @@ func NewViewPosition(
 	}
 }
 
-func NewTui() *Tui {
+func NewTui() *TUI {
 	g, err := gocui.NewGui(gocui.OutputTrue, true)
 	if err != nil {
 		log.Panicln(err)
 	}
-	tui := &Tui{
+	tui := &TUI{
 		Gui:         g,
 		Keybindings: make([]*KeybindingInfo, 0),
 	}
@@ -70,38 +70,38 @@ func Resume() {
 	gocui.Resume()
 }
 
-func (tui *Tui) Update(f func()) {
+func (tui *TUI) Update(f func()) {
 	tui.Gui.Update(func(g *gocui.Gui) error {
 		f()
 		return nil
 	})
 }
 
-func (tui *Tui) SetManager(m func(t *Tui) error) {
+func (tui *TUI) SetManager(m func(t *TUI) error) {
 	tui.Gui.SetManager(gocui.ManagerFunc(func(_ *gocui.Gui) error {
 		return m(tui)
 	}))
 }
 
-func (tui *Tui) SetCenteredView(name string, sizeX int, sizeY int, verticalOffset int) *View {
+func (tui *TUI) SetCenteredView(name string, sizeX int, sizeY int, verticalOffset int) *View {
 	maxX, maxY := tui.Size()
 	p := NewViewPosition(name, maxX/2-sizeX/2, maxY/2-sizeY/2+verticalOffset, maxX/2+sizeX/2, maxY/2+sizeY/2+verticalOffset, 0)
 	view := tui.SetView(p)
 	return view
 }
 
-func (tui *Tui) SetView(p *ViewPosition) *View {
+func (tui *TUI) SetView(p *ViewPosition) *View {
 	v, _ := tui.Gui.SetView(p.viewName, p.x0, p.y0, p.x1, p.y1, p.overlaps)
 	return newView(v)
 }
 
-func (tui *Tui) Resize(view *View, p *ViewPosition) *View {
+func (tui *TUI) Resize(view *View, p *ViewPosition) *View {
 	v, _ := tui.Gui.SetView(p.viewName, p.x0, p.y0, p.x1, p.y1, p.overlaps)
 	view.View = v
 	return view
 }
 
-func (tui *Tui) FocusedView() *View {
+func (tui *TUI) FocusedView() *View {
 	v := tui.CurrentView()
 	if v != nil {
 		return newView(v)
@@ -110,23 +110,23 @@ func (tui *Tui) FocusedView() *View {
 	return nil
 }
 
-func (tui *Tui) IsFocused(view *View) bool {
+func (tui *TUI) IsFocused(view *View) bool {
 	v := tui.FocusedView()
 	return v != nil && v.Name() == view.Name()
 }
 
-func (tui *Tui) FocusView(v *View) {
+func (tui *TUI) FocusView(v *View) {
 	tui.SetCurrentView(v.Name())
 }
 
-func (tui *Tui) DeleteView(v *View) {
+func (tui *TUI) DeleteView(v *View) {
 	tui.Gui.DeleteView(v.Name())
 	tui.DeleteKeybindings(v.Name())
 }
 
 type KeyBindingBuilder struct {
 	view *View
-	tui  *Tui
+	tui  *TUI
 }
 
 type KeybindingInfo struct {
@@ -147,7 +147,7 @@ func newKeybindingInfo(key any, description string) *KeybindingInfo {
 	}
 }
 
-func (tui *Tui) KeyBinding(v *View) *KeyBindingBuilder {
+func (tui *TUI) KeyBinding(v *View) *KeyBindingBuilder {
 	return &KeyBindingBuilder{
 		view: v,
 		tui:  tui,
