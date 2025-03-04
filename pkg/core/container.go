@@ -109,15 +109,15 @@ func (c *Container) CreateWorkspace(t *Topic, name string) (*Workspace, error) {
 }
 
 func (c *Container) MoveWorkspace(w *Workspace, topic *Topic) error {
+	if w.Topic == topic {
+		return errors.New("workspace is already in this topic")
+	}
+
 	topic.mu.Lock()
 	defer topic.mu.Unlock()
 
 	w.Topic.mu.Lock()
 	defer w.Topic.mu.Unlock()
-
-	if w.Topic == topic {
-		return errors.New("workspace is already in this topic")
-	}
 
 	// if there exists a workspace with this name in the same topic
 	if topic.workspaces[w.Name] != nil {
