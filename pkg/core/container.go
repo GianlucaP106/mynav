@@ -3,6 +3,7 @@ package core
 import (
 	"errors"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -122,6 +123,10 @@ func (c *Container) MoveWorkspace(w *Workspace, topic *Topic) error {
 	// if there exists a workspace with this name in the same topic
 	if topic.workspaces[w.Name] != nil {
 		return errors.New("workspace with this name already exists")
+	}
+
+	if err := os.Rename(w.Path(), filepath.Join(c.path, topic.Name, w.Name)); err != nil {
+		return err
 	}
 
 	delete(w.Topic.workspaces, w.Name)
