@@ -3,6 +3,7 @@ package core
 import (
 	"errors"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -55,6 +56,10 @@ func (c *Container) CreateTopic(name string) (*Topic, error) {
 }
 
 func (c *Container) RenameTopic(t *Topic, name string) error {
+	if name == "" {
+		return errors.New("name must not be empty")
+	}
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -89,6 +94,10 @@ func (c *Container) DeleteTopic(t *Topic) error {
 }
 
 func (c *Container) CreateWorkspace(t *Topic, name string) (*Workspace, error) {
+	if name == "" {
+		return nil, errors.New("name must not be empty")
+	}
+
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	name = strings.ReplaceAll(name, ".", "_")
@@ -105,9 +114,19 @@ func (c *Container) MoveWorkspace(w *Workspace, topic *Topic) error {
 		return errors.New("workspace is already in this topic")
 	}
 
+	topic.mu.Lock()
+	defer topic.mu.Unlock()
+
+	w.Topic.mu.Lock()
+	defer w.Topic.mu.Unlock()
+
 	// if there exists a workspace with this name in the same topic
 	if topic.workspaces[w.Name] != nil {
 		return errors.New("workspace with this name already exists")
+	}
+
+	if err := os.Rename(w.Path(), filepath.Join(c.path, topic.Name, w.Name)); err != nil {
+		return err
 	}
 
 	delete(w.Topic.workspaces, w.Name)
@@ -117,6 +136,10 @@ func (c *Container) MoveWorkspace(w *Workspace, topic *Topic) error {
 }
 
 func (c *Container) RenameWorkspace(w *Workspace, name string) error {
+	if name == "" {
+		return errors.New("name must not be empty")
+	}
+
 	t := w.Topic
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -153,6 +176,8 @@ func (c *Container) DeleteWorkspace(w *Workspace) error {
 }
 
 func (c *Container) AllTopics() Topics {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	out := make(Topics, 0, len(c.topics))
 	for _, t := range c.topics {
 		out = append(out, t)
@@ -161,23 +186,33 @@ func (c *Container) AllTopics() Topics {
 }
 
 func (c *Container) TopicsCount() int {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	return len(c.topics)
 }
 
 func (c *Container) AllWorkspaces() Workspaces {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	out := make(Workspaces, 0)
 	for _, t := range c.topics {
+		t.mu.RLock()
 		for _, w := range t.workspaces {
 			out = append(out, w)
 		}
+		t.mu.RUnlock()
 	}
 	return out
 }
 
 func (c *Container) WorkspacesCount() int {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	count := 0
 	for _, t := range c.topics {
+		t.mu.RLock()
 		count += len(t.workspaces)
+		t.mu.RUnlock()
 	}
 	return count
 }

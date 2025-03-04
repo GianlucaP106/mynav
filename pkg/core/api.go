@@ -77,7 +77,7 @@ func (a *API) DeleteTopic(t *Topic) error {
 	for _, w := range t.workspaces {
 		a.KillSession(w)
 	}
-	// TODO: selected
+	a.SelectWorkspace(nil)
 	return a.container.DeleteTopic(t)
 }
 
