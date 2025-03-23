@@ -22,7 +22,6 @@ func newTopicsView() *Topics {
 
 func (tv *Topics) focus() {
 	a.focusView(tv.view)
-	tv.refreshDown()
 }
 
 func (tv *Topics) refreshDown() {

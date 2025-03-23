@@ -24,7 +24,10 @@ func (t *Topic) Path() string {
 }
 
 func (t *Topic) LastModified() time.Time {
-	fi, _ := os.Stat(t.Path())
+	fi, err := os.Stat(t.Path())
+	if err != nil {
+		return time.Time{}
+	}
 	return fi.ModTime()
 }
 

@@ -220,7 +220,7 @@ func newSession(s *gotmux.Session, w *Workspace) *Session {
 
 // Returns a Session by workspace using its path, nil if doesnt exist.
 func (s SessionMap) Get(w *Workspace) *Session {
-	session := s[w.Path()]
+	session := s[w.TmuxName()]
 	if session == nil {
 		return nil
 	}
@@ -230,7 +230,7 @@ func (s SessionMap) Get(w *Workspace) *Session {
 
 // Returns the session associated to this workspace, nil if doesnt exist.
 func (a *API) Session(w *Workspace) *Session {
-	s, _ := a.tmux.GetSessionByName(w.Path())
+	s, _ := a.tmux.GetSessionByName(w.TmuxName())
 	if s == nil {
 		return nil
 	}
@@ -249,10 +249,11 @@ func (a *API) OpenSession(w *Workspace) error {
 	}
 
 	// create a new session
-	p := w.Path()
+	path := w.Path()
+	name := w.TmuxName()
 	session, err := a.tmux.NewSession(&gotmux.SessionOptions{
-		Name:           p,
-		StartDirectory: p,
+		Name:           name,
+		StartDirectory: path,
 	})
 	if err != nil {
 		return err
