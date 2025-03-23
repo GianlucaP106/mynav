@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -26,12 +27,19 @@ func (w *Workspace) Path() string {
 	return filepath.Join(w.Topic.Path(), w.Name)
 }
 
+func (w *Workspace) TmuxName() string {
+	return strings.ReplaceAll(w.Path(), ".", "_")
+}
+
 func (w *Workspace) ShortPath() string {
 	return filepath.Join(w.Topic.Name, w.Name)
 }
 
 func (w *Workspace) LastModified() time.Time {
-	fi, _ := os.Stat(w.Path())
+	fi, err := os.Stat(w.Path())
+	if err != nil {
+		return time.Time{}
+	}
 	return fi.ModTime()
 }
 

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 type Filesystem struct {
@@ -56,7 +55,7 @@ func (c *Filesystem) CreateWorkspace(t *Topic, name string) (*Workspace, error) 
 		return nil, errors.New("name must not be empty")
 	}
 
-	name = strings.ReplaceAll(name, ".", "_")
+	// name = strings.ReplaceAll(name, ".", "_")
 	w := newWorkspace(t, name)
 	if err := CreateDir(w.Path()); err != nil {
 		return nil, err
@@ -82,7 +81,7 @@ func (c *Filesystem) RenameWorkspace(w *Workspace, name string) error {
 		return errors.New("name must not be empty")
 	}
 
-	name = strings.ReplaceAll(name, ".", "_")
+	// name = strings.ReplaceAll(name, ".", "_")
 
 	oldPath := w.Path()
 	w.Name = name
