@@ -38,8 +38,8 @@ func (w *WorkspaceInfo) init() {
 	}, []float64{
 		0.20,
 		0.20,
-		0.40,
 		0.20,
+		0.40,
 	})
 	w.workspaceInfo.SetStyles([]color.Style{
 		workspaceNameColor,
