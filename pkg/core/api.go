@@ -182,11 +182,10 @@ func (a *API) SelectedWorkspace() *Workspace {
 
 // Sets the persisted selected workspace.
 func (a *API) SelectWorkspace(w *Workspace) error {
-	set := a.local.SetSelectedWorkspace
 	if w != nil {
-		set(w.ShortPath())
+		a.local.SetSelectedWorkspace(w.ShortPath())
 	} else {
-		set("")
+		a.local.SetSelectedWorkspace("")
 	}
 	return nil
 }
