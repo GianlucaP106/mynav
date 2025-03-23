@@ -22,6 +22,7 @@ func newTopicsView() *Topics {
 
 func (tv *Topics) focus() {
 	a.focusView(tv.view)
+	tv.refreshDown()
 }
 
 func (tv *Topics) refreshDown() {
@@ -150,9 +151,11 @@ func (tv *Topics) init() {
 		Set(gocui.KeyEnter, "Open topic", moveRight).
 		Set('g', "Go to top", func() {
 			tv.table.Top()
+			tv.refreshDown()
 		}).
 		Set('G', "Go to bottom", func() {
 			tv.table.Bottom()
+			tv.refreshDown()
 		}).
 		Set('a', "Create a topic", func() {
 			editor(func(s string) {
