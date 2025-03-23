@@ -3,8 +3,6 @@ package core
 import (
 	"errors"
 	"sync"
-
-	"github.com/GianlucaP106/mynav/pkg/system"
 )
 
 type Datasource[T any] struct {
@@ -33,7 +31,7 @@ func newDatasource[T any](path string, defaultValue *T) (*Datasource[T], error) 
 func (d *Datasource[T]) Load() error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	data, err := system.LoadJson[T](d.Path)
+	data, err := LoadJson[T](d.Path)
 	if err != nil {
 		return errors.New("could not load data from " + d.Path)
 	}
@@ -46,7 +44,7 @@ func (d *Datasource[T]) Save(data *T) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	d.data = data
-	return system.SaveJson(d.data, d.Path)
+	return SaveJson(d.data, d.Path)
 }
 
 func (d *Datasource[T]) Get() *T {

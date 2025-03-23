@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/GianlucaP106/mynav/pkg/core"
-	"github.com/GianlucaP106/mynav/pkg/system"
 	"github.com/GianlucaP106/mynav/pkg/tui"
 	"github.com/gookit/color"
 )
@@ -89,7 +88,7 @@ func (w *WorkspaceInfo) show(workspace *core.Workspace) {
 		remote = "None"
 	}
 
-	timeStr := fmt.Sprintf("%s (%s)", workspace.LastModifiedTimeFormatted(), system.TimeAgo(workspace.LastModifiedTime()))
+	timeStr := fmt.Sprintf("%s (%s)", workspace.LastModified().Format(core.TimeFormat()), core.TimeAgo(workspace.LastModified()))
 	row := [][]string{{
 		workspace.Name,
 		workspace.Topic.Name,
@@ -124,14 +123,14 @@ func (w *WorkspaceInfo) show(workspace *core.Workspace) {
 	}
 
 	// session info
-	activity := system.UnixTime(session.Activity)
-	created := system.UnixTime(session.Created)
+	activity := core.UnixTime(session.Activity)
+	created := core.UnixTime(session.Created)
 	row2 := [][]string{{
 		"Yes",
 		strconv.Itoa(session.Windows),
 		strconv.Itoa(len(panes)),
-		system.TimeAgo(activity),
-		system.TimeAgo(created),
+		core.TimeAgo(activity),
+		core.TimeAgo(created),
 		strings.Join(commandStrs, ", "),
 	}}
 	w.sessionInfo.Fill(row2, []*core.Session{session})

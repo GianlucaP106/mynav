@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/GianlucaP106/mynav/pkg/core"
-	"github.com/GianlucaP106/mynav/pkg/system"
 	"github.com/GianlucaP106/mynav/pkg/tui"
 	"github.com/awesome-gocui/gocui"
 	"github.com/gookit/color"
@@ -93,7 +92,7 @@ func (wv *Workspaces) refreshDown() {
 func (wv *Workspaces) refresh() {
 	var workspaces core.Workspaces
 	if selectedTopic := a.topics.selected(); selectedTopic != nil {
-		workspaces = a.api.AllWorkspaces().ByTopic(selectedTopic)
+		workspaces = a.api.Workspaces(selectedTopic)
 	} else {
 		workspaces = make(core.Workspaces, 0)
 	}
@@ -106,7 +105,7 @@ func (wv *Workspaces) refresh() {
 		if s != nil {
 			tmux = "Yes"
 		}
-		timeStr := system.TimeAgo(w.LastModifiedTime())
+		timeStr := core.TimeAgo(w.LastModified())
 		rows = append(rows, []string{
 			w.Name,
 			tmux,
@@ -142,7 +141,7 @@ func (wv *Workspaces) render() {
 	wv.table.RenderTable(wv.view, func(_ int, _ *tui.TableRow[*core.Workspace]) bool {
 		return isFocused
 	}, func(i int, tr *tui.TableRow[*core.Workspace]) {
-		newTime := system.TimeAgo(tr.Value.LastModifiedTime())
+		newTime := core.TimeAgo(tr.Value.LastModified())
 		tr.Cols[len(tr.Cols)-1] = newTime
 	})
 }
@@ -202,7 +201,7 @@ func (wv *Workspaces) init() {
 					return
 				}
 
-				if !system.DoesProgramExist(split[0]) {
+				if !core.DoesProgramExist(split[0]) {
 					toast(fmt.Sprintf("%s is not installed on the system", s), toastError)
 					return
 				}
@@ -211,7 +210,7 @@ func (wv *Workspaces) init() {
 
 				var err error
 				a.runAction(func() {
-					err = system.CommandWithRedirect(split...).Run()
+					err = core.CommandWithRedirect(split...).Run()
 				})
 				if err != nil {
 					toast(err.Error(), toastError)
@@ -247,7 +246,7 @@ func (wv *Workspaces) init() {
 				return
 			}
 
-			if err := system.OpenBrowser(remote); err != nil {
+			if err := core.OpenBrowser(remote); err != nil {
 				toast(err.Error(), toastError)
 			}
 		}).
@@ -262,7 +261,7 @@ func (wv *Workspaces) init() {
 				return
 			}
 
-			system.CopyToClip(remote)
+			core.CopyToClip(remote)
 			toast("Copied "+remote+" to clipboard", toastInfo)
 		}).
 		Set(gocui.KeyEnter, "Open workspace", func() {
@@ -285,7 +284,7 @@ func (wv *Workspaces) init() {
 				toast(error.Error(), toastError)
 			} else {
 				timeTaken := time.Since(start)
-				s := fmt.Sprintf("Detached session %s - %s active", curWorkspace.Name, system.TimeDeltaStr(timeTaken))
+				s := fmt.Sprintf("Detached session %s - %s active", curWorkspace.Name, core.TimeDeltaStr(timeTaken))
 				toast(s, toastInfo)
 			}
 
@@ -301,18 +300,25 @@ func (wv *Workspaces) init() {
 			*sd = search(SearchDialogConfig[*core.Topic]{
 				onSearch: func(s string) ([][]string, []*core.Topic) {
 					rows := make([][]string, 0)
-					topics := a.api.AllTopics().ByNameContaining(s)
-					for _, t := range topics {
+					topics := a.api.Topics()
+					filtered := core.Topics{}
+					for _, topic := range topics {
+						if strings.Contains(topic.Name, s) {
+							filtered = append(filtered, topic)
+						}
+					}
+
+					for _, t := range filtered {
 						rows = append(rows, []string{
 							t.Name,
 						})
 					}
 
-					return rows, topics
+					return rows, filtered
 				},
 				initial: func() ([][]string, []*core.Topic) {
 					rows := make([][]string, 0)
-					topics := a.api.AllTopics()
+					topics := a.api.Topics()
 					for _, t := range topics {
 						rows = append(rows, []string{
 							t.Name,

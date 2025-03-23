@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"sync/atomic"
 	"time"
 
 	"github.com/GianlucaP106/mynav/pkg/core"
-	"github.com/GianlucaP106/mynav/pkg/system"
 	"github.com/GianlucaP106/mynav/pkg/tui"
 	"github.com/awesome-gocui/gocui"
 	"github.com/gookit/color"
@@ -486,7 +486,7 @@ func (a *App) initGlobalKeys() {
 			}
 
 			useFzf := false
-			if system.IsFzfInstalled() {
+			if core.IsFzfInstalled() {
 				useFzf = true
 			} else {
 				toast("install fzf it for a better experience", toastWarn)
@@ -502,15 +502,21 @@ func (a *App) initGlobalKeys() {
 				foundWorkspaces := make(core.Workspaces, 0)
 				if useFzf {
 					found := []string{}
-					found = system.FuzzyFind(allNames, s)
+					found = core.FuzzyFind(allNames, s)
 					for _, item := range found {
-						w := a.api.FindWorkspace(item)
+						w := a.api.Workspace(item)
 						if w != nil {
 							foundWorkspaces = append(foundWorkspaces, w)
 						}
 					}
 				} else {
-					foundWorkspaces = allWorkspaces.ByNameContaining(s)
+					filtered := core.Workspaces{}
+					for _, workspace := range allWorkspaces {
+						if strings.Contains(workspace.Name, s) {
+							filtered = append(filtered, workspace)
+						}
+					}
+					foundWorkspaces = filtered
 				}
 
 				return makeRows(foundWorkspaces), foundWorkspaces
