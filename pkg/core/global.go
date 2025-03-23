@@ -4,12 +4,9 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"time"
 )
 
-type GlobalConfigData struct {
-	UpdateAsked time.Time `json:"update-asked"`
-}
+type GlobalConfigData struct{}
 
 // GlobalConfig exposes crud on global configuration (~/.mynav)
 type GlobalConfig struct {
@@ -43,10 +40,4 @@ func (gc *GlobalConfig) configPath() string {
 
 func (g *GlobalConfig) ConfigData() *GlobalConfigData {
 	return g.datasource.Get()
-}
-
-func (gc *GlobalConfig) SetUpdateAsked(time time.Time) {
-	data := gc.datasource.Get()
-	data.UpdateAsked = time
-	gc.datasource.Save(data)
 }

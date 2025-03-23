@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/GianlucaP106/mynav/pkg/core"
-	"github.com/GianlucaP106/mynav/pkg/system"
 	"github.com/GianlucaP106/mynav/pkg/tui"
 	"github.com/awesome-gocui/gocui"
 	"github.com/gookit/color"
@@ -53,15 +52,14 @@ func (tv *Topics) refreshDown() {
 }
 
 func (tv *Topics) refresh() {
-	topics := a.api.AllTopics().Sorted()
+	topics := a.api.Topics().Sorted()
 
-	workspaces := a.api.AllWorkspaces()
 	rows := make([][]string, 0)
 	rowValues := make([]*core.Topic, 0)
 	for _, topic := range topics {
 		rowValues = append(rowValues, topic)
-		topicWorkspaces := workspaces.ByTopic(topic)
-		timeStr := system.TimeAgo(topic.LastModifiedTime())
+		topicWorkspaces := a.api.Workspaces(topic)
+		timeStr := core.TimeAgo(topic.LastModified())
 		rows = append(rows, []string{
 			topic.Name,
 			strconv.Itoa(len(topicWorkspaces)),
@@ -100,7 +98,7 @@ func (tv *Topics) render() {
 	tv.table.RenderTable(tv.view, func(_ int, _ *tui.TableRow[*core.Topic]) bool {
 		return currentViewSelected
 	}, func(i int, tr *tui.TableRow[*core.Topic]) {
-		newTime := system.TimeAgo(tr.Value.LastModifiedTime())
+		newTime := core.TimeAgo(tr.Value.LastModified())
 		tr.Cols[len(tr.Cols)-1] = newTime
 	})
 }

@@ -6,8 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"time"
-
-	"github.com/GianlucaP106/mynav/pkg/system"
 )
 
 // Data for the local config store.
@@ -78,7 +76,7 @@ func (l *LocalConfig) setupDatasource(rootdir string) error {
 
 func (c *LocalConfig) setupDir(rootdir string) error {
 	path := filepath.Join(rootdir, ".mynav")
-	return system.CreateDir(path)
+	return CreateDir(path)
 }
 
 func (c *LocalConfig) detect() (string, error) {
@@ -86,7 +84,7 @@ func (c *LocalConfig) detect() (string, error) {
 	if err != nil {
 		log.Panicln(err)
 	}
-	dirEntries := system.GetDirEntries(cwd)
+	dirEntries := GetDirEntries(cwd)
 	homeDir, _ := os.UserHomeDir()
 
 	for {
@@ -109,7 +107,7 @@ func (c *LocalConfig) detect() (string, error) {
 			}
 		}
 		cwd = filepath.Dir(cwd)
-		dirEntries = system.GetDirEntries(cwd)
+		dirEntries = GetDirEntries(cwd)
 	}
 }
 

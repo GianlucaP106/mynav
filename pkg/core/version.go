@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"os/exec"
 
 	"golang.org/x/mod/semver"
 )
@@ -12,11 +11,6 @@ import (
 type updater struct{}
 
 const Version = "v2.1.1"
-
-// Updates mynav by running update script.
-func (u *updater) UpdateMynav() error {
-	return exec.Command("sh", "-c", "curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.sh | bash").Run()
-}
 
 // Returns if a mynav update is available.
 func (u *updater) UpdateAvailable() (bool, string) {

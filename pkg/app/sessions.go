@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/GianlucaP106/mynav/pkg/core"
-	"github.com/GianlucaP106/mynav/pkg/system"
 	"github.com/GianlucaP106/mynav/pkg/tui"
 	"github.com/awesome-gocui/gocui"
 	"github.com/gookit/color"
@@ -89,15 +88,15 @@ func (s *Sessions) refresh() {
 
 	// sort by last attached
 	sort.Slice(sessions, func(i, j int) bool {
-		t1 := system.UnixTime(sessions[i].LastAttached)
-		t2 := system.UnixTime(sessions[j].LastAttached)
+		t1 := core.UnixTime(sessions[i].LastAttached)
+		t2 := core.UnixTime(sessions[j].LastAttached)
 		return t1.After(t2)
 	})
 
 	// fill table
 	rows := make([][]string, 0)
 	for _, s := range sessions {
-		timeStr := system.TimeAgo(system.UnixTime(s.LastAttached))
+		timeStr := core.TimeAgo(core.UnixTime(s.LastAttached))
 		rows = append(rows, []string{
 			s.Workspace.ShortPath(),
 			strconv.Itoa(s.Windows),
@@ -126,7 +125,7 @@ func (s *Sessions) render() {
 	s.table.RenderTable(s.view, func(i int, tr *tui.TableRow[*core.Session]) bool {
 		return isFocused
 	}, func(i int, tr *tui.TableRow[*core.Session]) {
-		newTime := system.TimeAgo(system.UnixTime(tr.Value.LastAttached))
+		newTime := core.TimeAgo(core.UnixTime(tr.Value.LastAttached))
 		tr.Cols[len(tr.Cols)-1] = newTime
 	})
 }
@@ -195,7 +194,7 @@ func (s *Sessions) init() {
 				toast(err.Error(), toastError)
 			} else {
 				timeTaken := time.Since(start)
-				s := fmt.Sprintf("Detached session %s - %s active", session.Workspace.Name, system.TimeDeltaStr(timeTaken))
+				s := fmt.Sprintf("Detached session %s - %s active", session.Workspace.Name, core.TimeDeltaStr(timeTaken))
 				toast(s, toastInfo)
 			}
 

@@ -10,11 +10,11 @@ import (
 
 // API exposes all core api functions.
 type API struct {
-	container *Container
-	tmux      *gotmux.Tmux
-	local     *LocalConfig
-	global    *GlobalConfig
-	updater   *updater
+	fs      *Filesystem
+	tmux    *gotmux.Tmux
+	local   *LocalConfig
+	global  *GlobalConfig
+	updater *updater
 }
 
 // Inits the Api.
@@ -41,10 +41,10 @@ func NewApi(dir string) (*API, error) {
 		return nil, err
 	}
 
-	c := newContainer(local.path)
+	c := newFilesystem(local.path)
 
 	api := &API{}
-	api.container = c
+	api.fs = c
 	api.tmux = tmux
 	api.local = local
 	api.global = global
@@ -59,26 +59,26 @@ func (a *API) UpdateAvailable() (bool, string) {
 
 // Creates a new topic.
 func (a *API) NewTopic(name string) (*Topic, error) {
-	return a.container.CreateTopic(name)
+	return a.fs.CreateTopic(name)
 }
 
 // Returns all topics.
-func (a *API) AllTopics() Topics {
-	return a.container.AllTopics()
+func (a *API) Topics() Topics {
+	return a.fs.Topics()
 }
 
 // Returns topic count.
 func (a *API) TopicCount() int {
-	return a.container.TopicsCount()
+	return a.fs.TopicsCount()
 }
 
 // Deletes a topic.
 func (a *API) DeleteTopic(t *Topic) error {
-	for _, w := range t.workspaces {
+	for _, w := range a.Workspaces(t) {
 		a.KillSession(w)
 	}
 	a.SelectWorkspace(nil)
-	return a.container.DeleteTopic(t)
+	return a.fs.DeleteTopic(t)
 }
 
 // Renames a topic.
@@ -86,12 +86,12 @@ func (a *API) RenameTopic(t *Topic, name string) error {
 	// store topic path for session rename
 	oldTopicPath := t.Path()
 
-	if err := a.container.RenameTopic(t, name); err != nil {
+	if err := a.fs.RenameTopic(t, name); err != nil {
 		return err
 	}
 
 	// rename all sessions
-	for _, w := range t.workspaces {
+	for _, w := range a.Workspaces(t) {
 		session, err := a.tmux.GetSessionByName(filepath.Join(oldTopicPath, w.Name))
 		if err != nil {
 			return err
@@ -109,7 +109,7 @@ func (a *API) RenameTopic(t *Topic, name string) error {
 
 // Creates a new workspace.
 func (a *API) NewWorkspace(t *Topic, name string) (*Workspace, error) {
-	w, err := a.container.CreateWorkspace(t, name)
+	w, err := a.fs.CreateWorkspace(t, name)
 	if err != nil {
 		return nil, err
 	}
@@ -117,14 +117,19 @@ func (a *API) NewWorkspace(t *Topic, name string) (*Workspace, error) {
 	return w, nil
 }
 
+// Returns the workspaces for this topic.
+func (a *API) Workspaces(t *Topic) Workspaces {
+	return a.fs.Workspaces(t)
+}
+
 // Returns all workspaces.
 func (a *API) AllWorkspaces() Workspaces {
-	return a.container.AllWorkspaces()
+	return a.fs.AllWorkspaces()
 }
 
 // Returns the workspace count.
 func (a *API) WorkspacesCount() int {
-	return a.container.WorkspacesCount()
+	return a.fs.WorkspacesCount()
 }
 
 // Deletes this workspace.
@@ -135,14 +140,14 @@ func (a *API) DeleteWorkspace(w *Workspace) error {
 		a.SelectWorkspace(nil)
 	}
 
-	return a.container.DeleteWorkspace(w)
+	return a.fs.DeleteWorkspace(w)
 }
 
 // Renames the workspace.
 func (a *API) RenameWorkspace(w *Workspace, name string) error {
 	s := a.Session(w)
 
-	if err := a.container.RenameWorkspace(w, name); err != nil {
+	if err := a.fs.RenameWorkspace(w, name); err != nil {
 		return err
 	}
 
@@ -157,7 +162,7 @@ func (a *API) RenameWorkspace(w *Workspace, name string) error {
 // Moves the workspace to a different topic.
 func (a *API) MoveWorkspace(w *Workspace, topic *Topic) error {
 	s := a.Session(w)
-	if err := a.container.MoveWorkspace(w, topic); err != nil {
+	if err := a.fs.MoveWorkspace(w, topic); err != nil {
 		return err
 	}
 
@@ -172,29 +177,22 @@ func (a *API) MoveWorkspace(w *Workspace, topic *Topic) error {
 // Gets the persisted selected workspace.
 func (a *API) SelectedWorkspace() *Workspace {
 	lcd := a.local.ConfigData()
-	return a.FindWorkspace(lcd.SelectedWorkspace)
+	return a.Workspace(lcd.SelectedWorkspace)
 }
 
 // Sets the persisted selected workspace.
 func (a *API) SelectWorkspace(w *Workspace) error {
-	set := a.local.SetSelectedWorkspace
 	if w != nil {
-		set(w.ShortPath())
+		a.local.SetSelectedWorkspace(w.ShortPath())
 	} else {
-		set("")
+		a.local.SetSelectedWorkspace("")
 	}
 	return nil
 }
 
-func (s *API) FindWorkspace(shortPath string) *Workspace {
-	topicName, workspaceName := filepath.Dir(shortPath), filepath.Base(shortPath)
-	topic := s.container.topics[topicName]
-
-	if topic == nil {
-		return nil
-	}
-
-	return topic.workspaces[workspaceName]
+// Returns a Workspace object if short path is valid.
+func (s *API) Workspace(shortPath string) *Workspace {
+	return s.fs.Workspace(shortPath)
 }
 
 // Clones repo into workspace.
