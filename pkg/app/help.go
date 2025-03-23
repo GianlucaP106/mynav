@@ -74,6 +74,14 @@ func help(v *tui.View) {
 		Set('k', "Move up", up).
 		Set(gocui.KeyArrowDown, "Move down", down).
 		Set(gocui.KeyArrowUp, "Move up", up).
+		Set('g', "Go to top", func() {
+			h.table.Top()
+			h.show()
+		}).
+		Set('G', "Go to bottom", func() {
+			h.table.Bottom()
+			h.show()
+		}).
 		Set('?', "Close cheatsheet", func() {
 			a.ui.DeleteView(h.view)
 			if prevView != nil {
