@@ -466,9 +466,11 @@ func (wv *Workspaces) init() {
 		}).
 		Set('g', "Go to top", func() {
 			wv.table.Top()
+			wv.refreshDown()
 		}).
 		Set('G', "Go to bottom", func() {
 			wv.table.Bottom()
+			wv.refreshDown()
 		}).
 		Set(gocui.KeyArrowRight, "Focus sessions view", func() {
 			a.sessions.focus()
