@@ -40,12 +40,20 @@ func (p *Preview) refresh(session *core.Session) {
 
 	// collect all previews (one per pane)
 	previews := make([]string, 0)
+	firstActivePane := -1
 	for _, w := range windows {
 		panes, _ := w.ListPanes()
 		for _, p := range panes {
+			if firstActivePane == -1 && w.Active {
+				firstActivePane = len(previews)
+			}
 			preview, _ := p.Capture()
 			previews = append(previews, preview)
 		}
+	}
+
+	if firstActivePane > -1 {
+		p.idx = firstActivePane
 	}
 
 	p.setPreviews(previews)
