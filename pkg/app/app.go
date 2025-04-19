@@ -476,6 +476,7 @@ func (a *App) initGlobalKeys() {
 					if session != nil {
 						sessionStr = "Yes"
 					}
+
 					rows = append(rows, []string{
 						w.Name,
 						w.Topic.Name,
@@ -504,6 +505,10 @@ func (a *App) initGlobalKeys() {
 					found := []string{}
 					found = core.FuzzyFind(allNames, s)
 					for _, item := range found {
+						if item == "" {
+							continue
+						}
+
 						w := a.api.Workspace(item)
 						if w != nil {
 							foundWorkspaces = append(foundWorkspaces, w)

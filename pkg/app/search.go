@@ -88,6 +88,22 @@ func search[T any](params SearchDialogConfig[T]) *Search[T] {
 				a.ui.FocusView(prevView)
 			}
 		}).
+		Set(gocui.KeyCtrlJ, "Move down list", func() {
+			s.table.Down()
+			s.renderTable()
+		}).
+		Set(gocui.KeyCtrlK, "Move up list", func() {
+			s.table.Up()
+			s.renderTable()
+		}).
+		Set(gocui.KeyCtrlN, "Move down list", func() {
+			s.table.Down()
+			s.renderTable()
+		}).
+		Set(gocui.KeyCtrlP, "Move up list", func() {
+			s.table.Up()
+			s.renderTable()
+		}).
 		Set(gocui.KeyTab, "Toggle focus", func() {
 			s.focusList()
 		})
