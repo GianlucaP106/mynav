@@ -395,7 +395,13 @@ func (a *App) refreshInit() {
 		a.ui.Update(func() {
 			wv.setLoading(false)
 		})
+
+		selectedSession := a.api.Session(selected)
 		if selected != nil {
+			if selectedSession != nil {
+				sv.selectSession(selectedSession)
+			}
+
 			wv.selectWorkspace(selected)
 		}
 		wv.refreshPreview()
@@ -407,7 +413,11 @@ func (a *App) refreshInit() {
 
 			// initial focus
 			if selected != nil {
-				wv.focus()
+				if selectedSession != nil {
+					sv.focus()
+				} else {
+					wv.focus()
+				}
 			} else {
 				tv.focus()
 			}
@@ -536,11 +546,20 @@ func (a *App) initGlobalKeys() {
 					a.workspaces.refresh()
 					a.workspaces.selectWorkspace(w)
 
+					session := a.api.Session(w)
+					if session != nil {
+						a.sessions.selectSession(session)
+					}
+
 					if *sd != nil {
 						(*sd).close()
 					}
 
-					a.workspaces.focus()
+					if session != nil {
+						a.sessions.focus()
+					} else {
+						a.workspaces.focus()
+					}
 				},
 				onSelectDescription: "Go to workspace",
 				searchViewTitle:     "Search a workspace",
