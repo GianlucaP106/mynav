@@ -2,6 +2,8 @@ package app
 
 import (
 	"fmt"
+	"sync"
+	"time"
 
 	"github.com/GianlucaP106/mynav/pkg/core"
 	"github.com/GianlucaP106/mynav/pkg/tui"
@@ -13,8 +15,13 @@ type Preview struct {
 	// session to show
 	previews []string
 
+	// preview session
+	session *core.Session
+
 	// idx of preview to show
 	idx int
+
+	mu sync.RWMutex
 }
 
 func newPreview() *Preview {
@@ -27,32 +34,59 @@ func (p *Preview) init() {
 	p.view.Title = " Preview "
 	a.styleView(p.view)
 	p.setPreviews(nil)
+	go func() {
+		t := time.NewTicker(time.Second * 3)
+		for range t.C {
+			if !a.attached.Load() {
+				p.mu.Lock()
+				p.refresh(false)
+				p.mu.Unlock()
+				a.ui.Update(func() {
+					p.render()
+				})
+			}
+		}
+	}()
 }
 
-func (p *Preview) refresh(session *core.Session) {
+func (p *Preview) setSession(session *core.Session) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	if session == nil {
 		p.setPreviews(nil)
+		p.session = nil
+		return
+	}
+
+	p.session = session
+	p.refresh(true)
+}
+
+func (p *Preview) refresh(focusFirstPane bool) {
+	if p.session == nil {
 		return
 	}
 
 	// get all windows for this session
-	windows, _ := session.ListWindows()
+	windows, _ := p.session.ListWindows()
 
 	// collect all previews (one per pane)
 	previews := make([]string, 0)
 	firstActivePane := -1
 	for _, w := range windows {
 		panes, _ := w.ListPanes()
-		for _, p := range panes {
+		for idx, pane := range panes {
 			if firstActivePane == -1 && w.Active {
-				firstActivePane = len(previews)
+				firstActivePane = idx
 			}
-			preview, _ := p.Capture()
+
+			preview, _ := pane.Capture()
 			previews = append(previews, preview)
 		}
 	}
 
-	if firstActivePane > -1 {
+	if focusFirstPane && firstActivePane > -1 {
 		p.idx = firstActivePane
 	}
 
@@ -60,6 +94,9 @@ func (p *Preview) refresh(session *core.Session) {
 }
 
 func (p *Preview) render() {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
 	p.view.Clear()
 	a.ui.Resize(p.view, getViewPosition(p.view.Name()))
 
@@ -87,6 +124,8 @@ func (p *Preview) setPreviews(previews []string) {
 }
 
 func (p *Preview) increment() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	if p.idx == len(p.previews)-1 {
 		p.idx = 0
 	} else {
@@ -95,6 +134,8 @@ func (p *Preview) increment() {
 }
 
 func (p *Preview) decrement() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	if p.idx == 0 {
 		p.idx = len(p.previews) - 1
 	} else {

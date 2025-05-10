@@ -61,11 +61,11 @@ func (s *Sessions) showInfo() {
 func (s *Sessions) refreshPreview() {
 	session := s.selected()
 	if session == nil {
-		a.preview.refresh(nil)
+		a.preview.setSession(nil)
 		return
 	}
 
-	a.preview.refresh(session)
+	a.preview.setSession(session)
 }
 
 func (s *Sessions) focus() {
@@ -188,10 +188,10 @@ func (s *Sessions) init() {
 			}
 
 			start := time.Now()
-			var err error
-			a.runAction(func() {
-				err = a.api.OpenSession(session.Workspace)
+			err := a.runAction(func() error {
+				return a.api.OpenSession(session.Workspace)
 			})
+
 			if err != nil {
 				toast(err.Error(), toastError)
 			} else {
