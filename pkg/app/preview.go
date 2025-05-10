@@ -39,7 +39,7 @@ func (p *Preview) init() {
 		for range t.C {
 			if !a.attached.Load() {
 				p.mu.Lock()
-				p.refresh(false)
+				p.refresh()
 				p.mu.Unlock()
 				a.ui.Update(func() {
 					p.render()
@@ -60,10 +60,10 @@ func (p *Preview) setSession(session *core.Session) {
 	}
 
 	p.session = session
-	p.refresh(true)
+	p.refresh()
 }
 
-func (p *Preview) refresh(focusFirstPane bool) {
+func (p *Preview) refresh() {
 	if p.session == nil {
 		return
 	}
@@ -73,21 +73,12 @@ func (p *Preview) refresh(focusFirstPane bool) {
 
 	// collect all previews (one per pane)
 	previews := make([]string, 0)
-	firstActivePane := -1
 	for _, w := range windows {
 		panes, _ := w.ListPanes()
-		for idx, pane := range panes {
-			if firstActivePane == -1 && w.Active {
-				firstActivePane = idx
-			}
-
+		for _, pane := range panes {
 			preview, _ := pane.Capture()
 			previews = append(previews, preview)
 		}
-	}
-
-	if focusFirstPane && firstActivePane > -1 {
-		p.idx = firstActivePane
 	}
 
 	p.setPreviews(previews)
