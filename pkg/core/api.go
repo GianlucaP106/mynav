@@ -230,6 +230,10 @@ func (s SessionMap) Get(w *Workspace) *Session {
 
 // Returns the session associated to this workspace, nil if doesnt exist.
 func (a *API) Session(w *Workspace) *Session {
+	if w == nil {
+		return nil
+	}
+
 	s, _ := a.tmux.GetSessionByName(w.TmuxName())
 	if s == nil {
 		return nil

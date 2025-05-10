@@ -512,8 +512,7 @@ func (a *App) initGlobalKeys() {
 			searchFor := func(s string) ([][]string, []*core.Workspace) {
 				foundWorkspaces := make(core.Workspaces, 0)
 				if useFzf {
-					found := []string{}
-					found = core.FuzzyFind(allNames, s)
+					found := core.FuzzyFind(allNames, s)
 					for _, item := range found {
 						if item == "" {
 							continue
