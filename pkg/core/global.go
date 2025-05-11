@@ -20,7 +20,6 @@ func newGlobalConfig() (*GlobalConfig, error) {
 		return nil, err
 	}
 	g.datasource = d
-
 	return g, nil
 }
 
