@@ -35,6 +35,10 @@ type App struct {
 
 	// if the app ui is first initialized
 	initialized atomic.Bool
+
+	// if a session is currently attached (or yielding to another process)
+	// background workers can use this to avoid consuming ressources
+	attached atomic.Bool
 }
 
 // worker magic numbers
@@ -429,17 +433,20 @@ func (a *App) refreshInit() {
 }
 
 // Runs f in between a tui suspend-resume allowing other terminal apps to run.
-func (a *App) runAction(f func()) {
+func (a *App) runAction(f func() error) error {
+	a.attached.Store(true)
 	tui.Suspend()
-	f()
+	err := f()
 	tui.Resume()
+	a.attached.Store(false)
+	return err
 }
 
 // Closes the app after count seconds and displays a ticker as a toast.
 func (a *App) closeAfter(count int, delay time.Duration) {
 	time.AfterFunc(delay, func() {
-		ticker := time.Tick(time.Second)
-		for range ticker {
+		ticker := time.NewTicker(time.Second)
+		for range ticker.C {
 			if count == 0 {
 				a.ui.Close()
 				os.Exit(0)

@@ -71,12 +71,12 @@ func (wv *Workspaces) showInfo() {
 func (wv *Workspaces) refreshPreview() {
 	w := wv.selected()
 	if w == nil {
-		a.preview.refresh(nil)
+		a.preview.setSession(nil)
 		return
 	}
 
 	s := a.api.Session(w)
-	a.preview.refresh(s)
+	a.preview.setSession(s)
 }
 
 func (wv *Workspaces) refreshDown() {
@@ -208,9 +208,8 @@ func (wv *Workspaces) init() {
 
 				split = append(split, w.Path())
 
-				var err error
-				a.runAction(func() {
-					err = core.CommandWithRedirect(split...).Run()
+				err := a.runAction(func() error {
+					return core.CommandWithRedirect(split...).Run()
 				})
 				if err != nil {
 					toast(err.Error(), toastError)
@@ -276,12 +275,11 @@ func (wv *Workspaces) init() {
 			}
 
 			start := time.Now()
-			var error error
-			a.runAction(func() {
-				error = a.api.OpenSession(curWorkspace)
+			err := a.runAction(func() error {
+				return a.api.OpenSession(curWorkspace)
 			})
-			if error != nil {
-				toast(error.Error(), toastError)
+			if err != nil {
+				toast(err.Error(), toastError)
 			} else {
 				timeTaken := time.Since(start)
 				s := fmt.Sprintf("Detached session %s - %s active", curWorkspace.Name, core.TimeDeltaStr(timeTaken))
