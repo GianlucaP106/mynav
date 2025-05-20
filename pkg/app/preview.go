@@ -12,16 +12,15 @@ import (
 type Preview struct {
 	view *tui.View
 
+	// previewe raw content
+	previews   []string
+	previewIdx int
+	previewMu  sync.RWMutex
+
 	// session to show
-	previews []string
-
-	// preview session
-	session *core.Session
-
-	// idx of preview to show
-	idx int
-
-	mu sync.RWMutex
+	// this needs to be kept track of because of periodic refresh
+	session   *core.Session
+	sessionMu sync.RWMutex
 }
 
 func newPreview() *Preview {
@@ -38,9 +37,7 @@ func (p *Preview) init() {
 		t := time.NewTicker(time.Second * 3)
 		for range t.C {
 			if !a.attached.Load() {
-				p.mu.Lock()
 				p.refresh()
-				p.mu.Unlock()
 				a.ui.Update(func() {
 					p.render()
 				})
@@ -50,26 +47,34 @@ func (p *Preview) init() {
 }
 
 func (p *Preview) setSession(session *core.Session) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
 	if session == nil {
-		p.setPreviews(nil)
+		p.sessionMu.Lock()
 		p.session = nil
+		p.sessionMu.Unlock()
+
+		p.setPreviews(nil)
 		return
 	}
 
+	p.sessionMu.Lock()
 	p.session = session
+	p.sessionMu.Unlock()
+
 	p.refresh()
 }
 
 func (p *Preview) refresh() {
+	p.sessionMu.RLock()
+
 	if p.session == nil {
+		p.sessionMu.RUnlock()
 		return
 	}
 
 	// get all windows for this session
 	windows, _ := p.session.ListWindows()
+
+	p.sessionMu.RUnlock()
 
 	// collect all previews (one per pane)
 	previews := make([]string, 0)
@@ -85,8 +90,8 @@ func (p *Preview) refresh() {
 }
 
 func (p *Preview) render() {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
+	p.previewMu.RLock()
+	defer p.previewMu.RUnlock()
 
 	p.view.Clear()
 	a.ui.Resize(p.view, getViewPosition(p.view.Name()))
@@ -96,40 +101,43 @@ func (p *Preview) render() {
 		return
 	}
 
-	s := p.previews[p.idx]
-	p.view.Subtitle = fmt.Sprintf(" %d / %d ", min(p.idx+1, len(p.previews)), len(p.previews))
+	s := p.previews[p.previewIdx]
+	p.view.Subtitle = fmt.Sprintf(" %d / %d ", min(p.previewIdx+1, len(p.previews)), len(p.previews))
 	fmt.Fprintln(p.view, s)
 }
 
 func (p *Preview) setPreviews(previews []string) {
+	p.previewMu.Lock()
+	defer p.previewMu.Unlock()
+
 	if len(previews) == 0 {
-		p.idx = 0
+		p.previewIdx = 0
 		p.previews = previews
 		return
 	}
 
-	if p.idx >= len(previews) {
-		p.idx = len(previews) - 1
+	if p.previewIdx >= len(previews) {
+		p.previewIdx = len(previews) - 1
 	}
 	p.previews = previews
 }
 
 func (p *Preview) increment() {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	if p.idx == len(p.previews)-1 {
-		p.idx = 0
+	p.previewMu.Lock()
+	defer p.previewMu.Unlock()
+	if p.previewIdx == len(p.previews)-1 {
+		p.previewIdx = 0
 	} else {
-		p.idx++
+		p.previewIdx++
 	}
 }
 
 func (p *Preview) decrement() {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	if p.idx == 0 {
-		p.idx = len(p.previews) - 1
+	p.previewMu.Lock()
+	defer p.previewMu.Unlock()
+	if p.previewIdx == 0 {
+		p.previewIdx = len(p.previews) - 1
 	} else {
-		p.idx--
+		p.previewIdx--
 	}
 }
