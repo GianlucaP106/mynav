@@ -16,28 +16,23 @@ Before creating mynav, I often found myself frustrated when working on multiple 
 
 ## ✨ Features
 
-- 📁 **Smart Workspace Organization**
-  - Group projects into topics for better organization
-  - Automatic git repository detection and status
+- 📁 **Workspace Management**
+  - Group workspaces into topics
   - Quick workspace creation and navigation
-  - Customizable workspace hierarchy
+  - Lives directly on your filesystem
 
 - 💻 **Advanced Session Management**
-  - Seamless tmux session creation and switching
+  - Create, modify, delete and enter sessions seamlessly
   - Live session preview with window/pane information
-  - Bulk session operations (kill, detach)
-
-- 🎯 **Modern Interface**
-  - Clean, intuitive terminal UI
-  - Vim-style navigation
-  - Quick updates and notifications
-  - Fuzzy search functionality
+  - Fast session switching
 
 - 🔧 **Developer Experience**
-  - Git integration with repository status
-  - Built with tmux (uses tmux for sessions)
-  - Cross-platform support (macOS & Linux)
+  - Fuzzy search workspaces and sessions
+  - Built on tmux
   - Extensive keyboard shortcuts
+  - Git integration
+  - Clean, intuitive Lazygit-like terminal UI
+  - Vim-style navigation
 
 ## 🚀 Quick Start
 
@@ -80,43 +75,33 @@ go build
 - Git (optional, for repository features)
 - Terminal with UTF-8 support
 
+---
+
 ## 📖 Usage
 
-### Basic Commands
+Mynav requires a root directory to initialize in. You may initialize multiple directories but not nested. You can start mynav anywhere with:
 
 ```bash
-# Launch mynav in current directory
 mynav
-
-# Launch in specific directory
-mynav -path /your/project/path
-
-# Check version
-mynav -version
 ```
 
-### Common Workflows
+> This will look for an existing configuration if it exists (in the current or any parent directory).
 
-- **Creating a New Workspace and Session**
+You may specify a directory to launch in using:
 
-   ```bash
-   # Using the UI
-   mynav
-   # Press 'a' to create new topic
-   # Enter topic and press 'a' to create a workspace
-   # Enter the workspace session with 'Enter'
-   ```
+```bash
+mynav -path /your/root/path
+```
 
-- **Managing Sessions**
+You can use the `?` key in the TUI to view all the key bindings that are available in your context.
 
-   ```bash
-   # Using the UI
-   mynav
-   # Navigate to workspaces
-   # Press Enter to create/attach to session
-   # Navigate to sessions
-   # Press 'X' to kill session
-   ```
+## 📺 Tmux Integration
+
+Mynav integrates seamlessly with **tmux**, using it to manage sessions efficiently. When a session is created from a workspace, the workspace’s directory path is used as the tmux session name. This design keeps the state transparent and familiar, rather than hidden behind abstraction.
+
+Once inside a tmux session, you can use all your usual tmux features. One key feature that enhances the mynav experience is the ability to **detach from the session** and return to the mynav interface by pressing **`Leader + D`**.
+
+This tight integration gives you the full power of tmux while keeping mynav in sync with your development workflow.
 
 ## ⌨️ Key Bindings
 
