@@ -16,25 +16,23 @@ Before creating mynav, I often found myself frustrated when working on multiple 
 
 ## ✨ Features
 
-- 📁 **Smart Workspace Organization**
-  - Group projects into topics for better organization
-  - Automatic git repository detection and status
+- 📁 **Workspace Management**
+  - Group workspaces into topics
   - Quick workspace creation and navigation
+  - Lives directly on your filesystem
 
 - 💻 **Advanced Session Management**
-  - Seamless tmux session creation and switching
-  - Live session preview with window/pane information
+  - Session creation and switching
   - Create, modify, delete and enter sessions seamlessly
-
-- 🎯 **Modern Interface**
-  - Clean, intuitive terminal UI
-  - Vim-style navigation
-  - Fuzzy search functionality
+  - Live session preview with window/pane information
 
 - 🔧 **Developer Experience**
-  - Git integration with repository status
-  - Built with tmux (uses tmux for sessions)
+  - Fuzzy search workspaces and sessions
+  - Built on tmux
   - Extensive keyboard shortcuts
+  - Git integration
+  - Clean, intuitive Lazygit-like terminal UI
+  - Vim-style navigation
 
 ## 🚀 Quick Start
 
