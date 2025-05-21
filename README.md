@@ -22,9 +22,9 @@ Before creating mynav, I often found myself frustrated when working on multiple 
   - Lives directly on your filesystem
 
 - 💻 **Advanced Session Management**
-  - Session creation and switching
   - Create, modify, delete and enter sessions seamlessly
   - Live session preview with window/pane information
+  - Fast session switching
 
 - 🔧 **Developer Experience**
   - Fuzzy search workspaces and sessions
