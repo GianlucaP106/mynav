@@ -95,6 +95,8 @@ You may specify a directory to launch in using:
 mynav -path /your/root/path
 ```
 
+You can use the `?` key in the TUI to view all the key bindings that are available in your context.
+
 ## 📺 Tmux Integration
 
 Mynav integrates seamlessly with **tmux**, using it to manage sessions efficiently. When a session is created from a workspace, the workspace’s directory path is used as the tmux session name. This design keeps the state transparent and familiar, rather than hidden behind abstraction.
