@@ -56,6 +56,7 @@ func (s *Sessions) showInfo() {
 	}
 
 	a.info.show(session.Workspace)
+	a.info.showSession(session)
 }
 
 func (s *Sessions) refreshPreview() {
@@ -85,7 +86,6 @@ func (s *Sessions) refreshDown() {
 
 func (s *Sessions) refresh() {
 	sessions := a.api.AllSessions()
-
 	// sort by last attached
 	sort.Slice(sessions, func(i, j int) bool {
 		t1 := core.UnixTime(sessions[i].LastAttached)
@@ -94,16 +94,24 @@ func (s *Sessions) refresh() {
 	})
 
 	// fill table
-	rows := make([][]string, 0)
+	tableRows := make([]*tui.TableRow[*core.Session], 0)
 	for _, s := range sessions {
 		timeStr := core.TimeAgo(core.UnixTime(s.LastAttached))
-		rows = append(rows, []string{
-			s.Workspace.ShortPath(),
-			strconv.Itoa(s.Windows),
-			timeStr,
+		var wMarker string
+		if s.Workspace != nil {
+			wMarker = "Yes"
+		}
+		tableRows = append(tableRows, &tui.TableRow[*core.Session]{
+			Cols: []string{
+				s.DisplayName(),
+				strconv.Itoa(s.Windows),
+				wMarker,
+				timeStr,
+			},
+			Value: s,
 		})
 	}
-	s.table.Fill(rows, sessions)
+	s.table.Fill(tableRows)
 }
 
 func (s *Sessions) render() {
@@ -130,6 +138,28 @@ func (s *Sessions) render() {
 	})
 }
 
+func (s *Sessions) attach(session *core.Session) {
+	if core.IsTmuxSession() {
+		toast("A tmux session is already active", toastWarn)
+		return
+	}
+
+	start := time.Now()
+	err := a.runAction(func() error {
+		return session.Attach()
+	})
+
+	if err != nil {
+		toast(err.Error(), toastError)
+	} else {
+		timeTaken := time.Since(start)
+		s := fmt.Sprintf("Detached session %s - %s active", session.DisplayName(), core.TimeDeltaStr(timeTaken))
+		toast(s, toastInfo)
+	}
+
+	a.refresh(nil, nil, session)
+}
+
 func (s *Sessions) init() {
 	s.view = a.ui.SetView(getViewPosition(SessionsView))
 	s.view.Title = " Sessions "
@@ -137,17 +167,20 @@ func (s *Sessions) init() {
 
 	sizeX, sizeY := s.view.Size()
 	titles := []string{
-		"Workspace",
+		"Name",
 		"Windows",
+		"Workspace",
 		"Last Attached",
 	}
 	proportions := []float64{
 		0.40,
-		0.20,
-		0.40,
+		0.15,
+		0.15,
+		0.30,
 	}
 	styles := []color.Style{
 		workspaceNameColor,
+		sessionMarkerColor,
 		sessionMarkerColor,
 		timestampColor,
 	}
@@ -182,25 +215,7 @@ func (s *Sessions) init() {
 				return
 			}
 
-			if core.IsTmuxSession() {
-				toast("A tmux session is already active", toastWarn)
-				return
-			}
-
-			start := time.Now()
-			err := a.runAction(func() error {
-				return a.api.OpenSession(session.Workspace)
-			})
-
-			if err != nil {
-				toast(err.Error(), toastError)
-			} else {
-				timeTaken := time.Since(start)
-				s := fmt.Sprintf("Detached session %s - %s active", session.Workspace.Name, core.TimeDeltaStr(timeTaken))
-				toast(s, toastInfo)
-			}
-
-			a.refresh(nil, nil, session)
+			s.attach(session)
 		}).
 		Set('D', "Kill session", func() {
 			session := s.selected()
@@ -212,24 +227,40 @@ func (s *Sessions) init() {
 					return
 				}
 
-				if err := a.api.KillSession(session.Workspace); err != nil {
+				if err := session.Kill(); err != nil {
 					toast(err.Error(), toastError)
 					return
 				}
 
 				a.refresh(nil, nil, session)
-				toast("Killed session "+session.Workspace.Name, toastInfo)
-			}, fmt.Sprintf("Are you sure you want to delete session for %s?", session.Workspace.Name))
+				toast("Killed session "+session.DisplayName(), toastInfo)
+			}, fmt.Sprintf("Are you sure you want to delete session for %s?", session.DisplayName()))
 		}).
 		Set('w', "Go to workspace", func() {
 			session := s.selected()
 			if session == nil {
 				return
 			}
+
+			if session.Workspace == nil {
+				toast("No associated workspace", toastWarn)
+				return
+			}
+
 			a.topics.selectTopic(session.Workspace.Topic)
 			a.workspaces.refresh()
 			a.workspaces.selectWorkspace(session.Workspace)
 			a.workspaces.focus()
+		}).
+		Set('a', "Create a Sesssion", func() {
+			editor(func(name string) {
+				session, err := a.api.NewSession(name)
+				if err != nil {
+					toast(err.Error(), toastError)
+					return
+				}
+				s.attach(session)
+			}, func() {}, "Session Name", smallEditorSize, "")
 		}).
 		Set('h', "Focus workspaces view", func() {
 			a.workspaces.focus()

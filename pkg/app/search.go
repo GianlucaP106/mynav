@@ -17,10 +17,10 @@ type Search[T any] struct {
 
 // Params of the search dialog.
 type SearchDialogConfig[T any] struct {
-	onSearch            func(s string) ([][]string, []T)
+	onSearch            func(s string) []*tui.TableRow[T]
 	onSelect            func(a T)
-	onType              func(string) ([][]string, []T)
-	initial             func() ([][]string, []T)
+	onType              func(string) []*tui.TableRow[T]
+	initial             func() []*tui.TableRow[T]
 	onSelectDescription string
 	searchViewTitle     string
 	tableViewTitle      string
@@ -44,8 +44,7 @@ func search[T any](params SearchDialogConfig[T]) *Search[T] {
 	if params.onType != nil {
 		onType = func(search string) {
 			a.worker.DebounceLoad(func() {
-				rows, vals := params.onType(search)
-				s.table.Fill(rows, vals)
+				s.table.Fill(params.onType(search))
 			}, func() {
 				a.ui.Update(func() {
 					s.renderTable()
@@ -54,8 +53,7 @@ func search[T any](params SearchDialogConfig[T]) *Search[T] {
 		}
 	}
 	s.searchView.Editor = tui.NewSimpleEditor(func(item string) {
-		rows, rowValues := params.onSearch(item)
-		s.table.Fill(rows, rowValues)
+		s.table.Fill(params.onSearch(item))
 		s.renderTable()
 		s.focusList()
 	}, func() {
@@ -74,9 +72,9 @@ func search[T any](params SearchDialogConfig[T]) *Search[T] {
 	if params.colStyles != nil {
 		s.table.SetStyles(params.colStyles)
 	}
+
 	if params.initial != nil {
-		rows, rowValues := params.initial()
-		s.table.Fill(rows, rowValues)
+		s.table.Fill(params.initial())
 	}
 
 	// keybindings

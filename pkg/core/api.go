@@ -1,7 +1,6 @@
 package core
 
 import (
-	"errors"
 	"os"
 	"path/filepath"
 
@@ -19,6 +18,7 @@ type API struct {
 
 // Inits the Api.
 func NewApi(dir string) (*API, error) {
+	InitLogger("debug.log")
 	// init global config
 	global, err := newGlobalConfig()
 	if err != nil {
@@ -75,7 +75,9 @@ func (a *API) TopicCount() int {
 // Deletes a topic.
 func (a *API) DeleteTopic(t *Topic) error {
 	for _, w := range a.Workspaces(t) {
-		a.KillSession(w)
+		if s := a.Session(w); s != nil {
+			s.Kill()
+		}
 	}
 	a.SelectWorkspace(nil)
 	return a.fs.DeleteTopic(t)
@@ -134,7 +136,9 @@ func (a *API) WorkspacesCount() int {
 
 // Deletes this workspace.
 func (a *API) DeleteWorkspace(w *Workspace) error {
-	a.KillSession(w)
+	if s := a.Session(w); s != nil {
+		s.Kill()
+	}
 	selected := a.SelectedWorkspace()
 	if selected == w {
 		a.SelectWorkspace(nil)
@@ -207,6 +211,14 @@ type Session struct {
 	Workspace *Workspace
 }
 
+func (s *Session) DisplayName() string {
+	if s.Workspace == nil {
+		return s.Name
+	}
+
+	return s.Workspace.ShortPath()
+}
+
 // Session map for quickly looking up session by its name.
 type SessionMap map[string]*gotmux.Session
 
@@ -242,7 +254,7 @@ func (a *API) Session(w *Workspace) *Session {
 }
 
 // Creates and/or attaches to the workspace session.
-func (a *API) OpenSession(w *Workspace) error {
+func (a *API) OpenWorkspace(w *Workspace) error {
 	// select the workspace
 	a.SelectWorkspace(w)
 
@@ -266,13 +278,27 @@ func (a *API) OpenSession(w *Workspace) error {
 	return session.Attach()
 }
 
-// Kills the workspace session.
-func (a *API) KillSession(w *Workspace) error {
-	session := a.Session(w)
-	if session == nil {
-		return errors.New("session does not exist")
+func (a *API) NewSession(name string) (*Session, error) {
+	s, err := a.tmux.NewSession(&gotmux.SessionOptions{
+		Name: name,
+	})
+	if err != nil {
+		return nil, err
 	}
-	return session.Kill()
+	return newSession(s, nil), nil
+}
+
+func (a *API) SessionByName(name string) (*Session, error) {
+	session, err := a.tmux.Session(name)
+	if err != nil {
+		return nil, err
+	}
+
+	if session == nil {
+		return nil, nil
+	}
+
+	return newSession(session, nil), nil
 }
 
 // Returns the number of workspaces active workspace sessions.
@@ -282,16 +308,18 @@ func (a *API) SessionCount() int {
 
 // Returns all workspace sessions.
 func (a *API) AllSessions() []*Session {
-	// build map of sessions to lookup by name
-	sMap := a.SessionMap()
-
-	// get all workspaces and check which are associated to session
-	out := make([]*Session, 0)
+	// build map of workspaces accessible by tmux name
+	wMap := map[string]*Workspace{}
 	for _, w := range a.AllWorkspaces() {
-		s := sMap.Get(w)
-		if s != nil {
-			out = append(out, s)
-		}
+		wMap[w.TmuxName()] = w
+	}
+
+	sessions, _ := a.tmux.ListSessions()
+
+	out := make([]*Session, len(sessions))
+	for i, s := range sessions {
+		associatedWorkspace := wMap[s.Name]
+		out[i] = newSession(s, associatedWorkspace)
 	}
 
 	return out

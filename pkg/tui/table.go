@@ -27,14 +27,15 @@ type (
 	}
 
 	TableTitle struct {
-		Titles []string
-		Styles []color.Style
+		Titles        []string
+		DefaultStyles []color.Style
 	}
 
 	TableRow[T any] struct {
 		Value    T
 		Cols     []string
 		Selected bool
+		Styles   []color.Style
 	}
 )
 
@@ -55,8 +56,8 @@ func (tr *TableRenderer[T]) Init(width int, height int, titles []string, colProp
 
 	tr.table = &Table[T]{
 		Title: &TableTitle{
-			Titles: titles,
-			Styles: defaultStyles,
+			Titles:        titles,
+			DefaultStyles: defaultStyles,
 		},
 		ColProportions: colProportions,
 		Rows:           make([]*TableRow[T], 0),
@@ -67,7 +68,7 @@ func (tr *TableRenderer[T]) Init(width int, height int, titles []string, colProp
 }
 
 func (tr *TableRenderer[T]) SetStyles(colors []color.Style) {
-	tr.table.Title.Styles = colors
+	tr.table.Title.DefaultStyles = colors
 }
 
 func (tr *TableRenderer[T]) Size() int {
@@ -131,18 +132,12 @@ func (tr *TableRenderer[T]) Clear() {
 }
 
 // Fills the table.
-func (tr *TableRenderer[T]) Fill(rows [][]string, rowValues []T) {
+func (tr *TableRenderer[T]) Fill(rows []*TableRow[T]) {
 	tr.mu.Lock()
 	defer tr.mu.Unlock()
 
-	if (len(rows) > 0 && len(rows[0]) != len(tr.table.Title.Titles)) || len(rowValues) != len(rows) {
-		log.Panicln("invalid row length")
-	}
-
 	tr.table.clear()
-	for idx, row := range rows {
-		tr.table.addTableRow(row, rowValues[idx])
-	}
+	tr.table.Rows = append(tr.table.Rows, rows...)
 
 	tr.listRenderer.ResetSize(len(rows))
 }
@@ -195,8 +190,10 @@ func (tr *TableRenderer[T]) RenderTable(w io.Writer, onSelected func(int, *Table
 			var style color.Style
 			if currentRow.Selected {
 				style = color.New(color.FgBlack, color.BgCyan)
+			} else if currentRow.Styles != nil && len(currentRow.Styles) >= i+1 {
+				style = currentRow.Styles[i]
 			} else {
-				style = tr.table.Title.Styles[i]
+				style = tr.table.Title.DefaultStyles[i]
 			}
 			line += style.Sprint(colLine)
 		}
@@ -218,15 +215,6 @@ func (tr *TableRenderer[T]) renderTitle(w io.Writer) {
 	s := color.Note.Style
 	line = s.Sprint(line)
 	fmt.Fprintln(w, line)
-}
-
-func (t *Table[T]) addTableRow(cols []string, value T) {
-	tr := &TableRow[T]{
-		Cols:  cols,
-		Value: value,
-	}
-
-	t.Rows = append(t.Rows, tr)
 }
 
 func (t *Table[T]) clear() {

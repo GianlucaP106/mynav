@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -28,7 +29,7 @@ type App struct {
 	topics     *Topics
 	sessions   *Sessions
 	preview    *Preview
-	info       *WorkspaceInfo
+	info       *Info
 
 	// worker for processing tasks in FIFO and debouncing
 	worker *Worker
@@ -203,7 +204,7 @@ func (a *App) initUI() {
 	wv := newWorkspcacesView()
 	pv := newPreview()
 	sv := newSessionsView()
-	wiv := newWorkspaceInfo()
+	wiv := newInfo()
 	a.header = hv
 	a.topics = tv
 	a.workspaces = wv
@@ -284,10 +285,9 @@ func (a *App) refreshAll() {
 }
 
 // Refreshes all the views.
-// Ensures the refresh or topics is done before workspaces but everything else in async.
+// Ensures the data refresh of topics view is done before workspaces view but everything else in async.
 // if selectTopic, selectWorkspace are not nil, they will be selected in the views.
 // if selectSession is not nil, current session will be shown in preview/info, otherwise current workspace will be shown.
-// This is a generalized function to allow for refreshing the entire UI.
 func (a *App) refresh(selectTopic *core.Topic, selectWorkspace *core.Workspace, selectSession *core.Session) {
 	a.worker.Queue(func() {
 		// header in async
@@ -459,6 +459,11 @@ func (a *App) closeAfter(count int, delay time.Duration) {
 	})
 }
 
+type SearchItem struct {
+	workspace *core.Workspace
+	session   *core.Session
+}
+
 // Inits the global actions.
 func (a *App) initGlobalKeys() {
 	quit := func() bool {
@@ -476,48 +481,33 @@ func (a *App) initGlobalKeys() {
 		Set('>', "Cycle preview right", func() {
 			a.preview.increment()
 		}).
-		Set('s', "Search for a workspace", func() {
+		Set('s', "Search", func() {
 			// block if not initialized to avoid broken state
 			if !a.initialized.Load() {
 				return
 			}
 
-			// TODO: move to seperate file
-
-			// make helper function to create rows from workspaces
-			makeRows := func(workspaces core.Workspaces) [][]string {
-				rows := make([][]string, 0)
-				for _, w := range workspaces {
-					session := a.api.Session(w)
-					sessionStr := ""
-					if session != nil {
-						sessionStr = "Yes"
-					}
-
-					rows = append(rows, []string{
-						w.Name,
-						w.Topic.Name,
-						sessionStr,
-					})
-				}
-				return rows
-			}
-
-			useFzf := false
-			if core.IsFzfInstalled() {
-				useFzf = true
-			} else {
+			useFzf := core.IsFzfInstalled()
+			if !useFzf {
 				toast("install fzf it for a better experience", toastWarn)
 			}
 
-			allWorkspaces := a.api.AllWorkspaces().Sorted()
+			const workspacePrefix = "--workspace--"
+			const sessionPrefix = "--session--"
+
 			allNames := []string{}
+			allWorkspaces := a.api.AllWorkspaces().Sorted()
 			for _, w := range allWorkspaces {
-				allNames = append(allNames, w.ShortPath())
+				allNames = append(allNames, fmt.Sprintf("%s%s", workspacePrefix, w.ShortPath()))
 			}
 
-			searchFor := func(s string) ([][]string, []*core.Workspace) {
-				foundWorkspaces := make(core.Workspaces, 0)
+			allSessions := a.api.AllSessions()
+			for _, s := range allSessions {
+				allNames = append(allNames, fmt.Sprintf("%s%s", sessionPrefix, s.Name))
+			}
+
+			searchFor := func(s string) []*tui.TableRow[SearchItem] {
+				foundItems := make([]SearchItem, 0)
 				if useFzf {
 					found := core.FuzzyFind(allNames, s)
 					for _, item := range found {
@@ -525,45 +515,98 @@ func (a *App) initGlobalKeys() {
 							continue
 						}
 
-						w := a.api.Workspace(item)
-						if w != nil {
-							foundWorkspaces = append(foundWorkspaces, w)
+						switch {
+						case strings.HasPrefix(item, workspacePrefix):
+							i := strings.TrimPrefix(item, workspacePrefix)
+							w := a.api.Workspace(i)
+							if w != nil {
+								foundItems = append(foundItems, SearchItem{
+									workspace: w,
+								})
+							}
+						case strings.HasPrefix(item, sessionPrefix):
+							i := strings.TrimPrefix(item, sessionPrefix)
+							session, _ := a.api.SessionByName(i)
+							if session != nil {
+								foundItems = append(foundItems, SearchItem{
+									session: session,
+								})
+							}
 						}
 					}
 				} else {
-					filtered := core.Workspaces{}
 					for _, workspace := range allWorkspaces {
 						if strings.Contains(workspace.Name, s) {
-							filtered = append(filtered, workspace)
+							foundItems = append(foundItems, SearchItem{
+								workspace: workspace,
+							})
 						}
 					}
-					foundWorkspaces = filtered
+					for _, session := range allSessions {
+						if strings.Contains(session.Name, s) {
+							foundItems = append(foundItems, SearchItem{
+								session: session,
+							})
+						}
+					}
 				}
 
-				return makeRows(foundWorkspaces), foundWorkspaces
+				tableRows := make([]*tui.TableRow[SearchItem], 0)
+				for _, item := range foundItems {
+					cols := []string{}
+					styles := []color.Style{}
+					switch {
+					case item.session != nil:
+						name := item.session.Name
+						if parts := strings.Split(name, "/"); len(parts) > 3 {
+							lastParts := parts[len(parts)-3:]
+							lastParts = append([]string{".../"}, lastParts...)
+							name = filepath.Join(lastParts...)
+						}
+
+						cols = []string{
+							name,
+							"Session",
+						}
+						styles = []color.Style{
+							workspaceNameColor,
+							sessionMarkerColor,
+						}
+					case item.workspace != nil:
+						cols = []string{
+							item.workspace.ShortPath(),
+							"Workspace",
+						}
+						styles = []color.Style{
+							workspaceNameColor,
+							alternateSessionMarkerColor,
+						}
+					}
+					tableRows = append(tableRows, &tui.TableRow[SearchItem]{
+						Cols:   cols,
+						Value:  item,
+						Styles: styles,
+					})
+				}
+				return tableRows
 			}
 
-			sd := new(*Search[*core.Workspace])
-			*sd = search(SearchDialogConfig[*core.Workspace]{
+			sd := new(*Search[SearchItem])
+			*sd = search(SearchDialogConfig[SearchItem]{
 				onType:   searchFor,
 				onSearch: searchFor,
-				onSelect: func(w *core.Workspace) {
-					a.topics.selectTopic(w.Topic)
-					a.workspaces.refresh()
-					a.workspaces.selectWorkspace(w)
-
-					session := a.api.Session(w)
-					if session != nil {
-						a.sessions.selectSession(session)
-					}
-
+				onSelect: func(item SearchItem) {
 					if *sd != nil {
 						(*sd).close()
 					}
-
-					if session != nil {
+					switch {
+					case item.session != nil:
+						a.sessions.selectSession(item.session)
 						a.sessions.focus()
-					} else {
+					case item.workspace != nil:
+						a.topics.selectTopic(item.workspace.Topic)
+						a.workspaces.refresh()
+						a.workspaces.selectWorkspace(item.workspace)
 						a.workspaces.focus()
 					}
 				},
@@ -571,17 +614,14 @@ func (a *App) initGlobalKeys() {
 				searchViewTitle:     "Search a workspace",
 				tableViewTitle:      "Result",
 				tableTitles: []string{
-					"Workspace",
-					"Topic",
-					"Active Session",
+					"Name",
+					"Type",
 				}, tableProportions: []float64{
+					0.6,
 					0.4,
-					0.4,
-					0.2,
 				},
 				colStyles: []color.Style{
 					workspaceNameColor,
-					topicNameColor,
 					sessionMarkerColor,
 				},
 			})
