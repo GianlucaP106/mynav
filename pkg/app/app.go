@@ -610,8 +610,8 @@ func (a *App) initGlobalKeys() {
 						a.workspaces.focus()
 					}
 				},
-				onSelectDescription: "Go to workspace",
-				searchViewTitle:     "Search a workspace",
+				onSelectDescription: "Go to item",
+				searchViewTitle:     "Search a session/workspace",
 				tableViewTitle:      "Result",
 				tableTitles: []string{
 					"Name",
