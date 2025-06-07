@@ -98,7 +98,7 @@ func (wv *Workspaces) refresh() {
 	}
 
 	sMap := a.api.SessionMap()
-	rows := make([][]string, 0)
+	tableRows := make([]*tui.TableRow[*core.Workspace], 0)
 	for _, w := range workspaces.Sorted() {
 		tmux := ""
 		s := sMap.Get(w)
@@ -106,14 +106,17 @@ func (wv *Workspaces) refresh() {
 			tmux = "Yes"
 		}
 		timeStr := core.TimeAgo(w.LastModified())
-		rows = append(rows, []string{
-			w.Name,
-			tmux,
-			timeStr,
+		tableRows = append(tableRows, &tui.TableRow[*core.Workspace]{
+			Cols: []string{
+				w.Name,
+				tmux,
+				timeStr,
+			},
+			Value: w,
 		})
 	}
 
-	wv.table.Fill(rows, workspaces)
+	wv.table.Fill(tableRows)
 }
 
 func (wv *Workspaces) render() {
@@ -276,7 +279,7 @@ func (wv *Workspaces) init() {
 
 			start := time.Now()
 			err := a.runAction(func() error {
-				return a.api.OpenSession(curWorkspace)
+				return a.api.OpenWorkspace(curWorkspace)
 			})
 			if err != nil {
 				toast(err.Error(), toastError)
@@ -296,8 +299,8 @@ func (wv *Workspaces) init() {
 
 			sd := new(*Search[*core.Topic])
 			*sd = search(SearchDialogConfig[*core.Topic]{
-				onSearch: func(s string) ([][]string, []*core.Topic) {
-					rows := make([][]string, 0)
+				onSearch: func(s string) []*tui.TableRow[*core.Topic] {
+					rows := make([]*tui.TableRow[*core.Topic], 0)
 					topics := a.api.Topics()
 					filtered := core.Topics{}
 					for _, topic := range topics {
@@ -307,23 +310,29 @@ func (wv *Workspaces) init() {
 					}
 
 					for _, t := range filtered {
-						rows = append(rows, []string{
-							t.Name,
+						rows = append(rows, &tui.TableRow[*core.Topic]{
+							Cols: []string{
+								t.Name,
+							},
+							Value: t,
 						})
 					}
 
-					return rows, filtered
+					return rows
 				},
-				initial: func() ([][]string, []*core.Topic) {
-					rows := make([][]string, 0)
+				initial: func() []*tui.TableRow[*core.Topic] {
+					rows := make([]*tui.TableRow[*core.Topic], 0)
 					topics := a.api.Topics()
 					for _, t := range topics {
-						rows = append(rows, []string{
-							t.Name,
+						rows = append(rows, &tui.TableRow[*core.Topic]{
+							Cols: []string{
+								t.Name,
+							},
+							Value: t,
 						})
 					}
 
-					return rows, topics
+					return rows
 				},
 				onSelect: func(t *core.Topic) {
 					if err := a.api.MoveWorkspace(curWorkspace, t); err != nil {
@@ -437,13 +446,13 @@ func (wv *Workspaces) init() {
 				return
 			}
 
-			if a.api.Session(curWorkspace) != nil {
+			if s := a.api.Session(curWorkspace); s != nil {
 				alert(func(b bool) {
 					if !b {
 						return
 					}
 
-					if err := a.api.KillSession(curWorkspace); err != nil {
+					if err := s.Kill(); err != nil {
 						toast(err.Error(), toastError)
 						return
 					}

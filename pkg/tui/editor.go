@@ -1,6 +1,8 @@
 package tui
 
-import "github.com/awesome-gocui/gocui"
+import (
+	"github.com/awesome-gocui/gocui"
+)
 
 func NewSimpleEditor(onEnter func(string), onEsc func(), onType func(string)) gocui.EditorFunc {
 	return gocui.EditorFunc(

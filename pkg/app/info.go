@@ -11,18 +11,18 @@ import (
 	"github.com/gookit/color"
 )
 
-type WorkspaceInfo struct {
+type Info struct {
 	view          *tui.View
 	workspaceInfo *tui.TableRenderer[*core.Workspace]
 	sessionInfo   *tui.TableRenderer[*core.Session]
 }
 
-func newWorkspaceInfo() *WorkspaceInfo {
-	w := &WorkspaceInfo{}
+func newInfo() *Info {
+	w := &Info{}
 	return w
 }
 
-func (w *WorkspaceInfo) init() {
+func (w *Info) init() {
 	w.view = a.ui.SetView(getViewPosition(WorkspaceInfoView))
 	w.view.Title = " Workspace "
 	a.styleView(w.view)
@@ -75,31 +75,9 @@ func (w *WorkspaceInfo) init() {
 	})
 }
 
-func (w *WorkspaceInfo) show(workspace *core.Workspace) {
-	if workspace == nil {
-		w.workspaceInfo.Clear()
-		w.sessionInfo.Clear()
-		return
-	}
-
-	// workspace info
-	remote, _ := workspace.GitRemote()
-	if remote == "" {
-		remote = "None"
-	}
-
-	timeStr := fmt.Sprintf("%s (%s)", workspace.LastModified().Format(core.TimeFormat()), core.TimeAgo(workspace.LastModified()))
-	row := [][]string{{
-		workspace.Name,
-		workspace.Topic.Name,
-		timeStr,
-		remote,
-	}}
-	w.workspaceInfo.Fill(row, []*core.Workspace{workspace})
-
-	session := a.api.Session(workspace)
+func (i *Info) showSession(session *core.Session) {
 	if session == nil {
-		w.sessionInfo.Clear()
+		i.sessionInfo.Clear()
 		return
 	}
 
@@ -125,35 +103,63 @@ func (w *WorkspaceInfo) show(workspace *core.Workspace) {
 	// session info
 	activity := core.UnixTime(session.Activity)
 	created := core.UnixTime(session.Created)
-	row2 := [][]string{{
-		"Yes",
-		strconv.Itoa(session.Windows),
-		strconv.Itoa(len(panes)),
-		core.TimeAgo(activity),
-		core.TimeAgo(created),
-		strings.Join(commandStrs, ", "),
-	}}
-	w.sessionInfo.Fill(row2, []*core.Session{session})
+	row2 := &tui.TableRow[*core.Session]{
+		Cols: []string{
+			"Yes",
+			strconv.Itoa(session.Windows),
+			strconv.Itoa(len(panes)),
+			core.TimeAgo(activity),
+			core.TimeAgo(created),
+			strings.Join(commandStrs, ", "),
+		},
+		Value: session,
+	}
+	i.sessionInfo.Fill([]*tui.TableRow[*core.Session]{row2})
 }
 
-func (w *WorkspaceInfo) render() {
+func (i *Info) show(workspace *core.Workspace) {
+	if workspace == nil {
+		i.workspaceInfo.Clear()
+		i.sessionInfo.Clear()
+		return
+	}
+
+	// workspace info
+	remote, _ := workspace.GitRemote()
+	if remote == "" {
+		remote = "None"
+	}
+
+	timeStr := fmt.Sprintf("%s (%s)", workspace.LastModified().Format(core.TimeFormat()), core.TimeAgo(workspace.LastModified()))
+	row := &tui.TableRow[*core.Workspace]{
+		Cols: []string{
+			workspace.Name,
+			workspace.Topic.Name,
+			timeStr,
+			remote,
+		},
+		Value: workspace,
+	}
+	i.workspaceInfo.Fill([]*tui.TableRow[*core.Workspace]{row})
+
+	session := a.api.Session(workspace)
+	i.showSession(session)
+}
+
+func (w *Info) render() {
 	w.view.Clear()
 	a.ui.Resize(w.view, getViewPosition(w.view.Name()))
 
-	if w.workspaceInfo.Size() == 0 {
-		return
+	if w.workspaceInfo.Size() > 0 {
+		w.workspaceInfo.RenderTable(w.view, func(i int, tr *tui.TableRow[*core.Workspace]) bool {
+			return false
+		}, nil)
+		fmt.Fprintln(w.view)
 	}
 
-	w.workspaceInfo.RenderTable(w.view, func(i int, tr *tui.TableRow[*core.Workspace]) bool {
-		return false
-	}, nil)
-
-	if w.sessionInfo.Size() == 0 {
-		return
+	if w.sessionInfo.Size() > 0 {
+		w.sessionInfo.RenderTable(w.view, func(i int, tr *tui.TableRow[*core.Session]) bool {
+			return false
+		}, nil)
 	}
-
-	fmt.Fprintln(w.view)
-	w.sessionInfo.RenderTable(w.view, func(i int, tr *tui.TableRow[*core.Session]) bool {
-		return false
-	}, nil)
 }

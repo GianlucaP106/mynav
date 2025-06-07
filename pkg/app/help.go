@@ -51,14 +51,18 @@ func help(v *tui.View) {
 		return all[i].Description < all[j].Description
 	})
 
-	globalRows := make([][]string, 0)
+	globalTableRows := make([]*tui.TableRow[*tui.KeybindingInfo], 0)
 	for _, ki := range all {
-		globalRows = append(globalRows, []string{
-			ki.Key,
-			ki.Description,
+		globalTableRows = append(globalTableRows, &tui.TableRow[*tui.KeybindingInfo]{
+			Cols: []string{
+				ki.Key,
+				ki.Description,
+			},
+			Value: ki,
 		})
 	}
-	h.table.Fill(globalRows, all)
+
+	h.table.Fill(globalTableRows)
 
 	down := func() {
 		h.table.Down()

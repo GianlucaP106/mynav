@@ -54,20 +54,21 @@ func (tv *Topics) refreshDown() {
 func (tv *Topics) refresh() {
 	topics := a.api.Topics().Sorted()
 
-	rows := make([][]string, 0)
-	rowValues := make([]*core.Topic, 0)
+	tableRows := make([]*tui.TableRow[*core.Topic], 0)
 	for _, topic := range topics {
-		rowValues = append(rowValues, topic)
 		topicWorkspaces := a.api.Workspaces(topic)
 		timeStr := core.TimeAgo(topic.LastModified())
-		rows = append(rows, []string{
-			topic.Name,
-			strconv.Itoa(len(topicWorkspaces)),
-			timeStr,
+		tableRows = append(tableRows, &tui.TableRow[*core.Topic]{
+			Cols: []string{
+				topic.Name,
+				strconv.Itoa(len(topicWorkspaces)),
+				timeStr,
+			},
+			Value: topic,
 		})
 	}
 
-	tv.table.Fill(rows, rowValues)
+	tv.table.Fill(tableRows)
 }
 
 func (tv *Topics) selected() *core.Topic {
