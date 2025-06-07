@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
-	"strings"
 	"sync/atomic"
 	"time"
 
@@ -229,7 +227,7 @@ func (a *App) initUI() {
 	wv.init()
 	sv.init()
 	wiv.init()
-	pv.init()
+	pv.init(a.ui.SetView(getViewPosition(PreviewView)))
 
 	// set global key bindings
 	a.initGlobalKeys()
@@ -459,11 +457,6 @@ func (a *App) closeAfter(count int, delay time.Duration) {
 	})
 }
 
-type SearchItem struct {
-	workspace *core.Workspace
-	session   *core.Session
-}
-
 // Inits the global actions.
 func (a *App) initGlobalKeys() {
 	quit := func() bool {
@@ -487,143 +480,6 @@ func (a *App) initGlobalKeys() {
 				return
 			}
 
-			useFzf := core.IsFzfInstalled()
-			if !useFzf {
-				toast("install fzf it for a better experience", toastWarn)
-			}
-
-			const workspacePrefix = "--workspace--"
-			const sessionPrefix = "--session--"
-
-			allNames := []string{}
-			allWorkspaces := a.api.AllWorkspaces().Sorted()
-			for _, w := range allWorkspaces {
-				allNames = append(allNames, fmt.Sprintf("%s%s", workspacePrefix, w.ShortPath()))
-			}
-
-			allSessions := a.api.AllSessions()
-			for _, s := range allSessions {
-				allNames = append(allNames, fmt.Sprintf("%s%s", sessionPrefix, s.Name))
-			}
-
-			searchFor := func(s string) []*tui.TableRow[SearchItem] {
-				foundItems := make([]SearchItem, 0)
-				if useFzf {
-					found := core.FuzzyFind(allNames, s)
-					for _, item := range found {
-						if item == "" {
-							continue
-						}
-
-						switch {
-						case strings.HasPrefix(item, workspacePrefix):
-							i := strings.TrimPrefix(item, workspacePrefix)
-							w := a.api.Workspace(i)
-							if w != nil {
-								foundItems = append(foundItems, SearchItem{
-									workspace: w,
-								})
-							}
-						case strings.HasPrefix(item, sessionPrefix):
-							i := strings.TrimPrefix(item, sessionPrefix)
-							session, _ := a.api.SessionByName(i)
-							if session != nil {
-								foundItems = append(foundItems, SearchItem{
-									session: session,
-								})
-							}
-						}
-					}
-				} else {
-					for _, workspace := range allWorkspaces {
-						if strings.Contains(workspace.Name, s) {
-							foundItems = append(foundItems, SearchItem{
-								workspace: workspace,
-							})
-						}
-					}
-					for _, session := range allSessions {
-						if strings.Contains(session.Name, s) {
-							foundItems = append(foundItems, SearchItem{
-								session: session,
-							})
-						}
-					}
-				}
-
-				tableRows := make([]*tui.TableRow[SearchItem], 0)
-				for _, item := range foundItems {
-					cols := []string{}
-					styles := []color.Style{}
-					switch {
-					case item.session != nil:
-						name := item.session.Name
-						if parts := strings.Split(name, "/"); len(parts) > 3 {
-							lastParts := parts[len(parts)-3:]
-							lastParts = append([]string{".../"}, lastParts...)
-							name = filepath.Join(lastParts...)
-						}
-
-						cols = []string{
-							name,
-							"Session",
-						}
-						styles = []color.Style{
-							workspaceNameColor,
-							sessionMarkerColor,
-						}
-					case item.workspace != nil:
-						cols = []string{
-							item.workspace.ShortPath(),
-							"Workspace",
-						}
-						styles = []color.Style{
-							workspaceNameColor,
-							alternateSessionMarkerColor,
-						}
-					}
-					tableRows = append(tableRows, &tui.TableRow[SearchItem]{
-						Cols:   cols,
-						Value:  item,
-						Styles: styles,
-					})
-				}
-				return tableRows
-			}
-
-			sd := new(*Search[SearchItem])
-			*sd = search(SearchDialogConfig[SearchItem]{
-				onType:   searchFor,
-				onSearch: searchFor,
-				onSelect: func(item SearchItem) {
-					if *sd != nil {
-						(*sd).close()
-					}
-					switch {
-					case item.session != nil:
-						a.sessions.selectSession(item.session)
-						a.sessions.focus()
-					case item.workspace != nil:
-						a.topics.selectTopic(item.workspace.Topic)
-						a.workspaces.refresh()
-						a.workspaces.selectWorkspace(item.workspace)
-						a.workspaces.focus()
-					}
-				},
-				onSelectDescription: "Go to item",
-				searchViewTitle:     "Search a session/workspace",
-				tableViewTitle:      "Result",
-				tableTitles: []string{
-					"Name",
-					"Type",
-				}, tableProportions: []float64{
-					0.6,
-					0.4,
-				},
-				colStyles: []color.Style{
-					workspaceNameColor,
-					sessionMarkerColor,
-				},
-			})
+			newGlobalSearch().init()
 		})
 }

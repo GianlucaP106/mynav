@@ -39,7 +39,7 @@ func (wv *Workspaces) selectWorkspace(w *core.Workspace) {
 func (wv *Workspaces) selected() *core.Workspace {
 	_, w := wv.table.SelectedRow()
 	if w != nil {
-		return *w
+		return w.Value
 	}
 
 	return nil

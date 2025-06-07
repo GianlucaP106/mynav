@@ -18,7 +18,6 @@ type API struct {
 
 // Inits the Api.
 func NewApi(dir string) (*API, error) {
-	InitLogger("debug.log")
 	// init global config
 	global, err := newGlobalConfig()
 	if err != nil {
