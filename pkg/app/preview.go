@@ -12,7 +12,7 @@ import (
 type Preview struct {
 	view *tui.View
 
-	// previewe raw content
+	// preview raw content
 	previews   []string
 	previewIdx int
 	previewMu  sync.RWMutex
@@ -21,6 +21,9 @@ type Preview struct {
 	// this needs to be kept track of because of periodic refresh
 	session   *core.Session
 	sessionMu sync.RWMutex
+
+	// to kill the refresh routine
+	done chan bool
 }
 
 func newPreview() *Preview {
@@ -28,19 +31,26 @@ func newPreview() *Preview {
 	return p
 }
 
-func (p *Preview) init() {
-	p.view = a.ui.SetView(getViewPosition(PreviewView))
+func (p *Preview) init(v *tui.View) {
+	p.done = make(chan bool)
+	p.view = v
 	p.view.Title = " Preview "
 	a.styleView(p.view)
 	p.setPreviews(nil)
 	go func() {
 		t := time.NewTicker(time.Second * 3)
-		for range t.C {
-			if !a.attached.Load() {
-				p.refresh()
-				a.ui.Update(func() {
-					p.render()
-				})
+		for {
+			select {
+			case <-p.done:
+				return
+			case <-t.C:
+				if !a.attached.Load() {
+					p.refresh()
+					a.ui.Update(func() {
+						p.render()
+					})
+				}
+
 			}
 		}
 	}()
@@ -94,7 +104,10 @@ func (p *Preview) render() {
 	defer p.previewMu.RUnlock()
 
 	p.view.Clear()
-	a.ui.Resize(p.view, getViewPosition(p.view.Name()))
+	vp := getViewPosition(p.view.Name())
+	if vp != nil {
+		a.ui.Resize(p.view, vp)
+	}
 
 	if len(p.previews) == 0 {
 		p.view.Subtitle = ""
@@ -140,4 +153,9 @@ func (p *Preview) decrement() {
 	} else {
 		p.previewIdx--
 	}
+}
+
+func (p *Preview) teardown() {
+	p.done <- true
+	a.ui.DeleteView(p.view)
 }

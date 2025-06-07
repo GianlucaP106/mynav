@@ -74,7 +74,7 @@ func (tv *Topics) refresh() {
 func (tv *Topics) selected() *core.Topic {
 	_, t := tv.table.SelectedRow()
 	if t != nil {
-		return *t
+		return t.Value
 	}
 	return nil
 }

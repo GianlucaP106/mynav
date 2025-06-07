@@ -14,12 +14,11 @@ type Help struct {
 
 	// tables for table and local keys
 	table *tui.TableRenderer[*tui.KeybindingInfo]
-	// local  *tui.TableRenderer[*tui.KeybindingInfo]
 }
 
 func help(v *tui.View) {
 	h := &Help{}
-	h.view = a.ui.SetCenteredView(HelpDialog, 80, 20, 0)
+	h.view = a.ui.SetCenteredView(HelpDialog, 80, 20, 0, 0)
 	h.view.Title = fmt.Sprintf(" %s ", "Key bindings")
 	a.styleView(h.view)
 	h.view.TitleColor = onTitleColor

@@ -28,7 +28,7 @@ func editor(onEnter func(string), onEsc func(), title string, size editorSize, d
 		height = 7
 	}
 
-	ed.view = a.ui.SetCenteredView(EditorDialog, 80, height, 0)
+	ed.view = a.ui.SetCenteredView(EditorDialog, 80, height, 0, 0)
 	ed.view.Editable = true
 	ed.view.Title = fmt.Sprintf(" %s ", title)
 	ed.view.Wrap = true

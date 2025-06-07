@@ -1,8 +1,6 @@
 package app
 
 import (
-	"log"
-
 	"github.com/GianlucaP106/mynav/pkg/tui"
 )
 
@@ -22,12 +20,14 @@ const (
 
 // Dialogs.
 const (
-	EditorDialog          = "EditorDialog"
-	ConfirmationDialog    = "ConfirmationDialog"
-	ToastDialog           = "ToastDialogView"
-	HelpDialog            = "HelpDialog"
-	SearchListDialog1View = "SearchListDialog1"
-	SearchListDialog2View = "SearchListDialog2"
+	EditorDialog           = "EditorDialog"
+	ConfirmationDialog     = "ConfirmationDialog"
+	ToastDialog            = "ToastDialogView"
+	HelpDialog             = "HelpDialog"
+	SearchListDialog1View  = "SearchListDialog1"
+	SearchListDialog2View  = "SearchListDialog2"
+	SearchListDialog3View  = "SearchListDialog3"
+	SearchListDialogBgView = "SearchListDialogBg"
 )
 
 func getViewPosition(viewName string) *tui.ViewPosition {
@@ -106,9 +106,9 @@ func getViewPosition(viewName string) *tui.ViewPosition {
 	)
 
 	p := positionMap[viewName]
-	if p == nil {
-		log.Panic("invalid view")
-	}
+	// if p == nil {
+	// 	log.Panic("invalid view")
+	// }
 
 	return p
 }

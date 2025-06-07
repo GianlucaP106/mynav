@@ -83,9 +83,9 @@ func (tui *TUI) SetManager(m func(t *TUI) error) {
 	}))
 }
 
-func (tui *TUI) SetCenteredView(name string, sizeX int, sizeY int, verticalOffset int) *View {
+func (tui *TUI) SetCenteredView(name string, sizeX int, sizeY int, verticalOffset, horizontalOffset int) *View {
 	maxX, maxY := tui.Size()
-	p := NewViewPosition(name, maxX/2-sizeX/2, maxY/2-sizeY/2+verticalOffset, maxX/2+sizeX/2, maxY/2+sizeY/2+verticalOffset, 0)
+	p := NewViewPosition(name, maxX/2-sizeX/2+horizontalOffset, maxY/2-sizeY/2+verticalOffset, maxX/2+sizeX/2+horizontalOffset, maxY/2+sizeY/2+verticalOffset, 0)
 	view := tui.SetView(p)
 	return view
 }

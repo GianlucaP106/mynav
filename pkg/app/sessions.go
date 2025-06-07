@@ -29,7 +29,7 @@ func newSessionsView() *Sessions {
 func (s *Sessions) selected() *core.Session {
 	_, session := s.table.SelectedRow()
 	if session != nil {
-		return *session
+		return session.Value
 	}
 	return nil
 }

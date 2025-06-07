@@ -17,7 +17,7 @@ func alert(onConfirm func(bool), title string) *Alert {
 	// build alert dialog
 	cd := &Alert{}
 	cd.title = title
-	cd.view = a.ui.SetCenteredView(ConfirmationDialog, len(title)+5, 4, 0)
+	cd.view = a.ui.SetCenteredView(ConfirmationDialog, len(title)+5, 4, 0, 0)
 	cd.view.Wrap = true
 	cd.view.FrameColor = gocui.ColorWhite
 

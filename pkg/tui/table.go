@@ -77,13 +77,13 @@ func (tr *TableRenderer[T]) Size() int {
 	return len(tr.table.Rows)
 }
 
-func (tr *TableRenderer[T]) SelectedRow() (idx int, value *T) {
+func (tr *TableRenderer[T]) SelectedRow() (idx int, value *TableRow[T]) {
 	tr.mu.RLock()
 	defer tr.mu.RUnlock()
 	if len(tr.table.Rows) == 0 {
 		return 0, nil
 	}
-	return tr.listRenderer.selected, &tr.table.Rows[tr.listRenderer.selected].Value
+	return tr.listRenderer.selected, tr.table.Rows[tr.listRenderer.selected]
 }
 
 func (tr *TableRenderer[T]) SelectRow(idx int) {
