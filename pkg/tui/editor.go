@@ -31,6 +31,67 @@ func NewSimpleEditor(onEnter func(string), onEsc func(), onType func(string)) go
 				v.MoveCursor(-1, 0)
 			case key == gocui.KeyArrowRight:
 				v.MoveCursor(1, 0)
+
+			case key == gocui.KeyCtrlA || key == gocui.KeyCtrlE:
+				_, cury := v.Cursor()
+				line, err := v.Line(cury)
+				if err != nil {
+					return
+				}
+
+				switch key {
+				case gocui.KeyCtrlA: // <-
+					v.SetCursor(0, cury)
+				case gocui.KeyCtrlE: // ->
+					v.SetCursor(len(line), cury)
+
+				}
+			case mod == gocui.ModAlt && (ch == 'b' || ch == 'f'):
+				curx, cury := v.Cursor()
+				curLine, err := v.Line(cury)
+				if err != nil {
+					return
+				}
+
+				indicies := getSkipIndicies(curLine)
+
+			outer:
+				for thisIdx, idx := range indicies[:len(indicies)-1] {
+					before := idx
+					after := indicies[thisIdx+1]
+
+					switch ch {
+					case 'b': // <-
+						if before < curx && after >= curx {
+							v.SetCursor(before, cury)
+							break outer
+						}
+					case 'f': // ->
+						if before <= curx && after > curx {
+							v.SetCursor(after, cury)
+							break outer
+						}
+					}
+				}
 			}
 		})
+}
+
+func getSkipIndicies(line string) []int {
+	indicies := []int{}
+	spaceBlock := false
+	for idx, c := range line {
+		if c == ' ' {
+			if !spaceBlock {
+				spaceBlock = true
+				indicies = append(indicies, idx)
+			}
+		} else {
+			spaceBlock = false
+		}
+	}
+
+	indicies = append([]int{0}, indicies...)
+	indicies = append(indicies, len(line))
+	return indicies
 }
