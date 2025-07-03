@@ -1,0 +1,22 @@
+#!/usr/bin/make -f
+
+export DH_VERBOSE = 1
+export GOCACHE := $(CURDIR)/.gocache
+export GOPATH := $(CURDIR)/.gopath
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	mkdir -p $(GOCACHE) $(GOPATH)
+	go build -v -ldflags="-s -w" -o mynav .
+
+override_dh_auto_install:
+	install -D -m 0755 mynav debian/mynav/usr/bin/mynav
+
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -f mynav
+	rm -rf $(GOCACHE) $(GOPATH)
+
+override_dh_auto_test:

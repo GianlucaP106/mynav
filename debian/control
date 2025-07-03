@@ -1,0 +1,23 @@
+Source: mynav
+Section: utils
+Priority: optional
+Maintainer: MyNav Team <maintainer@example.com>
+Build-Depends: debhelper-compat (= 13), golang-go
+Standards-Version: 4.6.2
+Homepage: https://github.com/GianlucaP106/mynav
+Vcs-Git: https://github.com/GianlucaP106/mynav.git
+Vcs-Browser: https://github.com/GianlucaP106/mynav
+
+Package: mynav
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: Terminal-based navigation and workspace management tool
+ MyNav is a command-line tool for efficient navigation and workspace
+ management. It provides features for organizing projects, sessions,
+ and workspaces in a terminal user interface.
+ .
+ Key features:
+  - Workspace and session management
+  - Git integration
+  - Search and filtering capabilities
+  - Terminal-based user interface
