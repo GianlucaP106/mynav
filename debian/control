@@ -1,7 +1,7 @@
 Source: mynav
 Section: utils
 Priority: optional
-Maintainer: MyNav Team <maintainer@example.com>
+Maintainer: Gianluca Piccirillo <gpiccirillo@devprodigital.com>
 Build-Depends: debhelper-compat (= 13), golang-go
 Standards-Version: 4.6.2
 Homepage: https://github.com/GianlucaP106/mynav
