@@ -1,0 +1,29 @@
+# Git
+.git
+.gitignore
+
+# Build artifacts
+mynav
+*.deb
+*.tar.xz
+*.dsc
+*.changes
+*.buildinfo
+dist/
+
+# Go
+.gocache/
+.gopath/
+go.sum
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.log 

@@ -1,0 +1,12 @@
+services:
+  deb-builder:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      # Mount the parent directory to access the built packages
+      - ..:/output
+    environment:
+      - DEBIAN_FRONTEND=noninteractive
+    # command: /usr/local/bin/build-multi-deb.sh 
+    # command: /bin/bash
