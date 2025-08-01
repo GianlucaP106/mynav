@@ -10,7 +10,7 @@ import (
 
 type updater struct{}
 
-const Version = "v2.1.2"
+const Version = "v2.2.0"
 
 // Returns if a mynav update is available.
 func (u *updater) UpdateAvailable() (bool, string) {
