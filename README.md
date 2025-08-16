@@ -2,61 +2,67 @@
 
 A powerful terminal-based workspace navigator and session manager built in Go. MyNav helps developers organize and manage multiple projects through an intuitive interface, seamlessly integrating with tmux sessions.
 
-![Version](https://img.shields.io/badge/version-v2.1.1-blue)
-![Go Version](https://img.shields.io/badge/go-1.22.3+-00ADD8?logo=go)
-![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey)
+[![Version](https://img.shields.io/badge/version-v2.1.1-blue)](https://github.com/GianlucaP106/mynav/releases)
+[![Go Version](https://img.shields.io/badge/go-1.22.3+-00ADD8?logo=go)](https://golang.org/)
+[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey)](https://github.com/GianlucaP106/mynav#prerequisites)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-![demo](https://github.com/user-attachments/assets/c2482080-6c1d-4fda-a3d5-e0ae6d8a916b)
+![MyNav Demo](https://github.com/user-attachments/assets/c2482080-6c1d-4fda-a3d5-e0ae6d8a916b)
 
-## 🎤 Elevator Pitch
+## Overview
 
-Before creating mynav, I often found myself frustrated when working on multiple projects using tmux, as I had to manually navigate between project directories. While tmux’s choose-tree feature allows jumping between active sessions, it relies on the tmux server staying alive and doesn't fully meet the needs of a robust workspace manager. mynav bridges this gap by combining tmux's powerful features with a workspace management system, enabling a more efficient and streamlined development workflow in a terminal environment.
+MyNav addresses the common challenge of managing multiple development projects in a terminal environment. While tmux provides excellent session management, it lacks robust workspace organization capabilities. MyNav bridges this gap by combining tmux's powerful features with an intuitive workspace management system, enabling developers to efficiently navigate between projects and maintain organized development workflows.
 
-## ✨ Features
+## Features
 
-- 📁 **Workspace Management**
-  - Group workspaces into topics
-  - Quick workspace creation and navigation
-  - Lives directly on your filesystem
+### 🏢 Workspace Management
+- **Topic-based organization**: Group related workspaces into logical topics
+- **Rapid workspace creation**: Quick setup and navigation between projects
+- **Filesystem-based storage**: Direct integration with your existing directory structure
 
-- 💻 **Advanced Session Management**
-  - Create, modify, delete and enter sessions seamlessly
-  - Live session preview with window/pane information
-  - Fast session switching
+### 💻 Session Management
+- **Comprehensive session control**: Create, modify, delete, and enter sessions seamlessly
+- **Live session preview**: Real-time display of window and pane information
+- **Instant session switching**: Fast navigation between active development sessions
 
-- 🔧 **Developer Experience**
-  - Fuzzy search workspaces and sessions
-  - Built on tmux
-  - Extensive keyboard shortcuts
-  - Git integration
-  - Clean, intuitive Lazygit-like terminal UI
-  - Vim-style navigation
+### 🛠️ Developer Experience
+- **Fuzzy search**: Intelligent search across workspaces and sessions
+- **tmux integration**: Built on top of tmux for maximum compatibility
+- **Extensive shortcuts**: Comprehensive keyboard navigation and shortcuts
+- **Git awareness**: Integration with Git repositories and status
+- **Modern UI**: Clean, intuitive terminal interface inspired by Lazygit
+- **Vim-style navigation**: Familiar navigation patterns for power users
 
-## 🚀 Quick Start
+## Installation
 
-### Try with docker
+### Quick Start with Docker
+
+Experience MyNav immediately with our Docker setup:
 
 ```bash
 docker run -it --name mynav --rm ubuntu bash -c '
-        apt update &&
-        apt install -y git golang-go neovim tmux curl unzip &&
-        cd &&
-        (curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.bash | bash) &&
-        export PATH="$PATH:$HOME/.mynav" &&
-        mkdir nav && cd nav &&
-        mynav
-    '
+    apt update &&
+    apt install -y git golang-go neovim tmux curl unzip &&
+    cd &&
+    (curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.bash | bash) &&
+    export PATH="$PATH:$HOME/.mynav" &&
+    mkdir nav && cd nav &&
+    mynav
+'
 ```
 
-### One-Line Installation
+### Automated Installation
+
+Install MyNav with a single command:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.bash | bash
 ```
 
 ### Manual Installation
+
+For users who prefer manual installation:
 
 ```bash
 # Clone the repository
@@ -65,58 +71,64 @@ git clone https://github.com/GianlucaP106/mynav.git
 # Navigate to project directory
 cd mynav
 
-# Build project
+# Build the project
 go build
 ```
 
 ### Prerequisites
 
-- Tmux 3.0+
-- Git (optional, for repository features)
-- Terminal with UTF-8 support
+- **tmux 3.0+**: Required for session management
+- **Git**: Optional, enables repository-specific features
+- **Terminal**: UTF-8 support required for proper display
 
----
+## Usage
 
-## 📖 Usage
+### Getting Started
 
-Mynav requires a root directory to initialize in. You may initialize multiple directories but not nested. You can start mynav anywhere with:
+MyNav operates within a designated root directory. You can initialize multiple independent directories, but nested configurations are not supported.
+
+Launch MyNav from any location:
 
 ```bash
 mynav
 ```
 
-> This will look for an existing configuration if it exists (in the current or any parent directory).
+> **Note**: MyNav automatically detects existing configurations in the current directory or any parent directory.
 
-You may specify a directory to launch in using:
+Specify a custom root directory:
 
 ```bash
 mynav -path /your/root/path
 ```
 
-You can use the `?` key in the TUI to view all the key bindings that are available in your context.
-
-## 📺 Tmux Integration
-
-Mynav integrates seamlessly with **tmux**, using it to manage sessions efficiently. When a session is created from a workspace, the workspace’s directory path is used as the tmux session name. This design keeps the state transparent and familiar, rather than hidden behind abstraction.
-
-Once inside a tmux session, you can use all your usual tmux features. One key feature that enhances the mynav experience is the ability to **detach from the session** and return to the mynav interface by pressing **`Leader + D`**.
-
-This tight integration gives you the full power of tmux while keeping mynav in sync with your development workflow.
-
-## ⌨️ Key Bindings
-
 ### Navigation
+
+Press `?` within the interface to view all available keyboard shortcuts for your current context.
+
+## tmux Integration
+
+MyNav seamlessly integrates with **tmux** to provide robust session management. When creating a session from a workspace, MyNav uses the workspace's directory path as the tmux session name, maintaining transparency and familiarity.
+
+### Key Integration Features
+
+- **Full tmux compatibility**: All standard tmux features remain available
+- **Session detachment**: Press `Leader + D` to detach and return to MyNav
+- **State synchronization**: MyNav stays in sync with your development workflow
+
+## Keyboard Shortcuts
+
+### Navigation Controls
 
 | Key | Action | Context |
 |-----|--------|---------|
-| `h/←` | Focus left panel | Global |
-| `l/→` | Focus right panel | Global |
-| `j/↓` | Move down | List views |
-| `k/↑` | Move up | List views |
+| `h` / `←` | Focus left panel | Global |
+| `l` / `→` | Focus right panel | Global |
+| `j` / `↓` | Move down | List views |
+| `k` / `↑` | Move up | List views |
 | `Tab` | Toggle focus | Search dialog |
 | `Esc` | Close/cancel | Dialogs |
 
-### Actions
+### Action Commands
 
 | Key | Action | Context |
 |-----|--------|---------|
@@ -132,32 +144,39 @@ This tight integration gives you the full power of tmux while keeping mynav in s
 | `>` | Cycle preview right | Global |
 | `Ctrl+C` | Quit application | Global |
 
-## ⚙️ Configuration
+## Configuration
 
-- MyNav uses a configuration system that supports multiple independent workspaces
-- MyNav looks for configuration in the current or any parent directory
-- Multiple independent directories can be initialized with MyNav
-- Nested configurations are not allowed (invoking mynav nestedly will simply open the parent configuration)
-- Home directory cannot be initialized as a MyNav workspace
+MyNav employs a flexible configuration system designed for multi-project development:
 
-## 🛠️ Development
+- **Multiple workspace support**: Initialize independent workspaces in different directories
+- **Automatic configuration detection**: Searches current and parent directories for existing configurations
+- **Non-nested architecture**: Nested configurations are not allowed; MyNav will use the parent configuration
+- **Home directory protection**: The home directory cannot be initialized as a MyNav workspace
 
-### Setting Up Development Environment
+## Development
 
-Mynav is a straightforward, low-configuration project that only requires the Go runtime to get started in development.
+### Environment Setup
 
-## 🤝 Contributing
+MyNav is designed for minimal configuration requirements. To begin development:
 
-Ensure commits use conventional commits.
+1. Ensure Go runtime is installed
+2. Clone the repository
+3. Run `go build` to compile
 
-## 📝 License
+The project structure is straightforward and requires no additional dependencies beyond the Go standard library.
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## Contributing
+
+We welcome contributions from the community! Please ensure your commits follow the [Conventional Commits](https://www.conventionalcommits.org/) specification.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for complete details.
 
 ---
 
-<p align="center">
-  <a href="https://github.com/GianlucaP106/mynav/stargazers">⭐ Star on GitHub</a> •
-  <a href="https://github.com/GianlucaP106/mynav/issues">📫 Report Bug</a> •
-  <a href="https://github.com/GianlucaP106/mynav/discussions">💬 Discussions</a>
-</p>
+<div align="center">
+
+[⭐ Star on GitHub](https://github.com/GianlucaP106/mynav/stargazers) • [📫 Report Bug](https://github.com/GianlucaP106/mynav/issues) • [💬 Discussions](https://github.com/GianlucaP106/mynav/discussions)
+
+</div>
