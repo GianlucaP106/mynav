@@ -36,25 +36,7 @@ MyNav addresses the common challenge of managing multiple development projects i
 
 ## Installation
 
-### Quick Start with Docker
-
-Experience MyNav immediately with our Docker setup:
-
-```bash
-docker run -it --name mynav --rm ubuntu bash -c '
-    apt update &&
-    apt install -y git golang-go neovim tmux curl unzip &&
-    cd &&
-    (curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.bash | bash) &&
-    export PATH="$PATH:$HOME/.mynav" &&
-    mkdir nav && cd nav &&
-    mynav
-'
-```
-
-### Automated Installation
-
-Install MyNav with a single command:
+Install mynav with a single command:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/GianlucaP106/mynav/main/install.bash | bash
@@ -78,7 +60,6 @@ go build
 ### Prerequisites
 
 - **tmux 3.0+**: Required for session management
-- **Git**: Optional, enables repository-specific features
 - **Terminal**: UTF-8 support required for proper display
 
 ## Usage
